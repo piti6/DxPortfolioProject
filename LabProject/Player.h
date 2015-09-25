@@ -80,11 +80,11 @@ public:
 	virtual void OnCameraUpdated(float fTimeElapsed);
 };
 
-class CAirplanePlayer : public CPlayer
+class CGamePlayer : public CPlayer
 {
 public:
-	CAirplanePlayer(ID3D11Device *pd3dDevice);
-	~CAirplanePlayer();
+	CGamePlayer(ID3D11Device *pd3dDevice);
+	~CGamePlayer();
 
 	virtual void ChangeCamera(ID3D11Device *pd3dDevice, DWORD nNewCameraMode, float fTimeElapsed);
 	virtual void Render(ID3D11DeviceContext *pd3dImmediateDeviceContext);

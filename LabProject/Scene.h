@@ -58,10 +58,10 @@ public:
 	bool ProcessInput();
     void AnimateObjects(float fTimeElapsed);
     void Render(ID3D11DeviceContext	*pD3DImmediateDeviceContext, CCamera *pCamera);
-	CSceneShader					*m_pShaders;
-	int								m_nShaders;
-	LIGHTS *m_pLights;
-	ID3D11Buffer *m_pd3dcbLights;
+	CTexturedIlluminatedShader					*m_pShaders;
+	int											m_nShaders;
+	LIGHTS										*m_pLights;
+	ID3D11Buffer								*m_pd3dcbLights;
 
 	void BuildLights(ID3D11Device *pd3dDevice);
 	void UpdateLights(ID3D11DeviceContext *pd3dDeviceContext);

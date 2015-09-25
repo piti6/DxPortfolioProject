@@ -52,9 +52,6 @@
     <None Include="Effect.fx" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Collision.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
     <ClInclude Include="Mesh.h">
       <Filter>헤더 파일\DX11</Filter>
     </ClInclude>
@@ -143,6 +140,12 @@
     </ClCompile>
     <ClCompile Include="FbxToDxTranslation.cpp">
       <Filter>소스 파일\FBX</Filter>
+    </ClCompile>
+    <ClCompile Include="AABB.cpp">
+      <Filter>소스 파일\DX11</Filter>
+    </ClCompile>
+    <ClCompile Include="Material.cpp">
+      <Filter>소스 파일\DX11</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -53,7 +53,7 @@ bool CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 void CScene::BuildObjects(ID3D11Device *pd3dDevice)
 {
 	m_nShaders = 1;
-	m_pShaders = new CSceneShader[m_nShaders];
+	m_pShaders = new CTexturedIlluminatedShader[m_nShaders];
 	m_pShaders[0].CreateShader(pd3dDevice);
 	m_pShaders[0].BuildObjects(pd3dDevice);
 	BuildLights(pd3dDevice);

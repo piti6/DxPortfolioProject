@@ -192,7 +192,7 @@ void CPlayer::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext)
 	if (m_pShader)
 	{
 		m_pShader->UpdateShaderVariables(pd3dImmediateDeviceContext, &m_d3dxmtxWorld);
-		m_pShader->Render(pd3dImmediateDeviceContext);
+		m_pShader->Render(pd3dImmediateDeviceContext,m_pCamera);
 	}
 	if (m_pMesh) m_pMesh->Render(pd3dImmediateDeviceContext);
 }
@@ -206,9 +206,9 @@ void CPlayer::OnCameraUpdated(float fTimeElapsed)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// CAirplanePlayer
+// CGamePlayer
 
-CAirplanePlayer::CAirplanePlayer(ID3D11Device *pd3dDevice)
+CGamePlayer::CGamePlayer(ID3D11Device *pd3dDevice)
 {
 	ID3D11SamplerState *pd3dSamplerState = NULL;
 	D3D11_SAMPLER_DESC d3dSamplerDesc;
@@ -238,8 +238,8 @@ CAirplanePlayer::CAirplanePlayer(ID3D11Device *pd3dDevice)
 	ppMaterials->m_Material.m_d3dxcAmbient = D3DXCOLOR(1.0f,1.0f,1.0f,1.0f);
 	ppMaterials->m_Material.m_d3dxcSpecular = D3DXCOLOR(1.0f,1.0f,1.0f,10.0f);
 	ppMaterials->m_Material.m_d3dxcEmissive = D3DXCOLOR(0.0f,0.0f,0.0f,1.0f);
-	CMesh *pAirplaneMesh = new CCubeMeshIlluminatedTextured(pd3dDevice, 5, 5,5);
-	SetMesh(pAirplaneMesh);
+	CMesh *pPlayerMesh = new CCubeMeshIlluminatedTextured(pd3dDevice,5,5,5);
+	SetMesh(pPlayerMesh);
 	m_pShader = new CPlayerShader();
 	m_pShader->CreateShader(pd3dDevice);
 	m_pShader->CreateShaderVariables(pd3dDevice);
@@ -256,12 +256,12 @@ CAirplanePlayer::CAirplanePlayer(ID3D11Device *pd3dDevice)
 	delete [] ppMaterials;
 }
 
-CAirplanePlayer::~CAirplanePlayer()
+CGamePlayer::~CGamePlayer()
 {
     if (m_pShader) delete m_pShader;
 }
 
-void CAirplanePlayer::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext)
+void CGamePlayer::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext)
 {
 	DWORD nCurrentCameraMode = (m_pCamera) ? m_pCamera->GetMode() : 0x00;
     if ((nCurrentCameraMode == THIRD_PERSON_CAMERA) && m_pMesh)
@@ -275,7 +275,7 @@ void CAirplanePlayer::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext)
 	}
 }
 
-void CAirplanePlayer::ChangeCamera(ID3D11Device *pd3dDevice, DWORD nNewCameraMode, float fTimeElapsed)
+void CGamePlayer::ChangeCamera(ID3D11Device *pd3dDevice, DWORD nNewCameraMode, float fTimeElapsed)
 {
 	DWORD nCurrentCameraMode = (m_pCamera) ? m_pCamera->GetMode() : 0x00;
     if (nCurrentCameraMode == nNewCameraMode) return;
@@ -283,7 +283,7 @@ void CAirplanePlayer::ChangeCamera(ID3D11Device *pd3dDevice, DWORD nNewCameraMod
     {
         case FIRST_PERSON_CAMERA:            
             SetFriction(100.0f); 
-            SetGravity(D3DXVECTOR3(0.0f,-200, 0.0f));
+            SetGravity(D3DXVECTOR3(0.0f,0.0f, 0.0f));
             SetMaxVelocityXZ(100.0f);
             SetMaxVelocityY(200.0f);
             m_pCamera = OnChangeCamera(pd3dDevice, FIRST_PERSON_CAMERA, nCurrentCameraMode);
@@ -293,7 +293,7 @@ void CAirplanePlayer::ChangeCamera(ID3D11Device *pd3dDevice, DWORD nNewCameraMod
             break;
         case THIRD_PERSON_CAMERA:
             SetFriction(100.0f); 
-            SetGravity(D3DXVECTOR3(0.0f,-200, 0.0f));
+            SetGravity(D3DXVECTOR3(0.0f,0.0f, 0.0f));
             SetMaxVelocityXZ(100.0f);
             SetMaxVelocityY(200.0f);
             m_pCamera = OnChangeCamera(pd3dDevice, THIRD_PERSON_CAMERA, nCurrentCameraMode);

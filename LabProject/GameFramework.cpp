@@ -5,11 +5,9 @@
 #include "stdafx.h"
 #include "Object.h"
 #include "GameFramework.h"
-#include "Collision.h"
 DWORD dwDir = 0;
 CGameFramework::CGameFramework()
 {
-	Jump = false;
 	m_pd3dDevice = NULL;
 	m_pDXGISwapChain = NULL;
 	m_pd3dRenderTargetView = NULL;
@@ -180,9 +178,6 @@ void CGameFramework::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPA
 		switch(wParam)
 		{
 		case VK_SPACE:
-			if(Jump) break;
-			m_ppPlayers[0]->m_d3dxvVelocity.y+=300;
-			Jump = true;
 			break;
 		case 'Q':
 			if(m_pScene->m_pLights->m_pLights[1].m_bEnable==1.0f)
@@ -196,7 +191,6 @@ void CGameFramework::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPA
 		switch (wParam) 
 		{
 		case VK_SPACE:
-			Jump=false;
 			break;
 		case VK_ESCAPE:
 			::PostQuitMessage(0);
@@ -286,17 +280,17 @@ void CGameFramework::BuildObjects()
 	m_nPlayers = 1;
 	m_ppPlayers = new CPlayer*[m_nPlayers];
 
-	CAirplanePlayer *pAirplanePlyer = new CAirplanePlayer(m_pd3dDevice);
-	pAirplanePlyer->ChangeCamera(m_pd3dDevice, FIRST_PERSON_CAMERA, m_GameTimer.GetTimeElapsed());
+	CGamePlayer *pGamePlayer = new CGamePlayer(m_pd3dDevice);
+	pGamePlayer->ChangeCamera(m_pd3dDevice, FIRST_PERSON_CAMERA, m_GameTimer.GetTimeElapsed());
 
-	CCamera *pCamera = pAirplanePlyer->GetCamera();
+	CCamera *pCamera = pGamePlayer->GetCamera();
 	pCamera->SetViewport(m_pd3dImmediateDeviceContext, 0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT, 0.0f, 1.0f);
 	pCamera->GenerateProjectionMatrix(1.01f, 5000.0f, ASPECT_RATIO, 90.0f);
 	pCamera->GenerateViewMatrix();
 
-	pAirplanePlyer->SetPosition(D3DXVECTOR3(0.0f, 0.0f, -50.0f));
+	pGamePlayer->SetPosition(D3DXVECTOR3(0.0f, 0.0f, -50.0f));
 
-	m_ppPlayers[0] = pAirplanePlyer;
+	m_ppPlayers[0] = pGamePlayer;
 
 	if (m_pScene) m_pScene->BuildObjects(m_pd3dDevice);
 }
@@ -351,27 +345,8 @@ void CGameFramework::ProcessInput()
 					m_ppPlayers[0]->Rotate(cyDelta, cxDelta, 0.0f);
 				else
 					m_ppPlayers[0]->Rotate(cyDelta, cxDelta, 0.0f);        
-			} 
-
-			for(int k=0; k<m_pScene->m_nShaders;++k)
-				for(int l=0; l<m_pScene->m_pShaders[0].m_nObjects;++l){
-					Dist = CollisionCheck(m_ppPlayers[0],(m_pScene->m_pShaders[0].m_ppObjects[l]));					
-					if(Dist>0)
-					{
-						switch(dwDir){
-						case DIR_FORWARD:
-							m_ppPlayers[0]->Move(DIR_BACKWARD, Dist+20,false);
-							break;
-						case DIR_BACKWARD:
-							m_ppPlayers[0]->Move(DIR_FORWARD, Dist+20,false);
-							break;
-
-						}
-						break;
-					}
-				}
-				if(Dist<0){					
-					if(dwDirection==DIR_FORWARD)
+			}
+			if(dwDirection==DIR_FORWARD)
 						m_ppPlayers[0]->Move(dwDirection, 80.0f * m_GameTimer.GetTimeElapsed(),false);
 					if(dwDirection==DIR_BACKWARD)
 						m_ppPlayers[0]->Move(dwDirection, 80.0f * m_GameTimer.GetTimeElapsed(),false);
@@ -379,13 +354,6 @@ void CGameFramework::ProcessInput()
 						m_ppPlayers[0]->Rotate(0.0f, -50.0f * m_GameTimer.GetTimeElapsed(), 0.0f);
 					if(dwDirection==DIR_RIGHT)
 						m_ppPlayers[0]->Rotate(0.0f, 50.0f * m_GameTimer.GetTimeElapsed(), 0.0f);
-					/*
-					if(dwDirection==DIR_UP)
-						m_ppPlayers[0]->m_d3dxvVelocity.y+=10;//m_ppPlayers[0]->Move(dwDirection,400.0f * m_GameTimer.GetTimeElapsed(),false);*/
-					
-				}
-
-
 		}
 		m_ppPlayers[0]->Update(m_GameTimer.GetTimeElapsed());
 	}
@@ -409,38 +377,18 @@ void CGameFramework::FrameAdvance()
 	float fClearColor[4] = { 0.0f, 0.125f, 0.3f, 1.0f }; 
 	if (m_pd3dRenderTargetView) m_pd3dImmediateDeviceContext->ClearRenderTargetView(m_pd3dRenderTargetView, fClearColor);
 	if (m_pd3dDepthStencilView) m_pd3dImmediateDeviceContext->ClearDepthStencilView(m_pd3dDepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
-	D3DXVECTOR3 d3dxvPlayerPosition = m_ppPlayers[0]->GetPosition();
 	CCamera *pCamera = NULL;
-	for (int i = 0; i < m_nPlayers; i++)
+	for (int i = 0; i < m_nPlayers; ++i)
 	{
 		if (m_ppPlayers[i]) {
 			m_ppPlayers[i]->UpdateShaderVariables(m_pd3dImmediateDeviceContext);
+			m_ppPlayers[i]->Render(m_pd3dImmediateDeviceContext);
 			pCamera = m_ppPlayers[i]->GetCamera();
-			if(m_ppPlayers[i]->GetPosition().y>50)
-				m_ppPlayers[i]->SetPosition(D3DXVECTOR3(m_ppPlayers[i]->GetPosition().x,50,m_ppPlayers[i]->GetPosition().z));
-		}
-		for(int i=0; i<50;++i)
-			for(int j=0; j<52;++j){
-				if(m_pScene->m_pShaders[0].Ter[i][j]){
-					if(((i+1)*50-25 > m_ppPlayers[0]->GetPosition().x) && (m_ppPlayers[0]->GetPosition().x>i*50-25))
-						if(((j-1)*50-25 > m_ppPlayers[0]->GetPosition().z )&&( m_ppPlayers[0]->GetPosition().z>(j-2)*50-25))
-							if(m_ppPlayers[0]->GetPosition().y<0)
-							{
-							d3dxvPlayerPosition.y = 0.05f;
-							m_ppPlayers[0]->SetPosition(d3dxvPlayerPosition);
-						}
-				}
-				
-
-			}
-			
-			if (m_pScene){
-				m_pScene->Render(m_pd3dImmediateDeviceContext, pCamera);
-
-			}
-			for (int j = 0; j < m_nPlayers; j++) if (m_ppPlayers[j]) m_ppPlayers[j]->Render(m_pd3dImmediateDeviceContext);
-			
+		}		
 	}
+	if (m_pScene){
+			m_pScene->Render(m_pd3dImmediateDeviceContext, pCamera);
+	}	
 
 	m_pDXGISwapChain->Present(0, 0);
 

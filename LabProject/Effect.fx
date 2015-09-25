@@ -49,6 +49,22 @@ struct VS_TEXTURED_LIGHTING_OUTPUT
 	float2 tex2dcoord : TEXCOORD0;
 };
 
+struct VS_INSTANCED_TEXTURED_LIGHTING_INPUT
+{
+    float3 position : POSITION;
+	float3 normal : NORMAL;
+	float2 tex2dcoord : TEXCOORD0;
+    float4x4 mtxTransform : INSTANCEPOS;
+};
+
+struct VS_INSTANCED_TEXTURED_LIGHTING_OUTPUT
+{
+    float4 position : SV_POSITION;
+    float3 positionW : POSITION;
+    float3 normalW : NORMAL;
+	float2 tex2dcoord : TEXCOORD0;
+};
+
 //물질을 위한 구조체를 선언한다.
 struct MATERIAL
 {
@@ -295,6 +311,8 @@ VS_TEXTURED_LIGHTING_OUTPUT VSTexturedLighting(VS_TEXTURED_LIGHTING_INPUT input)
 
     return(output);
 }
+
+
 Texture2D gtxtTexture : register(t0);
 SamplerState gSamplerState : register(s0);
 
@@ -348,6 +366,29 @@ float4 PSTexturedColor(VS_TEXTURED_OUTPUT input) : SV_Target
 }
 
 float4 PSTexturedLighting(VS_TEXTURED_LIGHTING_OUTPUT input) : SV_Target
+{ 
+    input.normalW = normalize(input.normalW); 
+    float4 cIllumination = Lighting(input.positionW, input.normalW);
+    float4 cColor = gtxtTexture.Sample(gSamplerState, input.tex2dcoord) * cIllumination;
+
+    return(cColor);
+}
+
+VS_INSTANCED_TEXTURED_LIGHTING_OUTPUT VSInstancedTexturedLighting(VS_INSTANCED_TEXTURED_LIGHTING_INPUT input)
+{
+    VS_INSTANCED_TEXTURED_LIGHTING_OUTPUT output = (VS_INSTANCED_TEXTURED_LIGHTING_OUTPUT)0;
+    output.normalW = mul(input.normal, (float3x3)input.mtxTransform);
+    output.positionW = mul(input.position, (float3x3)input.mtxTransform);
+    output.positionW += float3(input.mtxTransform._41, input.mtxTransform._42, input.mtxTransform._43);
+    matrix mtxWorldViewProjection = mul(input.mtxTransform, gmtxView);
+    mtxWorldViewProjection = mul(mtxWorldViewProjection, gmtxProjection);
+    output.position = mul(float4(input.position, 1.0f), mtxWorldViewProjection);
+    output.tex2dcoord = input.tex2dcoord;
+
+    return(output);
+}
+
+float4 PSInstancedTexturedLighting(VS_INSTANCED_TEXTURED_LIGHTING_OUTPUT input) : SV_Target
 { 
     input.normalW = normalize(input.normalW); 
     float4 cIllumination = Lighting(input.positionW, input.normalW);

@@ -7,7 +7,6 @@
 class CGameFramework
 {
 public:
-	bool Jump;
 	CGameFramework();
 	~CGameFramework();
 

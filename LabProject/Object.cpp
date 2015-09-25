@@ -184,7 +184,7 @@ CRotatingObject::~CRotatingObject()
 
 void CRotatingObject::Animate(float fTimeElapsed)
 {
-	CGameObject::Rotate(&m_d3dxvRotationAxis, m_fRotationSpeed * fTimeElapsed);
+	CGameObject::Rotate(0, m_fRotationSpeed * fTimeElapsed,0);
 }
 
 void CRotatingObject::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, CCamera *pCamera)
@@ -216,23 +216,4 @@ void CRevolvingObject::Render(ID3D11DeviceContext *pd3dDeviceContext, CCamera *p
 	CGameObject::Render(pd3dDeviceContext, pCamera);
 }
 
-CMaterial::CMaterial()
-{
-	m_nReferences = 0;
-}
-
-CMaterial::~CMaterial()
-{
-}
-
-void CMaterial::AddRef() 
-{ 
-	m_nReferences++; 
-}
-
-void CMaterial::Release() 
-{ 
-	if (m_nReferences > 0) m_nReferences--; 
-	if (m_nReferences == 0) delete this;
-}
 

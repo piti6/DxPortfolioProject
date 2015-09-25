@@ -89,7 +89,6 @@
   <ItemGroup>
     <ClInclude Include="AABB.h" />
     <ClInclude Include="Camera.h" />
-    <ClInclude Include="Collision.h" />
     <ClInclude Include="FbxToDxTranslation.h" />
     <ClInclude Include="GameFramework.h" />
     <ClInclude Include="LabProject07-3.h" />
@@ -108,10 +107,12 @@
     <ClInclude Include="Vertex.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AABB.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="FbxToDxTranslation.cpp" />
     <ClCompile Include="GameFramework.cpp" />
     <ClCompile Include="LabProject07-3.cpp" />
+    <ClCompile Include="Material.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="Object.cpp" />
     <ClCompile Include="Player.cpp" />

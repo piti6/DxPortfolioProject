@@ -21,10 +21,10 @@ public:
 
 	D3D11_PRIMITIVE_TOPOLOGY		m_d3dPrimitiveTopology;
 
-	ID3D11Buffer					*m_pd3dVertexBuffer;
+	ID3D11Buffer					**m_ppd3dVertexBuffers;
 	UINT							m_nVertices;
-	UINT							m_nStride;
-	UINT							m_nOffset;
+	UINT							*m_nStride;
+	UINT							*m_nOffset;
 	UINT							m_nVertexBuffers;
 	ID3D11Buffer					*m_pd3dIndexBuffer;
 	UINT							m_nIndices;
@@ -38,7 +38,7 @@ public:
 	virtual void SetRasterizerState(ID3D11Device *pd3dDevice);
 	virtual void Render(ID3D11DeviceContext *pd3dImmediateDeviceContext);
 	virtual void RenderInstanced(ID3D11DeviceContext *pd3dDeviceContext, int nInstances, int nStartInstance);
-	virtual void AppendVertexBuffer(ID3D11Buffer *pd3dBuffer, UINT nStride, UINT nOffset);
+	virtual void AppendVertexBuffer(int nBuffers,ID3D11Buffer **pd3dBuffer, UINT *nStride, UINT *nOffset);
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////

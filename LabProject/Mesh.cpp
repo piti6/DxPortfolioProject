@@ -10,8 +10,8 @@
 CMesh::CMesh(ID3D11Device *pd3dDevice)
 {
 	m_nVertices = 0;
-    m_nStride = sizeof(CVertex);
-    m_nOffset = 0;
+    m_nStride = NULL;
+    m_nOffset = NULL;
 	m_d3dPrimitiveTopology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 
 	m_nVertexBuffers = 1;
@@ -20,7 +20,7 @@ CMesh::CMesh(ID3D11Device *pd3dDevice)
 	m_nBaseVertex = 0;
 
 	m_pd3dIndexBuffer = NULL;
-	m_pd3dVertexBuffer = NULL;
+	m_ppd3dVertexBuffers = NULL;
 
 	m_pd3dRasterizerState = NULL;
 
@@ -34,8 +34,14 @@ CMesh::CMesh(ID3D11Device *pd3dDevice)
 CMesh::~CMesh()
 {
     if (m_pd3dRasterizerState) m_pd3dRasterizerState->Release();
-    if (m_pd3dVertexBuffer) m_pd3dVertexBuffer->Release();
+    if (m_ppd3dVertexBuffers)
+	{
+		for (UINT i = 0; i < m_nVertexBuffers; i++) if (m_ppd3dVertexBuffers[i]) m_ppd3dVertexBuffers[i]->Release();
+		delete [] m_ppd3dVertexBuffers;
+	}
     if (m_pd3dIndexBuffer) m_pd3dIndexBuffer->Release();
+	if (m_nStride) delete [] m_nStride;
+	if (m_nOffset) delete [] m_nOffset;
 }
 
 void CMesh::AddRef() 
@@ -55,7 +61,7 @@ void CMesh::SetRasterizerState(ID3D11Device *pd3dDevice)
 
 void CMesh::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext)
 {
-    if (m_pd3dVertexBuffer) pd3dImmediateDeviceContext->IASetVertexBuffers(0, m_nVertexBuffers, &m_pd3dVertexBuffer, &m_nStride, &m_nOffset);
+    if (m_ppd3dVertexBuffers) pd3dImmediateDeviceContext->IASetVertexBuffers(0, m_nVertexBuffers, m_ppd3dVertexBuffers, m_nStride, m_nOffset);
     if (m_pd3dIndexBuffer) pd3dImmediateDeviceContext->IASetIndexBuffer(m_pd3dIndexBuffer, DXGI_FORMAT_R16_UINT, 0);
     if (m_d3dPrimitiveTopology) pd3dImmediateDeviceContext->IASetPrimitiveTopology(m_d3dPrimitiveTopology);
 	if (m_pd3dRasterizerState) pd3dImmediateDeviceContext->RSSetState(m_pd3dRasterizerState);
@@ -63,11 +69,11 @@ void CMesh::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext)
 	if (m_pd3dIndexBuffer) 
 		pd3dImmediateDeviceContext->DrawIndexed(m_nIndices, m_nStartIndex, m_nBaseVertex);
 	else
-		pd3dImmediateDeviceContext->Draw(m_nVertices, m_nOffset);
+		pd3dImmediateDeviceContext->Draw(m_nVertices, 0);
 }
 void CMesh::RenderInstanced(ID3D11DeviceContext *pd3dDeviceContext, int nInstances, int nStartInstance)
 {
-	if (m_pd3dVertexBuffer) pd3dDeviceContext->IASetVertexBuffers(0, 0, &m_pd3dVertexBuffer, &m_nStride, &m_nOffset);
+	if (m_ppd3dVertexBuffers) pd3dDeviceContext->IASetVertexBuffers(0, 0, m_ppd3dVertexBuffers, m_nStride, m_nOffset);
 	if (m_pd3dIndexBuffer) pd3dDeviceContext->IASetIndexBuffer(m_pd3dIndexBuffer, DXGI_FORMAT_R16_UINT, 0);
 	if (m_d3dPrimitiveTopology) pd3dDeviceContext->IASetPrimitiveTopology(m_d3dPrimitiveTopology);
 	if (m_pd3dRasterizerState) pd3dDeviceContext->RSSetState(m_pd3dRasterizerState);
@@ -78,39 +84,43 @@ void CMesh::RenderInstanced(ID3D11DeviceContext *pd3dDeviceContext, int nInstanc
 		pd3dDeviceContext->DrawInstanced(m_nVertices, nInstances, 0, nStartInstance);
 }
 
-void CMesh::AppendVertexBuffer(ID3D11Buffer *pd3dBuffer, UINT nStride, UINT nOffset)
+void CMesh::AppendVertexBuffer(int nBuffers,ID3D11Buffer **pd3dBuffer, UINT *nStride, UINT *nOffset)
 {
-	ID3D11Buffer **ppd3dVertexBuffers = new ID3D11Buffer*[m_nVertexBuffers+1];
-//기존의 배열들 보다 하나 큰 배열을 생성하고 기존의 배열을 복사한 후 새로운 원소를 추가한다.
-	UINT *pnVertexStrides = new UINT[m_nVertexBuffers+1];
-	UINT *pnVertexOffsets = new UINT[m_nVertexBuffers+1];
+	ID3D11Buffer **ppd3dVertexBuffers = new ID3D11Buffer*[m_nVertexBuffers+nBuffers];
+	//기존의 배열들 보다 하나 큰 배열을 생성하고 기존의 배열을 복사한 후 새로운 원소를 추가한다.
+	UINT *pnVertexStrides = new UINT[m_nVertexBuffers+nBuffers];
+	UINT *pnVertexOffsets = new UINT[m_nVertexBuffers+nBuffers];
 
-	for (UINT i = 0; i < m_nVertexBuffers; i++) 
+	if(m_nVertexBuffers >0)
 	{
-		ppd3dVertexBuffers[i] = m_ppd3dVertexBuffers[i];
-		pnVertexStrides[i] = m_pnVertexStrides[i];
-		pnVertexOffsets[i] = m_pnVertexOffsets[i];
+		for (UINT i = 0; i < m_nVertexBuffers; i++) 
+		{
+			ppd3dVertexBuffers[i] = m_ppd3dVertexBuffers[i];
+			pnVertexStrides[i] = m_nStride[i];
+			pnVertexOffsets[i] = m_nOffset[i];
+		}
+		if(m_ppd3dVertexBuffers) delete [] m_ppd3dVertexBuffers;
+		if(m_nStride) delete [] m_nStride;
+		if(m_nOffset) delete [] m_nOffset;
+
+		for(int i=0; i<nBuffers; ++i)
+		{
+			ppd3dVertexBuffers[m_nVertexBuffers+i] = pd3dBuffer[i];
+			pnVertexStrides[m_nVertexBuffers+i] = nStride[i];
+			pnVertexOffsets[m_nVertexBuffers+i] = nOffset[i];
+		}
+
+		//기존의 정점 배열들 보다 하나 큰 배열을 생성하고 기존의 배열을 복사한 후 새로운 원소를 추가한다.
+
+		m_nVertexBuffers += nBuffers;
+		m_ppd3dVertexBuffers = ppd3dVertexBuffers;
+		m_nStride = pnVertexStrides;
+		m_nOffset = pnVertexOffsets;
+
+
+		//if (pd3dBuffer) pd3dBuffer->AddRef();
+
 	}
-	delete [] m_ppd3dVertexBuffers;
-	delete [] m_pnVertexStrides;
-	delete [] m_pnVertexOffsets;
-
-	ppd3dVertexBuffers[m_nVertexBuffers] = pd3dBuffer;
-	pnVertexStrides[m_nVertexBuffers] = nStride;
-	pnVertexOffsets[m_nVertexBuffers] = nOffset;
-	
-
-//기존의 정점 배열들 보다 하나 큰 배열을 생성하고 기존의 배열을 복사한 후 새로운 원소를 추가한다.
-	
-	++m_nVertexBuffers;
-	m_ppd3dVertexBuffers = ppd3dVertexBuffers;
-	m_pnVertexStrides = pnVertexStrides;
-	m_pnVertexOffsets = pnVertexOffsets;
-
-	
-	//if (pd3dBuffer) pd3dBuffer->AddRef();
-	
-
 	
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -153,11 +163,11 @@ void CMeshIlluminated::SetTriAngleListVertexNormal(BYTE *pVertices)
 	for (int i = 0; i < nPrimitives; i++) 
 	{
 		d3dxvNormal = CalculateTriAngleNormal(pVertices, (i*3+0), (i*3+1), (i*3+2));
-		pVertex = (CNormalVertex *)(pVertices + ((i*3+0) * m_nStride));
+		pVertex = (CNormalVertex *)(pVertices + ((i*3+0) * m_nStride[0]));
 		pVertex->SetNormal(d3dxvNormal);
-		pVertex = (CNormalVertex *)(pVertices + ((i*3+1) * m_nStride));
+		pVertex = (CNormalVertex *)(pVertices + ((i*3+1) * m_nStride[0]));
 		pVertex->SetNormal(d3dxvNormal);
-		pVertex = (CNormalVertex *)(pVertices + ((i*3+2) * m_nStride));
+		pVertex = (CNormalVertex *)(pVertices + ((i*3+2) * m_nStride[0]));
 		pVertex->SetNormal(d3dxvNormal);
 	}
 }
@@ -165,9 +175,9 @@ void CMeshIlluminated::SetTriAngleListVertexNormal(BYTE *pVertices)
 D3DXVECTOR3 CMeshIlluminated::CalculateTriAngleNormal(BYTE *pVertices, USHORT nIndex0, USHORT nIndex1, USHORT nIndex2)
 {
 	D3DXVECTOR3 d3dxvNormal(0.0f, 0.0f, 0.0f);
-	D3DXVECTOR3 d3dxvP0 = *((D3DXVECTOR3 *)(pVertices + (m_nStride * nIndex0)));
-	D3DXVECTOR3 d3dxvP1 = *((D3DXVECTOR3 *)(pVertices + (m_nStride * nIndex1)));
-	D3DXVECTOR3 d3dxvP2 = *((D3DXVECTOR3 *)(pVertices + (m_nStride * nIndex2)));
+	D3DXVECTOR3 d3dxvP0 = *((D3DXVECTOR3 *)(pVertices + (m_nStride[0] * nIndex0)));
+	D3DXVECTOR3 d3dxvP1 = *((D3DXVECTOR3 *)(pVertices + (m_nStride[0] * nIndex1)));
+	D3DXVECTOR3 d3dxvP2 = *((D3DXVECTOR3 *)(pVertices + (m_nStride[0] * nIndex2)));
 	D3DXVECTOR3 d3dxvEdge1 = d3dxvP1 - d3dxvP0;
 	D3DXVECTOR3 d3dxvEdge2 = d3dxvP2 - d3dxvP0;
 	D3DXVec3Cross(&d3dxvNormal, &d3dxvEdge1, &d3dxvEdge2);
@@ -194,7 +204,7 @@ void CMeshIlluminated::SetAverageVertexNormal(BYTE *pVertices, WORD *pIndices, i
 			if ((nIndex0 == j) || (nIndex1 == j) || (nIndex2 == j)) d3dxvSumOfNormal += CalculateTriAngleNormal(pVertices, nIndex0, nIndex1, nIndex2);
 		}
 		D3DXVec3Normalize(&d3dxvSumOfNormal, &d3dxvSumOfNormal);
-		pVertex = (CNormalVertex *)(pVertices + (j * m_nStride));
+		pVertex = (CNormalVertex *)(pVertices + (j * m_nStride[0]));
 		pVertex->SetNormal(d3dxvSumOfNormal);
 	}
 }
@@ -203,8 +213,10 @@ CCubeMeshIlluminated::CCubeMeshIlluminated(ID3D11Device *pd3dDevice, float fWidt
 {
 	int i = 0;
 	m_nVertices = 8;
-	m_nStride = sizeof(CNormalVertex);
-	m_nOffset = 0;
+	m_nStride = new UINT[1];
+	m_nStride[0] = sizeof(CNormalVertex);
+	m_nOffset = new UINT[1];
+	m_nOffset[0] = 0;
 	m_d3dPrimitiveTopology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 
 	float fx = fWidth*0.5f, fy = fHeight*0.5f, fz = fDepth*0.5f;
@@ -248,7 +260,7 @@ CCubeMeshIlluminated::CCubeMeshIlluminated(ID3D11Device *pd3dDevice, float fWidt
 	D3D11_SUBRESOURCE_DATA d3dBufferData;
 	ZeroMemory(&d3dBufferData, sizeof(D3D11_SUBRESOURCE_DATA));
 	d3dBufferData.pSysMem = pVertices;
-	pd3dDevice->CreateBuffer(&d3dBufferDesc, &d3dBufferData, &m_pd3dVertexBuffer);
+	pd3dDevice->CreateBuffer(&d3dBufferDesc, &d3dBufferData, &m_ppd3dVertexBuffers[0]);
 
 	ZeroMemory(&d3dBufferDesc, sizeof(D3D11_BUFFER_DESC));
 	d3dBufferDesc.Usage = D3D11_USAGE_DEFAULT;
@@ -286,10 +298,12 @@ void CMeshIlluminated::Render(ID3D11DeviceContext *pd3dDeviceContext)
 CCubeMeshIlluminatedTextured::CCubeMeshIlluminatedTextured(ID3D11Device *pd3dDevice, float fWidth, float fHeight, float fDepth) : CMeshIlluminated(pd3dDevice)
 {
 	m_nVertices = 36;
-	m_nStride = sizeof(CTexturedNormalVertex);
-	m_nOffset = 0;
+	m_nStride = new UINT[1];
+	m_nStride[0] = sizeof(CTexturedNormalVertex);
+	m_nOffset = new UINT[1];
+	m_nOffset[0] = 0;
 	m_d3dPrimitiveTopology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-
+	m_ppd3dVertexBuffers = new ID3D11Buffer*[m_nVertexBuffers];
 	float fx = fWidth*0.5f, fy = fHeight*0.5f, fz = fDepth*0.5f;
 
 	CTexturedNormalVertex pVertices[36];
@@ -350,13 +364,13 @@ CCubeMeshIlluminatedTextured::CCubeMeshIlluminatedTextured(ID3D11Device *pd3dDev
 	D3D11_BUFFER_DESC d3dBufferDesc;
 	ZeroMemory(&d3dBufferDesc, sizeof(D3D11_BUFFER_DESC));
 	d3dBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-	d3dBufferDesc.ByteWidth = m_nStride * m_nVertices;
+	d3dBufferDesc.ByteWidth = m_nStride[0] * m_nVertices;
 	d3dBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 	d3dBufferDesc.CPUAccessFlags = 0;
 	D3D11_SUBRESOURCE_DATA d3dBufferData;
 	ZeroMemory(&d3dBufferData, sizeof(D3D11_SUBRESOURCE_DATA));
 	d3dBufferData.pSysMem = pVertices;
-	pd3dDevice->CreateBuffer(&d3dBufferDesc, &d3dBufferData, &m_pd3dVertexBuffer);
+	pd3dDevice->CreateBuffer(&d3dBufferDesc, &d3dBufferData, &m_ppd3dVertexBuffers[0]);
 
 	SetRasterizerState(pd3dDevice);
 }

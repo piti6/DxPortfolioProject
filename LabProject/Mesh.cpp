@@ -77,37 +77,42 @@ void CMesh::RenderInstanced(ID3D11DeviceContext *pd3dDeviceContext, int nInstanc
 	else
 		pd3dDeviceContext->DrawInstanced(m_nVertices, nInstances, 0, nStartInstance);
 }
-/*
+
 void CMesh::AppendVertexBuffer(ID3D11Buffer *pd3dBuffer, UINT nStride, UINT nOffset)
 {
+	ID3D11Buffer **ppd3dVertexBuffers = new ID3D11Buffer*[m_nVertexBuffers+1];
 //기존의 배열들 보다 하나 큰 배열을 생성하고 기존의 배열을 복사한 후 새로운 원소를 추가한다.
 	UINT *pnVertexStrides = new UINT[m_nVertexBuffers+1];
 	UINT *pnVertexOffsets = new UINT[m_nVertexBuffers+1];
+
 	for (UINT i = 0; i < m_nVertexBuffers; i++) 
 	{
+		ppd3dVertexBuffers[i] = m_ppd3dVertexBuffers[i];
 		pnVertexStrides[i] = m_pnVertexStrides[i];
 		pnVertexOffsets[i] = m_pnVertexOffsets[i];
 	}
+	delete [] m_ppd3dVertexBuffers;
 	delete [] m_pnVertexStrides;
 	delete [] m_pnVertexOffsets;
+
+	ppd3dVertexBuffers[m_nVertexBuffers] = pd3dBuffer;
 	pnVertexStrides[m_nVertexBuffers] = nStride;
 	pnVertexOffsets[m_nVertexBuffers] = nOffset;
+	
+
+//기존의 정점 배열들 보다 하나 큰 배열을 생성하고 기존의 배열을 복사한 후 새로운 원소를 추가한다.
+	
+	++m_nVertexBuffers;
+	m_ppd3dVertexBuffers = ppd3dVertexBuffers;
 	m_pnVertexStrides = pnVertexStrides;
 	m_pnVertexOffsets = pnVertexOffsets;
 
-//기존의 정점 배열들 보다 하나 큰 배열을 생성하고 기존의 배열을 복사한 후 새로운 원소를 추가한다.
-	ID3D11Buffer **ppd3dVertexBuffers = new ID3D11Buffer*[m_nVertexBuffers+1];
-	for (UINT i = 0; i < m_nVertexBuffers; i++)
-	{
-		ppd3dVertexBuffers[i] = m_ppd3dVertexBuffers[i];
-	}
-	delete [] m_ppd3dVertexBuffers;
-	ppd3dVertexBuffers[m_nVertexBuffers] = pd3dBuffer;
-	if (pd3dBuffer) pd3dBuffer->AddRef();
-	m_ppd3dVertexBuffers = ppd3dVertexBuffers;
+	
+	//if (pd3dBuffer) pd3dBuffer->AddRef();
+	
 
-	++m_nVertexBuffers;
-}*/
+	
+}
 /////////////////////////////////////////////////////////////////////////////////////////////////
 //
 

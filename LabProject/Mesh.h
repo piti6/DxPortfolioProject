@@ -38,7 +38,8 @@ public:
 	virtual void SetRasterizerState(ID3D11Device *pd3dDevice);
 	virtual void Render(ID3D11DeviceContext *pd3dImmediateDeviceContext);
 	virtual void RenderInstanced(ID3D11DeviceContext *pd3dDeviceContext, int nInstances, int nStartInstance);
-	virtual void AppendVertexBuffer(int nBuffers,ID3D11Buffer **pd3dBuffer, UINT *nStride, UINT *nOffset);
+	virtual void AppendVertexBuffer(ID3D11Buffer *pd3dBuffer, UINT nStride, UINT nOffset);
+	//virtual void AppendVertexBuffer(int nBuffers,ID3D11Buffer **pd3dBuffer, UINT *nStride, UINT *nOffset);
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////

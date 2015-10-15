@@ -243,7 +243,6 @@ CGamePlayer::CGamePlayer(ID3D11Device *pd3dDevice)
 	m_pShader = new CPlayerShader();
 	m_pShader->CreateShader(pd3dDevice);
 	m_pShader->CreateShaderVariables(pd3dDevice);
-	
 
 	
 

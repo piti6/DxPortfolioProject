@@ -73,7 +73,7 @@ void CMesh::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext)
 }
 void CMesh::RenderInstanced(ID3D11DeviceContext *pd3dDeviceContext, int nInstances, int nStartInstance)
 {
-	if (m_ppd3dVertexBuffers) pd3dDeviceContext->IASetVertexBuffers(0, 0, m_ppd3dVertexBuffers, m_nStride, m_nOffset);
+	if (m_ppd3dVertexBuffers) pd3dDeviceContext->IASetVertexBuffers(0, m_nVertexBuffers, m_ppd3dVertexBuffers, m_nStride, m_nOffset);
 	if (m_pd3dIndexBuffer) pd3dDeviceContext->IASetIndexBuffer(m_pd3dIndexBuffer, DXGI_FORMAT_R16_UINT, 0);
 	if (m_d3dPrimitiveTopology) pd3dDeviceContext->IASetPrimitiveTopology(m_d3dPrimitiveTopology);
 	if (m_pd3dRasterizerState) pd3dDeviceContext->RSSetState(m_pd3dRasterizerState);
@@ -83,7 +83,37 @@ void CMesh::RenderInstanced(ID3D11DeviceContext *pd3dDeviceContext, int nInstanc
 	else
 		pd3dDeviceContext->DrawInstanced(m_nVertices, nInstances, 0, nStartInstance);
 }
+void CMesh::AppendVertexBuffer(ID3D11Buffer *pd3dBuffer, UINT nStride, UINT nOffset)
+{
+//기존의 배열들 보다 하나 큰 배열을 생성하고 기존의 배열을 복사한 후 새로운 원소를 추가한다.
+	UINT *pnVertexStrides = new UINT[m_nVertexBuffers+1];
+	UINT *pnVertexOffsets = new UINT[m_nVertexBuffers+1];
+	for (UINT i = 0; i < m_nVertexBuffers; i++) 
+	{
+		pnVertexStrides[i] = m_nStride[i];
+		pnVertexOffsets[i] = m_nOffset[i];
+	}
+	delete [] m_nStride;
+	delete [] m_nOffset;
+	pnVertexStrides[m_nVertexBuffers] = nStride;
+	pnVertexOffsets[m_nVertexBuffers] = nOffset;
+	m_nStride = pnVertexStrides;
+	m_nOffset = pnVertexOffsets;
 
+//기존의 정점 배열들 보다 하나 큰 배열을 생성하고 기존의 배열을 복사한 후 새로운 원소를 추가한다.
+	ID3D11Buffer **ppd3dVertexBuffers = new ID3D11Buffer*[m_nVertexBuffers+1];
+	for (UINT i = 0; i < m_nVertexBuffers; i++)
+	{
+		ppd3dVertexBuffers[i] = m_ppd3dVertexBuffers[i];
+	}
+	delete [] m_ppd3dVertexBuffers;
+	ppd3dVertexBuffers[m_nVertexBuffers] = pd3dBuffer;
+	//if (pd3dBuffer) pd3dBuffer->AddRef();
+	m_ppd3dVertexBuffers = ppd3dVertexBuffers;
+
+	m_nVertexBuffers++;
+}
+/*
 void CMesh::AppendVertexBuffer(int nBuffers,ID3D11Buffer **pd3dBuffer, UINT *nStride, UINT *nOffset)
 {
 	ID3D11Buffer **ppd3dVertexBuffers = new ID3D11Buffer*[m_nVertexBuffers+nBuffers];
@@ -123,6 +153,7 @@ void CMesh::AppendVertexBuffer(int nBuffers,ID3D11Buffer **pd3dBuffer, UINT *nSt
 	}
 	
 }
+*/
 /////////////////////////////////////////////////////////////////////////////////////////////////
 //
 

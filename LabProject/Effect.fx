@@ -302,11 +302,9 @@ VS_TEXTURED_LIGHTING_OUTPUT VSTexturedLighting(VS_TEXTURED_LIGHTING_INPUT input)
 {
     VS_TEXTURED_LIGHTING_OUTPUT output = (VS_TEXTURED_LIGHTING_OUTPUT)0;
     output.normalW = mul(input.normal, (float3x3)gmtxWorld);
-    output.positionW = mul(input.position, (float3x3)gmtxWorld);
-    output.positionW += float3(gmtxWorld._41, gmtxWorld._42, gmtxWorld._43);
-    matrix mtxWorldViewProjection = mul(gmtxWorld, gmtxView);
-    mtxWorldViewProjection = mul(mtxWorldViewProjection, gmtxProjection);
-    output.position = mul(float4(input.position, 1.0f), mtxWorldViewProjection);
+
+    output.positionW = mul(float4(input.position, 1.0f), gmtxWorld).xyz;
+    output.position = mul(mul(float4(output.positionW, 1.0f), gmtxView), gmtxProjection);
     output.tex2dcoord = input.tex2dcoord;
 
     return(output);
@@ -378,11 +376,9 @@ VS_INSTANCED_TEXTURED_LIGHTING_OUTPUT VSInstancedTexturedLighting(VS_INSTANCED_T
 {
     VS_INSTANCED_TEXTURED_LIGHTING_OUTPUT output = (VS_INSTANCED_TEXTURED_LIGHTING_OUTPUT)0;
     output.normalW = mul(input.normal, (float3x3)input.mtxTransform);
-    output.positionW = mul(input.position, (float3x3)input.mtxTransform);
-    output.positionW += float3(input.mtxTransform._41, input.mtxTransform._42, input.mtxTransform._43);
-    matrix mtxWorldViewProjection = mul(input.mtxTransform, gmtxView);
-    mtxWorldViewProjection = mul(mtxWorldViewProjection, gmtxProjection);
-    output.position = mul(float4(input.position, 1.0f), mtxWorldViewProjection);
+	//output.normalW = input.normal, (float3x3)input.mtxTransform);
+    output.positionW = mul(float4(input.position, 1.0f), input.mtxTransform).xyz;
+    output.position = mul(mul(float4(output.positionW, 1.0f), gmtxView), gmtxProjection);
     output.tex2dcoord = input.tex2dcoord;
 
     return(output);

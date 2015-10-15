@@ -94,6 +94,8 @@ public:
 	virtual void UpdateShaderVariables(ID3D11DeviceContext *pd3dImmediateDeviceContext, D3DXMATRIX *pd3dxmtxWorld);
 	virtual void UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext, MATERIAL *pMaterial=NULL);
 	ID3D11Buffer					*m_pd3dcbWorldMatrix;
+	ID3D11Buffer					*m_pd3dcbMaterial;
+
 };
 
 class CInstancingShader : public CTexturedIlluminatedShader
@@ -109,12 +111,14 @@ public:
 	virtual void ReleaseObjects();
 	virtual void AnimateObjects(float fTimeElapsed);
 	virtual void Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, CCamera *pCamera=NULL);
-
+	ID3D11Buffer* CreateInstanceBuffer(ID3D11Device *pd3dDevice, int nObjects, UINT nBufferStride, void *pBufferData);
 private:
 
 //직육면체 객체의 인스턴스 버퍼와 구 객체의 인스턴스 버퍼이다.
 	ID3D11Buffer		*m_pd3dInstances;
 	UINT				m_nMatrixBufferStride;
 	UINT				m_nMatrixBufferOffset;
+
+	CMesh				*m_pCubeMesh;
 
 };

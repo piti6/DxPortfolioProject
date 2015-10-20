@@ -26,15 +26,16 @@ class CGameObject
 public:
 	CGameObject();
     virtual ~CGameObject();
-	CTexture *m_pTexture;
-	void SetTexture(CTexture *pTexture);
+	
 
 
     D3DXMATRIX						m_d3dxmtxWorld;         
 	CMesh							*m_pMesh;
 	CMaterial						*m_pMaterial;
-	void SetMaterial(CMaterial *pMaterial);
+	CTexture						*m_pTexture;
 
+	void SetMaterial(CMaterial *pMaterial);
+	void SetTexture(CTexture *pTexture);
 
 	virtual void SetMesh(CMesh *pMesh);
 	virtual void Animate(float fTimeElapsed);
@@ -73,22 +74,11 @@ private:
 	float						m_fRotationSpeed;
 };
 
-class CRevolvingObject : public CGameObject
+class CSkyBox : public CGameObject
 {
 public:
-	CRevolvingObject();
-	virtual ~CRevolvingObject();
+	CSkyBox(ID3D11Device *pd3dDevice);
+	virtual ~CSkyBox();
 
-	virtual void Animate(float fTimeElapsed);
-	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, CCamera *pCamera=NULL);
-
-// 공전 속력을 설정한다.
-	void SetRevolutionSpeed(float fRevolutionSpeed) { m_fRevolutionSpeed = fRevolutionSpeed; }
-// 공전을 위한 회전축을 설정한다.
-	void SetRevolutionAxis(D3DXVECTOR3 d3dxvRevolutionAxis) { m_d3dxvRevolutionAxis = d3dxvRevolutionAxis; }
-
-private:
-// 공전 회전축과 회전 속력을 나타낸다.
-	D3DXVECTOR3 m_d3dxvRevolutionAxis;
-	float m_fRevolutionSpeed;
+	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, CCamera *pCamera);
 };

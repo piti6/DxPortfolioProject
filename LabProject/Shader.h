@@ -23,7 +23,8 @@ public:
 	virtual void CreateShader(ID3D11Device *pd3dDevice);
 	virtual void CreateShaderVariables(ID3D11Device *pd3dDevice);
 	virtual void UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext, MATERIAL *pMaterial=NULL);
-	
+	virtual void UpdateShaderVariables(ID3D11DeviceContext *pd3dImmediateDeviceContext, D3DXMATRIX *pd3dxmtxWorld);
+	virtual void UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext, CTexture *pTexture);
 	virtual void OnPostRender(ID3D11DeviceContext *pd3dDeviceContext);
 	virtual void Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, CCamera *pCamera);
 	
@@ -31,34 +32,19 @@ public:
 	virtual void BuildObjects(ID3D11Device *pd3dDevice);
 	virtual void ReleaseObjects();
 	
-public:
+protected:
 	ID3D11VertexShader				*m_pd3dVertexShader;
 	ID3D11InputLayout				*m_pd3dVertexLayout;
-	ID3D11Buffer					*m_pd3dcbMaterial;
+	
 	ID3D11PixelShader				*m_pd3dPixelShader;
-
 	CGameObject						**m_ppObjects;       
 	int								m_nObjects;
 
+	ID3D11Buffer					*m_pd3dcbMaterial;
 	ID3D11Buffer					*m_pd3dcbWorldMatrix;
 };
 
-class CDiffusedShader : public CShader
-{
-public:
-    CDiffusedShader();
-    ~CDiffusedShader();
-
-	virtual void CreateShader(ID3D11Device *pd3dDevice);
-	virtual void CreateShaderVariables(ID3D11Device *pd3dDevice);
-	virtual void UpdateShaderVariables(ID3D11DeviceContext *pd3dImmediateDeviceContext);
-
-	virtual void Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, CCamera *pCamera);
-};
-
-
-
-class CTexturedIlluminatedShader : public CDiffusedShader
+class CTexturedIlluminatedShader : public CShader
 {
 public:
     CTexturedIlluminatedShader();
@@ -74,16 +60,9 @@ public:
 	virtual void ReleaseObjects();
     virtual void AnimateObjects(float fTimeElapsed);
 	virtual void Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, CCamera *pCamera=NULL);
-
-	CGameObject						**m_ppObjects;       
-	int								m_nObjects;
-
-	ID3D11Buffer					*m_pd3dcbWorldMatrix;
-	ID3D11Buffer					*m_pd3dcbMaterial;
-
 };
 
-class CPlayerShader : public CDiffusedShader
+class CPlayerShader : public CShader
 {
 public:
     CPlayerShader();
@@ -93,9 +72,7 @@ public:
 	virtual void CreateShaderVariables(ID3D11Device *pd3dDevice);
 	virtual void UpdateShaderVariables(ID3D11DeviceContext *pd3dImmediateDeviceContext, D3DXMATRIX *pd3dxmtxWorld);
 	virtual void UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext, MATERIAL *pMaterial=NULL);
-	ID3D11Buffer					*m_pd3dcbWorldMatrix;
-	ID3D11Buffer					*m_pd3dcbMaterial;
-
+	
 };
 
 class CInstancingShader : public CTexturedIlluminatedShader
@@ -105,20 +82,46 @@ public:
 	~CInstancingShader();
 
 	virtual void CreateShader(ID3D11Device *pd3dDevice);
-	virtual void UpdateShaderVariables(ID3D11DeviceContext *pd3dImmediateDeviceContext);
+	virtual void UpdateShaderVariables(ID3D11DeviceContext *pd3dImmediateDeviceContext, CCamera *pCamera);
 
 	virtual void BuildObjects(ID3D11Device *pd3dDevice);
 	virtual void ReleaseObjects();
 	virtual void AnimateObjects(float fTimeElapsed);
 	virtual void Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, CCamera *pCamera=NULL);
 	ID3D11Buffer* CreateInstanceBuffer(ID3D11Device *pd3dDevice, int nObjects, UINT nBufferStride, void *pBufferData);
-private:
 
-//직육면체 객체의 인스턴스 버퍼와 구 객체의 인스턴스 버퍼이다.
+private:
+	bool				isFirstRenderTexture;
+	bool				isFirstRenderMaterial;
+	int					m_nVisibleInstances;
+//객체의 인스턴스 버퍼이다.
 	ID3D11Buffer		*m_pd3dInstances;
+
 	UINT				m_nMatrixBufferStride;
 	UINT				m_nMatrixBufferOffset;
+	
+	CMesh				*m_pMesh;
 
-	CMesh				*m_pCubeMesh;
+};
 
+class CTexturedShader : public CShader
+{
+public:
+    CTexturedShader();
+    virtual ~CTexturedShader();
+
+	virtual void CreateShader(ID3D11Device *pd3dDevice);
+	virtual void CreateShaderVariables(ID3D11Device *pd3dDevice);
+	virtual void UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext, CTexture *pTexture);
+	virtual void UpdateShaderVariables(ID3D11DeviceContext *pd3dImmediateDeviceContext, D3DXMATRIX *pd3dxmtxWorld);
+};
+
+class CSkyBoxShader : public CTexturedShader
+{
+public:
+    CSkyBoxShader();
+    virtual ~CSkyBoxShader();
+
+	virtual void BuildObjects(ID3D11Device *pd3dDevice);
+	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, CCamera *pCamera);
 };

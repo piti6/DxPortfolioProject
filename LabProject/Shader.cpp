@@ -66,7 +66,12 @@ void CShader::CreateShaderVariables(ID3D11Device *pd3dDevice)
 void CShader::UpdateShaderVariables(ID3D11DeviceContext *pd3dImmediateDeviceContext, MATERIAL *pMaterial)
 {
 }
-
+void CShader::UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext, CTexture *pTexture)
+{
+}
+void CShader::UpdateShaderVariables(ID3D11DeviceContext *pd3dImmediateDeviceContext, D3DXMATRIX *pd3dxmtxWorld)
+{
+}
 void CShader::OnPostRender(ID3D11DeviceContext *pd3dDeviceContext)
 {
 	pd3dDeviceContext->IASetInputLayout(m_pd3dVertexLayout);
@@ -101,45 +106,7 @@ void CShader::AnimateObjects(float fTimeElapsed)
 	}
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-//
-CDiffusedShader::CDiffusedShader()
-{
-}
 
-CDiffusedShader::~CDiffusedShader()
-{
-}
-
-void CDiffusedShader::CreateShader(ID3D11Device *pd3dDevice)
-{
-	D3D11_INPUT_ELEMENT_DESC d3dInputLayout[] =
-	{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 }
-	};
-	UINT nElements = ARRAYSIZE(d3dInputLayout);
-	CreateVertexShaderFromFile(pd3dDevice, L"Effect.fx", "VSDiffusedColor", "vs_4_0", &m_pd3dVertexShader, d3dInputLayout, nElements, &m_pd3dVertexLayout);
-	CreatePixelShaderFromFile(pd3dDevice, L"Effect.fx", "PSDiffusedColor", "ps_4_0", &m_pd3dPixelShader);
-}
-
-void CDiffusedShader::CreateShaderVariables(ID3D11Device *pd3dDevice)
-{
-	CShader::CreateShaderVariables(pd3dDevice);
-}         
-
-void CDiffusedShader::UpdateShaderVariables(ID3D11DeviceContext *pd3dImmediateDeviceContext)
-{
-	CShader::UpdateShaderVariables(pd3dImmediateDeviceContext);
-}
-
-void CDiffusedShader::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, CCamera *pCamera)
-{
-	CShader::Render(pd3dImmediateDeviceContext,pCamera);
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-//
 CTexturedIlluminatedShader::CTexturedIlluminatedShader()
 {
 	m_ppObjects = NULL;       
@@ -207,8 +174,9 @@ void CTexturedIlluminatedShader::BuildObjects(ID3D11Device *pd3dDevice)
 	pRotatingObject->SetPosition(0,-100,0);
 	for(int i=0;i<m_nObjects;++i)
 		m_ppObjects[i] = pRotatingObject;
-	
+
 	CreateShaderVariables(pd3dDevice);
+	
 	delete [] ppTextures;
 	delete [] ppMaterials;
 }
@@ -249,9 +217,6 @@ void CTexturedIlluminatedShader::CreateShader(ID3D11Device *pd3dDevice)
 
 void CTexturedIlluminatedShader::CreateShaderVariables(ID3D11Device *pd3dDevice)
 {
-	//CDiffusedShader::CreateShaderVariables(pd3dDevice);
-
-	//Create World Matrix Constant Buffer
 	D3D11_BUFFER_DESC bd;
 	ZeroMemory(&bd, sizeof(bd));
 	bd.Usage = D3D11_USAGE_DYNAMIC;
@@ -315,6 +280,7 @@ void CTexturedIlluminatedShader::Render(ID3D11DeviceContext *pd3dImmediateDevice
 			bIsVisible = pCamera->IsInFrustum(bcBoundingCube.GetMinimum(), bcBoundingCube.GetMaximum());
 			if (bIsVisible)
 			{
+				
 				if (m_ppObjects[j]->m_pTexture) 
 					UpdateShaderVariables(pd3dImmediateDeviceContext, m_ppObjects[j]->m_pTexture);
 				if (m_ppObjects[j]->m_pMaterial) 
@@ -395,7 +361,7 @@ void CPlayerShader::UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext
 	pd3dDeviceContext->PSSetShaderResources(PS_SLOT_TEXTURE, pTexture->m_nTextures, pTexture->m_ppd3dsrvTextures);
 	pd3dDeviceContext->PSSetSamplers(PS_SLOT_SAMPLER_STATE, pTexture->m_nTextures, pTexture->m_ppd3dSamplerStates);
 }
-/*
+
 CTexturedShader::CTexturedShader()
 {
 }
@@ -414,9 +380,37 @@ void CTexturedShader::CreateShader(ID3D11Device *pd3dDevice)
 		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 }
 	};
 	UINT nElements = ARRAYSIZE(d3dInputLayout);
-	CreateVertexShaderFromFile(pd3dDevice, L"Effect.fx", "VSTexturedColor", "vs_4_0", &m_pd3dVertexShader, d3dInputLayout, nElements, &m_pd3dVertexLayout);
-	CreatePixelShaderFromFile(pd3dDevice, L"Effect.fx", "PSTexturedColor", "ps_4_0", &m_pd3dPixelShader);
+	CreateVertexShaderFromFile(pd3dDevice, L"Effect.fx", "VSTexturedColor", "vs_5_0", &m_pd3dVertexShader, d3dInputLayout, nElements, &m_pd3dVertexLayout);
+	CreatePixelShaderFromFile(pd3dDevice, L"Effect.fx", "PSTexturedColor", "ps_5_0", &m_pd3dPixelShader);
 }
+void CTexturedShader::UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext, CTexture *pTexture)
+{
+	pd3dDeviceContext->PSSetShaderResources(PS_SLOT_TEXTURE, pTexture->m_nTextures, pTexture->m_ppd3dsrvTextures);
+	pd3dDeviceContext->PSSetSamplers(PS_SLOT_SAMPLER_STATE, pTexture->m_nTextures, pTexture->m_ppd3dSamplerStates);
+}
+void CTexturedShader::UpdateShaderVariables(ID3D11DeviceContext *pd3dImmediateDeviceContext, D3DXMATRIX *pd3dxmtxWorld)
+{
+	//Update World Matrix Constant Buffer
+	D3D11_MAPPED_SUBRESOURCE d3dMappedResource;
+	pd3dImmediateDeviceContext->Map(m_pd3dcbWorldMatrix, 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
+	VS_CB_WORLD_MATRIX *pcbWorldMatrix = (VS_CB_WORLD_MATRIX *)d3dMappedResource.pData;
+	D3DXMatrixTranspose(&pcbWorldMatrix->m_d3dxmtxWorld, pd3dxmtxWorld);
+	pd3dImmediateDeviceContext->Unmap(m_pd3dcbWorldMatrix, 0);
+	pd3dImmediateDeviceContext->VSSetConstantBuffers(VS_SLOT_WORLD_MATRIX, 1, &m_pd3dcbWorldMatrix);
+
+}
+void CTexturedShader::CreateShaderVariables(ID3D11Device *pd3dDevice)
+{
+	D3D11_BUFFER_DESC bd;
+	ZeroMemory(&bd, sizeof(bd));
+	bd.Usage = D3D11_USAGE_DYNAMIC;
+	bd.ByteWidth = sizeof(VS_CB_WORLD_MATRIX);
+	bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	pd3dDevice->CreateBuffer(&bd, NULL, &m_pd3dcbWorldMatrix);
+}
+
+/*
 void CTexturedShader::BuildObjects(ID3D11Device *pd3dDevice)
 {
 //텍스쳐 맵핑에 사용할 샘플러 상태 객체를 생성한다.
@@ -494,8 +488,8 @@ void CInstancingShader::CreateShader(ID3D11Device *pd3dDevice){
 	D3D11_INPUT_ELEMENT_DESC d3dInputLayout[] =
 	{
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-        { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-        { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+        { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+        { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "INSTANCEPOS", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 1,0, D3D11_INPUT_PER_INSTANCE_DATA, 1 },
 		{ "INSTANCEPOS", 1, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_INSTANCE_DATA, 1 },
 		{ "INSTANCEPOS", 2, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_INSTANCE_DATA, 1 },
@@ -510,22 +504,11 @@ void CInstancingShader::CreateShader(ID3D11Device *pd3dDevice){
 
 void CInstancingShader::BuildObjects(ID3D11Device *pd3dDevice){
 	CreateShaderVariables(pd3dDevice);
-	CMaterial **ppMaterials = new CMaterial*[3];
-	ppMaterials[0] = new CMaterial();
-	ppMaterials[0]->m_Material.m_d3dxcDiffuse = D3DXCOLOR(0.5f,0.0f,0.0f,1.0f);
-	ppMaterials[0]->m_Material.m_d3dxcAmbient = D3DXCOLOR(0.5f,0.0f,0.0f,1.0f);
-	ppMaterials[0]->m_Material.m_d3dxcSpecular = D3DXCOLOR(0.5f,0.5f,0.5f,5.0f);
-	ppMaterials[0]->m_Material.m_d3dxcEmissive = D3DXCOLOR(0.0f,0.0f,0.0f,1.0f);
-	ppMaterials[1] = new CMaterial();
-	ppMaterials[1]->m_Material.m_d3dxcDiffuse = D3DXCOLOR(0.0f,0.5f,0.0f,1.0f);
-	ppMaterials[1]->m_Material.m_d3dxcAmbient = D3DXCOLOR(0.0f,0.5f,0.0f,1.0f);
-	ppMaterials[1]->m_Material.m_d3dxcSpecular = D3DXCOLOR(0.5f,0.5f,0.5f,10.0f);
-	ppMaterials[1]->m_Material.m_d3dxcEmissive = D3DXCOLOR(0.0f,0.0f,0.0f,1.0f);
-	ppMaterials[2] = new CMaterial();
-	ppMaterials[2]->m_Material.m_d3dxcDiffuse = D3DXCOLOR(1.0f,1.0f,1.0f,1.0f);
-	ppMaterials[2]->m_Material.m_d3dxcAmbient = D3DXCOLOR(1.0f,1.0f,1.0f,1.0f);
-	ppMaterials[2]->m_Material.m_d3dxcSpecular = D3DXCOLOR(1.0f,1.0f,1.0f,1.0f);
-	ppMaterials[2]->m_Material.m_d3dxcEmissive = D3DXCOLOR(0.0f,0.0f,0.0f,1.0f);
+	CMaterial *pMaterial = new CMaterial;
+	pMaterial->m_Material.m_d3dxcDiffuse = D3DXCOLOR(1.0f,1.0f,1.0f,1.0f);
+	pMaterial->m_Material.m_d3dxcAmbient = D3DXCOLOR(1.0f,1.0f,1.0f,1.0f);
+	pMaterial->m_Material.m_d3dxcSpecular = D3DXCOLOR(1.0f,1.0f,1.0f,1.0f);
+	pMaterial->m_Material.m_d3dxcEmissive = D3DXCOLOR(1.0f,1.0f,1.0f,1.0f);
 
 	ID3D11SamplerState *pd3dSamplerState = NULL;
 	D3D11_SAMPLER_DESC d3dSamplerDesc;
@@ -554,15 +537,14 @@ void CInstancingShader::BuildObjects(ID3D11Device *pd3dDevice){
 	m_nMatrixBufferStride = sizeof(D3DXMATRIX);
 	m_nMatrixBufferOffset = 0;
 //인스턴스 쉐이더에서 렌더링할 메쉬이다.
-	m_pCubeMesh = new CCubeMeshIlluminatedTextured(pd3dDevice, 25.0f, 25.0f, 25.0f);
-
+	m_pMesh = new CCubeMeshIlluminatedTextured(pd3dDevice, 25.0f, 25.0f, 25.0f);
+	/*
 //인스턴스 쉐이더에서 렌더링할 객체의 개수이다.
-	int xObjects = 10, yObjects = 10, zObjects = 10, i = 0;
+	int xObjects = 1, yObjects = 1, zObjects = 1, i = 0;
 	m_nObjects = (xObjects*2+1)*(yObjects*2+1)*(zObjects*2+1);
 	m_ppObjects = new CGameObject*[m_nObjects];
 	CRotatingObject *pRotatingObject = NULL;
 //인스턴스 데이터 즉, 렌더링할 객체들의 위치 벡터 배열이다.
-	//D3DXVECTOR3 *pd3dxvPositions = new D3DXVECTOR3[m_nObjects]; 
 	float fxPitch = 100, fyPitch = 100, fzPitch = 100;
 	for (int x = -xObjects; x <= xObjects; x++)
 	{
@@ -571,41 +553,41 @@ void CInstancingShader::BuildObjects(ID3D11Device *pd3dDevice){
 			for (int z = -zObjects; z <= zObjects; z++)
 			{
 				pRotatingObject = new CRotatingObject();
-				pRotatingObject->SetMesh(m_pCubeMesh);
-				pRotatingObject->SetMaterial(ppMaterials[2]);
+				pRotatingObject->SetMesh(m_pMesh);
+				pRotatingObject->SetMaterial(pMaterial);
 				pRotatingObject->SetTexture(ppTextures[0]);
-				pRotatingObject->SetPosition(D3DXVECTOR3(fxPitch*x, fyPitch*y, fzPitch*z));
-				//pRotatingObject->SetPosition(D3DXVECTOR3(0, -200, 0));
+				//pRotatingObject->SetPosition(D3DXVECTOR3(fxPitch*x, fyPitch*y, fzPitch*z));
+				pRotatingObject->SetPosition(D3DXVECTOR3(0, -200, 0));
 				pRotatingObject->SetRotationAxis(D3DXVECTOR3(0.0f,1.0f,0.0f));
 				pRotatingObject->SetRotationSpeed(36.0f*(i%10)+36.0f);
 				m_ppObjects[i++] = pRotatingObject;
 			}
 		}
 	}
-	D3D11_BUFFER_DESC d3dBufferDesc;
-	ZeroMemory(&d3dBufferDesc, sizeof(D3D11_BUFFER_DESC));
-	d3dBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-	d3dBufferDesc.ByteWidth = sizeof(D3DXMATRIX) * m_nObjects;
-	d3dBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	d3dBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	D3D11_SUBRESOURCE_DATA d3dBufferData;
-	ZeroMemory(&d3dBufferData, sizeof(D3D11_SUBRESOURCE_DATA));
-	d3dBufferData.pSysMem = NULL;
-	pd3dDevice->CreateBuffer(&d3dBufferDesc, NULL, &m_pd3dInstances);
-	//m_pd3dInstances = CreateInstanceBuffer(pd3dDevice,m_nObjects,sizeof(D3DXMATRIX),NULL);
+	*/
+				m_nObjects = 1;
+				m_ppObjects = new CGameObject*[m_nObjects];
+				CRotatingObject *pRotatingObject = NULL;
+				pRotatingObject = new CRotatingObject();
+				pRotatingObject->SetMesh(m_pMesh);
+				pRotatingObject->SetMaterial(pMaterial);
+				pRotatingObject->SetTexture(ppTextures[0]);
+				//pRotatingObject->SetPosition(D3DXVECTOR3(fxPitch*x, fyPitch*y, fzPitch*z));
+				pRotatingObject->SetPosition(D3DXVECTOR3(0, -100, 0));
+				pRotatingObject->SetRotationAxis(D3DXVECTOR3(0.0f,1.0f,0.0f));
+				pRotatingObject->SetRotationSpeed(36.0f);
+				m_ppObjects[0] = pRotatingObject;
+	m_pd3dInstances = CreateInstanceBuffer(pd3dDevice,m_nObjects,sizeof(D3DXMATRIX),NULL);
 	
 //인스턴스 데이터(렌더링할 객체들의 위치 벡터 배열)를 메쉬의 정점 버퍼에 추가한다.
 
-	//pCubeMesh->AppendVertexBuffer(1, &m_pd3dInstances,&m_nMatrixBufferStride,&m_nMatrixBufferOffset);
-	m_pCubeMesh->AppendVertexBuffer(m_pd3dInstances,m_nMatrixBufferStride,m_nMatrixBufferOffset);
+	m_pMesh->AppendVertexBuffer(1, &m_pd3dInstances,&m_nMatrixBufferStride,&m_nMatrixBufferOffset);
 
-	/*
-	delete [] pd3dxvPositions;
-
-	D3DXMatrixIdentity(&m_d3dxmtxWorld);
-	*/
+	isFirstRenderTexture= true;
+	isFirstRenderMaterial= true;
 	
 }
+
 ID3D11Buffer *CInstancingShader::CreateInstanceBuffer(ID3D11Device *pd3dDevice, int nObjects, UINT nBufferStride, void *pBufferData)
 {
 	ID3D11Buffer *pd3dInstanceBuffer = NULL;
@@ -627,6 +609,7 @@ void CInstancingShader::ReleaseObjects(){
 		for (int j = 0; j < m_nObjects; j++) delete m_ppObjects[j];
 		delete [] m_ppObjects;
 	}
+
 	if (m_pd3dInstances) 
 		m_pd3dInstances->Release();
 }
@@ -637,30 +620,14 @@ void CInstancingShader::AnimateObjects(float fTimeElapsed){
 		m_ppObjects[j]->Animate(fTimeElapsed);
 	}
 }
-void CInstancingShader::UpdateShaderVariables(ID3D11DeviceContext *pd3dImmediateDeviceContext){
-	D3D11_MAPPED_SUBRESOURCE d3dMappedResource;
-	pd3dImmediateDeviceContext->Map(m_pd3dInstances, 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
-	D3DXMATRIX *pcbWorldMatrix = (D3DXMATRIX *)d3dMappedResource.pData;
-	for (int j = 0; j < m_nObjects; ++j) pcbWorldMatrix[j] = m_ppObjects[j]->m_d3dxmtxWorld;
-	pd3dImmediateDeviceContext->Unmap(m_pd3dInstances, 0);
-}
-void CInstancingShader::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, CCamera *pCamera){
-	OnPostRender(pd3dImmediateDeviceContext);
+void CInstancingShader::UpdateShaderVariables(ID3D11DeviceContext *pd3dImmediateDeviceContext, CCamera *pCamera){
 	//카메라의 절두체에 포함되는 객체들만을 렌더링한다. 
-	//UpdateShaderVariables(pd3dImmediateDeviceContext);
-	bool bIsVisible = false;
 	AABB bcBoundingCube;
-	int nSphereInstances = 0;
-	
-	if (m_ppObjects[0]->m_pTexture) 
-			CTexturedIlluminatedShader::UpdateShaderVariables(pd3dImmediateDeviceContext, m_ppObjects[0]->m_pTexture);
-	if (m_ppObjects[0]->m_pMaterial) 
-			CTexturedIlluminatedShader::UpdateShaderVariables(pd3dImmediateDeviceContext, &m_ppObjects[0]->m_pMaterial->m_Material);
-	
+	bool bIsVisible = false;
+	m_nVisibleInstances = 0;
 	D3D11_MAPPED_SUBRESOURCE d3dMappedResource;
 	pd3dImmediateDeviceContext->Map(m_pd3dInstances, 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
-	D3DXMATRIX *pnSphereInstances = (D3DXMATRIX *)d3dMappedResource.pData;
-	//VS_CB_WORLD_MATRIX *pcbWorldMatrix = (VS_CB_WORLD_MATRIX *)d3dMappedResource.pData;
+	D3DXMATRIX *pd3dxmInstances = (D3DXMATRIX *)d3dMappedResource.pData;
 	
 	for (int j = 0; j < m_nObjects; j++)
 	{
@@ -673,23 +640,115 @@ void CInstancingShader::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, 
 			bIsVisible = pCamera->IsInFrustum(bcBoundingCube.GetMinimum(), bcBoundingCube.GetMaximum());
 			if (bIsVisible)
 			{
-				/*
-				if (m_ppObjects[j]->m_pTexture) 
-					CTexturedIlluminatedShader::UpdateShaderVariables(pd3dImmediateDeviceContext, m_ppObjects[j]->m_pTexture);
-				if (m_ppObjects[j]->m_pMaterial) 
-					CTexturedIlluminatedShader::UpdateShaderVariables(pd3dImmediateDeviceContext, &m_ppObjects[j]->m_pMaterial->m_Material);
-				*/
-				//UpdateShaderVariables(pd3dImmediateDeviceContext, &m_ppObjects[j]->m_d3dxmtxWorld);
-				//D3DXMatrixTranspose(&pnSphereInstances->m_d3dxmtxWorld, &m_ppObjects[j]->m_d3dxmtxWorld);
-				D3DXMatrixTranspose(&pnSphereInstances[nSphereInstances++], &m_ppObjects[j]->m_d3dxmtxWorld);
-				//m_ppObjects[j]->Render(pd3dImmediateDeviceContext, pCamera);
-				//m_ppObjects[j]->m_pMesh->RenderInstanced(pd3dImmediateDeviceContext,m_nObjects,0);
+				D3DXMatrixTranspose(&pd3dxmInstances[m_nVisibleInstances++], &m_ppObjects[j]->m_d3dxmtxWorld);
 			}
 		}
 	}
 	
 	pd3dImmediateDeviceContext->Unmap(m_pd3dInstances, 0);
+}
+void CInstancingShader::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, CCamera *pCamera){
+	OnPostRender(pd3dImmediateDeviceContext);
+	UpdateShaderVariables(pd3dImmediateDeviceContext,pCamera);
+	for(int i=0; i<m_nObjects;++i){
+		if (m_ppObjects[i]->m_pTexture) 
+			CTexturedIlluminatedShader::UpdateShaderVariables(pd3dImmediateDeviceContext, m_ppObjects[i]->m_pTexture);
+		if (m_ppObjects[i]->m_pMaterial) 
+			CTexturedIlluminatedShader::UpdateShaderVariables(pd3dImmediateDeviceContext, &m_ppObjects[i]->m_pMaterial->m_Material);
+	}
+	m_pMesh->RenderInstanced(pd3dImmediateDeviceContext,m_nVisibleInstances,0);
+}
 
-	m_ppObjects[0]->m_pMesh->RenderInstanced(pd3dImmediateDeviceContext,nSphereInstances,0);
-	//m_ppObjects[0]->m_pMesh->RenderInstanced(pd3dImmediateDeviceContext,m_nObjects,0);
+CSkyBoxShader::CSkyBoxShader()
+{
+}
+
+CSkyBoxShader::~CSkyBoxShader()
+{
+}
+
+void CSkyBoxShader::BuildObjects(ID3D11Device *pd3dDevice)
+{
+	CreateShaderVariables(pd3dDevice);
+	m_nObjects = 6;
+	m_ppObjects = new CGameObject*[m_nObjects]; 
+
+	ID3D11SamplerState *pd3dSamplerState = NULL;
+	D3D11_SAMPLER_DESC d3dSamplerDesc;
+	ZeroMemory(&d3dSamplerDesc, sizeof(D3D11_SAMPLER_DESC));
+	d3dSamplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	d3dSamplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	d3dSamplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	d3dSamplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+	d3dSamplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+	d3dSamplerDesc.MinLOD = 0;
+	d3dSamplerDesc.MaxLOD = 0;
+	pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &pd3dSamplerState);
+
+	ID3D11ShaderResourceView *pd3dTexture = NULL;    
+	CTexture **ppTextures = new CTexture*[m_nObjects];
+	for(int i=0;i<m_nObjects;++i)
+		ppTextures[i] = new CTexture(1);
+	D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("Data/Image/Skybox/Back.png"), NULL, NULL, &pd3dTexture, NULL);
+	ppTextures[0]->SetTexture(0, pd3dTexture, pd3dSamplerState);
+	D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("Data/Image/Skybox/Front.png"), NULL, NULL, &pd3dTexture, NULL);
+	ppTextures[1]->SetTexture(0, pd3dTexture, pd3dSamplerState);
+	D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("Data/Image/Skybox/Top.png"), NULL, NULL, &pd3dTexture, NULL);
+	ppTextures[2]->SetTexture(0, pd3dTexture, pd3dSamplerState);
+	D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("Data/Image/Skybox/Bottom.png"), NULL, NULL, &pd3dTexture, NULL);
+	ppTextures[3]->SetTexture(0, pd3dTexture, pd3dSamplerState);
+	D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("Data/Image/Skybox/Right.png"), NULL, NULL, &pd3dTexture, NULL);
+	ppTextures[4]->SetTexture(0, pd3dTexture, pd3dSamplerState);
+	D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("Data/Image/Skybox/Left.png"), NULL, NULL, &pd3dTexture, NULL);
+	ppTextures[5]->SetTexture(0, pd3dTexture, pd3dSamplerState);
+	
+
+
+	
+	CSkyBoxMesh *pSkyBoxMesh = new CSkyBoxMesh(pd3dDevice, 2000.0f, 2000.0f, 2000.0f);
+
+
+	CSkyBox **pSkyBox = new CSkyBox*[m_nObjects];
+	for(int i=0;i<6;++i){
+		pSkyBox[i] = new CSkyBox(pd3dDevice);
+		pSkyBox[i]->SetMesh(pSkyBoxMesh);
+		pSkyBox[i]->SetPosition(0,0,0);
+		pSkyBox[i]->SetTexture(ppTextures[i]);
+		m_ppObjects[i] = pSkyBox[i];
+	}
+	
+	//back
+	m_ppObjects[0]->Rotate(0,180,0);
+	//front
+
+	//top
+	m_ppObjects[2]->Rotate(90,0,0);
+	//bottom
+	m_ppObjects[3]->Rotate(270,0,0);
+	//left
+	m_ppObjects[4]->Rotate(0,90,0);
+	//right
+	m_ppObjects[5]->Rotate(0,270,0);
+	
+	
+}
+void CSkyBoxShader::Render(ID3D11DeviceContext *pd3dDeviceContext, CCamera *pCamera)
+{
+	OnPostRender(pd3dDeviceContext);
+	
+	D3DXVECTOR3 d3dxvCameraPos = pCamera->GetPosition();
+
+	m_ppObjects[0]->SetPosition(d3dxvCameraPos.x, d3dxvCameraPos.y, d3dxvCameraPos.z+2000);
+	m_ppObjects[1]->SetPosition(d3dxvCameraPos.x, d3dxvCameraPos.y, d3dxvCameraPos.z-2000);
+	m_ppObjects[2]->SetPosition(d3dxvCameraPos.x, d3dxvCameraPos.y+2000, d3dxvCameraPos.z);
+	m_ppObjects[3]->SetPosition(d3dxvCameraPos.x, d3dxvCameraPos.y-2000, d3dxvCameraPos.z);
+	m_ppObjects[4]->SetPosition(d3dxvCameraPos.x-2000, d3dxvCameraPos.y, d3dxvCameraPos.z);
+	m_ppObjects[5]->SetPosition(d3dxvCameraPos.x+2000, d3dxvCameraPos.y, d3dxvCameraPos.z);
+	
+	for(int i=0; i<m_nObjects;++i){
+		if (m_ppObjects[i]->m_pTexture) 
+			CTexturedShader::UpdateShaderVariables(pd3dDeviceContext, m_ppObjects[i]->m_pTexture);
+		CTexturedShader::UpdateShaderVariables(pd3dDeviceContext, &m_ppObjects[i]->m_d3dxmtxWorld);
+		m_ppObjects[i]->Render(pd3dDeviceContext, pCamera);
+	}
 }

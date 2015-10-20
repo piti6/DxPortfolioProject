@@ -37,7 +37,7 @@ CPlayer::CPlayer()
 CPlayer::~CPlayer()
 {
     if (m_pCamera) delete m_pCamera;
-	if (ppMaterials) ppMaterials->Release();
+	if (m_pMaterial) m_pMaterial->Release();
 }
 
 void CPlayer::CreateShaderVariables(ID3D11Device *pd3dDevice)
@@ -224,7 +224,7 @@ CGamePlayer::CGamePlayer(ID3D11Device *pd3dDevice)
 
 	ID3D11ShaderResourceView *pd3dTexture = NULL;    
 	CTexture **ppTextures = new CTexture*[3];
-		ppTextures[0] = new CTexture(1);
+	ppTextures[0] = new CTexture(1);
 	D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("3.jpg"), NULL, NULL, &pd3dTexture, NULL);
 	ppTextures[0]->SetTexture(0, pd3dTexture, pd3dSamplerState);
 	ppTextures[1] = new CTexture(1);
@@ -233,24 +233,28 @@ CGamePlayer::CGamePlayer(ID3D11Device *pd3dDevice)
 	ppTextures[2] = new CTexture(1);
 	D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("1.jpg"), NULL, NULL, &pd3dTexture, NULL);
 	ppTextures[2]->SetTexture(0, pd3dTexture, pd3dSamplerState);
-	ppMaterials=new CMaterial;
-	ppMaterials->m_Material.m_d3dxcDiffuse = D3DXCOLOR(1.0f,1.0f,1.0f,1.0f);
-	ppMaterials->m_Material.m_d3dxcAmbient = D3DXCOLOR(1.0f,1.0f,1.0f,1.0f);
-	ppMaterials->m_Material.m_d3dxcSpecular = D3DXCOLOR(1.0f,1.0f,1.0f,10.0f);
-	ppMaterials->m_Material.m_d3dxcEmissive = D3DXCOLOR(0.0f,0.0f,0.0f,1.0f);
+
+	CMaterial **ppMaterials;
+	ppMaterials=new CMaterial*[1];
+	ppMaterials[0] = new CMaterial();
+	ppMaterials[0]->m_Material.m_d3dxcDiffuse = D3DXCOLOR(1.0f,1.0f,1.0f,1.0f);
+	ppMaterials[0]->m_Material.m_d3dxcAmbient = D3DXCOLOR(1.0f,1.0f,1.0f,1.0f);
+	ppMaterials[0]->m_Material.m_d3dxcSpecular = D3DXCOLOR(1.0f,1.0f,1.0f,10.0f);
+	ppMaterials[0]->m_Material.m_d3dxcEmissive = D3DXCOLOR(0.0f,0.0f,0.0f,1.0f);
 	CMesh *pPlayerMesh = new CCubeMeshIlluminatedTextured(pd3dDevice,5,5,5);
 	SetMesh(pPlayerMesh);
-	m_pShader = new CPlayerShader();
+	m_pShader = new CTexturedIlluminatedShader();
 	m_pShader->CreateShader(pd3dDevice);
 	m_pShader->CreateShaderVariables(pd3dDevice);
 
 	
 
 
-	SetMaterial(ppMaterials);
+	SetMaterial(ppMaterials[0]);
 	SetTexture(ppTextures[2]);
 
 	CreateShaderVariables(pd3dDevice);
+	
 	delete [] ppTextures;
 	delete [] ppMaterials;
 }
@@ -297,7 +301,7 @@ void CGamePlayer::ChangeCamera(ID3D11Device *pd3dDevice, DWORD nNewCameraMode, f
             SetMaxVelocityY(200.0f);
             m_pCamera = OnChangeCamera(pd3dDevice, THIRD_PERSON_CAMERA, nCurrentCameraMode);
             m_pCamera->SetTimeLag(0.0f);
-            m_pCamera->SetOffset(D3DXVECTOR3(0.0f,0.0f,-20.0f));
+            m_pCamera->SetOffset(D3DXVECTOR3(0.0f,0.0f,-30.0f));
 			m_pCamera->GenerateProjectionMatrix(1.01f, 2000.0f, ASPECT_RATIO, 60.0f);
             break;
 		default:

@@ -83,37 +83,7 @@ void CMesh::RenderInstanced(ID3D11DeviceContext *pd3dDeviceContext, int nInstanc
 	else
 		pd3dDeviceContext->DrawInstanced(m_nVertices, nInstances, 0, nStartInstance);
 }
-void CMesh::AppendVertexBuffer(ID3D11Buffer *pd3dBuffer, UINT nStride, UINT nOffset)
-{
-//기존의 배열들 보다 하나 큰 배열을 생성하고 기존의 배열을 복사한 후 새로운 원소를 추가한다.
-	UINT *pnVertexStrides = new UINT[m_nVertexBuffers+1];
-	UINT *pnVertexOffsets = new UINT[m_nVertexBuffers+1];
-	for (UINT i = 0; i < m_nVertexBuffers; i++) 
-	{
-		pnVertexStrides[i] = m_nStride[i];
-		pnVertexOffsets[i] = m_nOffset[i];
-	}
-	delete [] m_nStride;
-	delete [] m_nOffset;
-	pnVertexStrides[m_nVertexBuffers] = nStride;
-	pnVertexOffsets[m_nVertexBuffers] = nOffset;
-	m_nStride = pnVertexStrides;
-	m_nOffset = pnVertexOffsets;
 
-//기존의 정점 배열들 보다 하나 큰 배열을 생성하고 기존의 배열을 복사한 후 새로운 원소를 추가한다.
-	ID3D11Buffer **ppd3dVertexBuffers = new ID3D11Buffer*[m_nVertexBuffers+1];
-	for (UINT i = 0; i < m_nVertexBuffers; i++)
-	{
-		ppd3dVertexBuffers[i] = m_ppd3dVertexBuffers[i];
-	}
-	delete [] m_ppd3dVertexBuffers;
-	ppd3dVertexBuffers[m_nVertexBuffers] = pd3dBuffer;
-	//if (pd3dBuffer) pd3dBuffer->AddRef();
-	m_ppd3dVertexBuffers = ppd3dVertexBuffers;
-
-	m_nVertexBuffers++;
-}
-/*
 void CMesh::AppendVertexBuffer(int nBuffers,ID3D11Buffer **pd3dBuffer, UINT *nStride, UINT *nOffset)
 {
 	ID3D11Buffer **ppd3dVertexBuffers = new ID3D11Buffer*[m_nVertexBuffers+nBuffers];
@@ -153,7 +123,7 @@ void CMesh::AppendVertexBuffer(int nBuffers,ID3D11Buffer **pd3dBuffer, UINT *nSt
 	}
 	
 }
-*/
+
 /////////////////////////////////////////////////////////////////////////////////////////////////
 //
 
@@ -329,10 +299,10 @@ void CMeshIlluminated::Render(ID3D11DeviceContext *pd3dDeviceContext)
 CCubeMeshIlluminatedTextured::CCubeMeshIlluminatedTextured(ID3D11Device *pd3dDevice, float fWidth, float fHeight, float fDepth) : CMeshIlluminated(pd3dDevice)
 {
 	m_nVertices = 36;
-	m_nStride = new UINT[1];
-	m_nStride[0] = sizeof(CTexturedNormalVertex);
-	m_nOffset = new UINT[1];
-	m_nOffset[0] = 0;
+	m_nStride = new UINT;
+	*m_nStride = sizeof(CTexturedNormalVertex);
+	m_nOffset = new UINT;
+	*m_nOffset = 0;
 	m_d3dPrimitiveTopology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 	m_ppd3dVertexBuffers = new ID3D11Buffer*[m_nVertexBuffers];
 	float fx = fWidth*0.5f, fy = fHeight*0.5f, fz = fDepth*0.5f;
@@ -424,3 +394,77 @@ void CCubeMeshIlluminatedTextured::Render(ID3D11DeviceContext *pd3dDeviceContext
 	CMeshIlluminated::Render(pd3dDeviceContext);
 }
 
+CSkyBoxMesh::CSkyBoxMesh(ID3D11Device *pd3dDevice, float fWidth, float fHeight, float fDepth) : CMeshTextured(pd3dDevice)
+{
+	m_nVertices = 6;
+	m_d3dPrimitiveTopology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+	m_nStride = new UINT[1];
+	m_nStride[0] = sizeof(CTexturedVertex);
+	m_nOffset = new UINT[1];
+	m_nOffset[0] = 0;
+	m_ppd3dVertexBuffers = new ID3D11Buffer*[m_nVertexBuffers];
+	CTexturedVertex pVertices[36];
+	int i = 0;
+	float fx = fWidth, fy = fHeight , fz = fDepth;
+	
+	pVertices[i++] = CTexturedVertex(D3DXVECTOR3(+fx, +fy, 0), D3DXVECTOR2(1.0f, 0.0f));
+	pVertices[i++] = CTexturedVertex(D3DXVECTOR3(-fx, +fy, 0), D3DXVECTOR2(0.0f, 0.0f));
+	pVertices[i++] = CTexturedVertex(D3DXVECTOR3(-fx, -fy, 0), D3DXVECTOR2(0.0f, 1.0f));
+
+	pVertices[i++] = CTexturedVertex(D3DXVECTOR3(-fx, -fy, 0), D3DXVECTOR2(0.0f, 1.0f));
+	pVertices[i++] = CTexturedVertex(D3DXVECTOR3(+fx, -fy, 0), D3DXVECTOR2(1.0f, 1.0f));
+	pVertices[i++] = CTexturedVertex(D3DXVECTOR3(+fx, +fy, 0), D3DXVECTOR2(1.0f, 0.0f));
+
+	D3D11_BUFFER_DESC d3dBufferDesc;
+	ZeroMemory(&d3dBufferDesc, sizeof(D3D11_BUFFER_DESC));
+	d3dBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+	d3dBufferDesc.ByteWidth = m_nStride[0] * m_nVertices;
+	d3dBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	d3dBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	D3D11_SUBRESOURCE_DATA d3dBufferData;
+	ZeroMemory(&d3dBufferData, sizeof(D3D11_SUBRESOURCE_DATA));
+	d3dBufferData.pSysMem = pVertices;
+	pd3dDevice->CreateBuffer(&d3dBufferDesc, &d3dBufferData, &m_ppd3dVertexBuffers[0]);
+
+	m_bcBoundingCube.SetMinimum(D3DXVECTOR3(-fx, -fy, -fz));
+	m_bcBoundingCube.SetMaximum(D3DXVECTOR3(+fx, +fy, +fz));
+	
+	SetRasterizerState(pd3dDevice);
+}
+
+CSkyBoxMesh::~CSkyBoxMesh()
+{
+}
+void CSkyBoxMesh::SetRasterizerState(ID3D11Device *pd3dDevice)
+{
+	D3D11_RASTERIZER_DESC d3dRasterizerDesc;
+	ZeroMemory(&d3dRasterizerDesc, sizeof(D3D11_RASTERIZER_DESC));
+	d3dRasterizerDesc.CullMode = D3D11_CULL_NONE;
+	d3dRasterizerDesc.FillMode = D3D11_FILL_SOLID;
+	pd3dDevice->CreateRasterizerState(&d3dRasterizerDesc, &m_pd3dRasterizerState);
+}
+void CSkyBoxMesh::Render(ID3D11DeviceContext *pd3dDeviceContext)
+{
+	if (m_ppd3dVertexBuffers) pd3dDeviceContext->IASetVertexBuffers(0, m_nVertexBuffers, m_ppd3dVertexBuffers, m_nStride, m_nOffset);
+    if (m_pd3dIndexBuffer) pd3dDeviceContext->IASetIndexBuffer(m_pd3dIndexBuffer, DXGI_FORMAT_R16_UINT, 0);
+    if (m_d3dPrimitiveTopology) pd3dDeviceContext->IASetPrimitiveTopology(m_d3dPrimitiveTopology);
+	if (m_pd3dRasterizerState) pd3dDeviceContext->RSSetState(m_pd3dRasterizerState);
+	/*
+    for (int i = 0; i < 6; i++)
+    {
+		//m_pSkyboxTexture->UpdateTextureShaderVariable(pd3dDeviceContext, i, 0);
+		pd3dDeviceContext->DrawIndexed(4, 0, i * 4);
+		
+    } */
+	pd3dDeviceContext->Draw(m_nVertices,0);
+}
+
+CMeshTextured::CMeshTextured(ID3D11Device *pd3dDevice) : CMesh(pd3dDevice)
+{
+	m_pd3dTexCoordBuffer = NULL;
+}
+
+CMeshTextured::~CMeshTextured()
+{
+	if (m_pd3dTexCoordBuffer) m_pd3dTexCoordBuffer->Release();
+}

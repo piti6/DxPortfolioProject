@@ -7,7 +7,7 @@
 
 CScene::CScene()
 {
-	m_pShaders = NULL;
+	m_ppShaders = NULL;
 	m_nShaders = 0;
 	m_pLights = NULL;
 	m_pd3dcbLights = NULL;
@@ -52,18 +52,28 @@ bool CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 
 void CScene::BuildObjects(ID3D11Device *pd3dDevice)
 {
-	m_nShaders = 1;
+	m_nShaders = 2;
+	m_ppShaders = new CShader*[m_nShaders];
 	//m_pShaders = new CTexturedIlluminatedShader[m_nShaders];
-	m_pShaders = new CInstancingShader[m_nShaders];
-	m_pShaders[0].CreateShader(pd3dDevice);
-	m_pShaders[0].BuildObjects(pd3dDevice);
+	m_ppShaders[0] = new CInstancingShader();
+	m_ppShaders[0]->CreateShader(pd3dDevice);
+	m_ppShaders[0]->BuildObjects(pd3dDevice);
+	
+	m_ppShaders[1] = new CSkyBoxShader();
+	m_ppShaders[1]->CreateShader(pd3dDevice);
+	m_ppShaders[1]->BuildObjects(pd3dDevice);
+	
 	BuildLights(pd3dDevice);
 }
 
 void CScene::ReleaseObjects()
 {
-	for (int j = 0; j < m_nShaders; j++) m_pShaders[j].ReleaseObjects();
-	if (m_pShaders) delete [] m_pShaders;
+	ReleaseLights();
+	for (int j = 0; j < m_nShaders; j++) {
+		if(m_ppShaders[j]) m_ppShaders[j]->ReleaseObjects();
+		if(m_ppShaders[j]) delete m_ppShaders[j];
+	}
+	if (m_ppShaders) delete [] m_ppShaders;
 }
 
 bool CScene::ProcessInput()
@@ -75,10 +85,9 @@ void CScene::AnimateObjects(float fTimeElapsed)
 {
 	for (int i = 0; i < m_nShaders; i++)
 	{
-		m_pShaders[i].AnimateObjects(fTimeElapsed);
+		m_ppShaders[i]->AnimateObjects(fTimeElapsed);
 	}
 }
-
 void CScene::Render(ID3D11DeviceContext	*pd3dImmediateDeviceContext, CCamera *pCamera)
 {
 	if (m_pLights && m_pd3dcbLights) 
@@ -96,7 +105,7 @@ void CScene::Render(ID3D11DeviceContext	*pd3dImmediateDeviceContext, CCamera *pC
 
 	for (int i = 0; i < m_nShaders; i++)
 	{
-		m_pShaders[i].Render(pd3dImmediateDeviceContext, pCamera);
+		m_ppShaders[i]->Render(pd3dImmediateDeviceContext, pCamera);
 	}
 }
 void CScene::BuildLights(ID3D11Device *pd3dDevice)

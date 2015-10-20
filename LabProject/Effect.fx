@@ -1,39 +1,70 @@
 //--------------------------------------------------------------------------------------
-// File: LabProject07-2.fx
+// File: Effect.fx
 //--------------------------------------------------------------------------------------
 
-//--------------------------------------------------------------------------------------
-// Constant Buffer Variables
-//--------------------------------------------------------------------------------------
-cbuffer cbViewMatrix : register(b0)
-{
-	matrix		gmtxView : packoffset(c0);
-	matrix		gmtxProjection : packoffset(c4);
-};
-
-cbuffer cbWorldMatrix : register(b1)
-{
-	matrix		gmtxWorld : packoffset(c0);
-};
-#define MAX_LIGHTS		10
-#define POINT_LIGHT		1.0f
-#define SPOT_LIGHT		2.0f
+#define MAX_LIGHTS			10
+#define POINT_LIGHT			1.0f
+#define SPOT_LIGHT			2.0f
 #define DIRECTIONAL_LIGHT	3.0f
 
 #define _WITH_LOCAL_VIEWER_HIGHLIGHTING
 #define _WITH_THETA_PHI_CONES
-struct VS_TEXTURED_INPUT
+
+
+//--------------------------------------------------------------------------------------
+// Struct For Material & Lighting
+//--------------------------------------------------------------------------------------
+
+
+//물질을 위한 구조체를 선언한다.
+struct MATERIAL
 {
-	float3 position : POSITION;
-	float2 tex2dcoord : TEXCOORD0;
+	float4 m_cAmbient;
+	float4 m_cDiffuse;
+	float4 m_cSpecular; //a = power
+	float4 m_cEmissive;
 };
 
-struct VS_TEXTURED_OUTPUT
+
+//조명을 위한 구조체를 선언한다.
+struct LIGHT
 {
-	float4 position : SV_POSITION;
-	float2 tex2dcoord : TEXCOORD0;
+	float4 m_cAmbient;
+	float4 m_cDiffuse;
+	float4 m_cSpecular;
+	float3 m_vPosition;
+	float m_fRange;
+	float3 m_vDirection;
+	float m_nType;
+	float3 m_vAttenuation; 
+	float m_fFalloff;
+	float m_fTheta; //cos(m_fTheta)
+	float m_fPhi; //cos(m_fPhi)
+	float m_bEnable;
+	float padding;
 };
 
+struct LIGHTEDCOLOR
+{
+	float4 m_cAmbient;
+	float4 m_cDiffuse;
+	float4 m_cSpecular;
+};
+
+//--------------------------------------------------------------------------------------
+// Struct For Vertex Shader In & Out
+//--------------------------------------------------------------------------------------
+struct VS_TEXTURED_COLOR_INPUT
+{
+    float3 position : POSITION;
+	float2 tex2dCoord : TEXCOORD0;
+};
+
+struct VS_TEXTURED_COLOR_OUTPUT
+{
+    float4 position : SV_POSITION;
+	float2 tex2dCoord : TEXCOORD0;
+};
 struct VS_TEXTURED_LIGHTING_INPUT
 {
 	float3 position : POSITION;
@@ -65,32 +96,18 @@ struct VS_INSTANCED_TEXTURED_LIGHTING_OUTPUT
 	float2 tex2dcoord : TEXCOORD0;
 };
 
-//물질을 위한 구조체를 선언한다.
-struct MATERIAL
+//--------------------------------------------------------------------------------------
+// Constant Buffer Variables
+//--------------------------------------------------------------------------------------
+cbuffer cbViewMatrix : register(b0)
 {
-	float4 m_cAmbient;
-	float4 m_cDiffuse;
-	float4 m_cSpecular; //a = power
-	float4 m_cEmissive;
+	matrix		gmtxView : packoffset(c0);
+	matrix		gmtxProjection : packoffset(c4);
 };
 
-
-//조명을 위한 구조체를 선언한다.
-struct LIGHT
+cbuffer cbWorldMatrix : register(b1)
 {
-	float4 m_cAmbient;
-	float4 m_cDiffuse;
-	float4 m_cSpecular;
-	float3 m_vPosition;
-	float m_fRange;
-	float3 m_vDirection;
-	float m_nType;
-	float3 m_vAttenuation; 
-	float m_fFalloff;
-	float m_fTheta; //cos(m_fTheta)
-	float m_fPhi; //cos(m_fPhi)
-	float m_bEnable;
-	float padding;
+	matrix		gmtxWorld : packoffset(c0);
 };
 
 //조명을 위한 상수버퍼를 선언한다. 
@@ -107,12 +124,17 @@ cbuffer cbMaterial : register(b1)
 	MATERIAL gMaterial;
 };
 
-struct LIGHTEDCOLOR
-{
-	float4 m_cAmbient;
-	float4 m_cDiffuse;
-	float4 m_cSpecular;
-};
+//--------------------------------------------------------------------------------------
+// Texture & Sampler
+//--------------------------------------------------------------------------------------
+
+Texture2D gtxtTexture : register(t0);
+SamplerState gSamplerState : register(s0);
+
+//--------------------------------------------------------------------------------------
+// Lighting Function
+//--------------------------------------------------------------------------------------
+
 /*방향성 조명의 효과를 계산하는 함수이다. 방향성 조명은 조명까지의 거리에 따라 조명의 양이 변하지 않는다.*/
 LIGHTEDCOLOR DirectionalLight(int i, float3 vNormal, float3 vToCamera) 
 {
@@ -144,6 +166,7 @@ LIGHTEDCOLOR DirectionalLight(int i, float3 vNormal, float3 vToCamera)
 	output.m_cAmbient = gMaterial.m_cAmbient * gLights[i].m_cAmbient;
 	return(output);
 } 
+
 //점 조명의 효과를 계산하는 함수이다.
 LIGHTEDCOLOR PointLight(int i, float3 vPosition, float3 vNormal, float3 vToCamera) 
 {
@@ -231,6 +254,7 @@ LIGHTEDCOLOR SpotLight(int i, float3 vPosition, float3 vNormal, float3 vToCamera
 	}
 	return(output);
 } 
+
 float4 Lighting(float3 vPosition, float3 vNormal)
 {
 	int i;
@@ -269,33 +293,15 @@ float4 Lighting(float3 vPosition, float3 vNormal)
 }
 
 //--------------------------------------------------------------------------------------
-struct VS_DIFFUSED_COLOR_OUTPUT
+// Vertex Shader
+//--------------------------------------------------------------------------------------
+VS_TEXTURED_COLOR_OUTPUT VSTexturedColor(VS_TEXTURED_COLOR_INPUT input)
 {
-    float4 position : SV_POSITION;
-    float4 color : COLOR0;
-};
-struct VS_LIGHTING_INPUT
-{
-	float3 position: POSITION;
-	float3 normal: NORMAL;
-};
-//조명을 사용하는 경우 정점 쉐이더의 출력을 위한 구조체이다.
-struct VS_LIGHTING_OUTPUT
-{
-	float4 position: SV_POSITION;
-//월드좌표계에서 정점의 위치와 법선 벡터를 나타낸다.
-	float3 positionW: POSITION;
-	float3 normalW: NORMAL;
-};
-VS_TEXTURED_OUTPUT VSTexturedColor(VS_TEXTURED_INPUT input)
-{
-    VS_TEXTURED_OUTPUT output = (VS_TEXTURED_OUTPUT)0;
-    matrix mtxWorldViewProjection = mul(gmtxWorld, gmtxView);
-    mtxWorldViewProjection = mul(mtxWorldViewProjection, gmtxProjection);
-    output.position = mul(float4(input.position, 1.0f), mtxWorldViewProjection);
-    output.tex2dcoord = input.tex2dcoord;
+    VS_TEXTURED_COLOR_OUTPUT output = (VS_TEXTURED_COLOR_OUTPUT)0;
+    output.position = mul(mul(mul(float4(input.position, 1.0f), gmtxWorld), gmtxView), gmtxProjection);
+	output.tex2dCoord = input.tex2dCoord;
 
-    return(output);
+	return(output);
 }
 
 VS_TEXTURED_LIGHTING_OUTPUT VSTexturedLighting(VS_TEXTURED_LIGHTING_INPUT input)
@@ -311,67 +317,6 @@ VS_TEXTURED_LIGHTING_OUTPUT VSTexturedLighting(VS_TEXTURED_LIGHTING_INPUT input)
 }
 
 
-Texture2D gtxtTexture : register(t0);
-SamplerState gSamplerState : register(s0);
-
-
-
-//--------------------------------------------------------------------------------------
-// Vertex Shader
-//--------------------------------------------------------------------------------------
-VS_DIFFUSED_COLOR_OUTPUT VSDiffusedColor(float4 position : POSITION, float4 color : COLOR)
-{
-    VS_DIFFUSED_COLOR_OUTPUT output = (VS_DIFFUSED_COLOR_OUTPUT)0;
-    output.position = mul(position, gmtxWorld);
-    output.position = mul(output.position, gmtxView);
-    output.position = mul(output.position, gmtxProjection);
-    output.color = color;
-    return output;
-}
-//조명의 영향을 계산하는 경우의 정점 쉐이더 함수이다.
-VS_LIGHTING_OUTPUT VSLightingColor(VS_LIGHTING_INPUT input)
-{
-    VS_LIGHTING_OUTPUT output = (VS_LIGHTING_OUTPUT)0;
-//조명의 영향을 계산하기 위하여 월드좌표계에서 정점의 위치와 법선 벡터를 구한다.
-    output.normalW = mul(input.normal, (float3x3)gmtxWorld);
-    output.positionW = mul(input.position, (float3x3)gmtxWorld);
-    output.positionW += float3(gmtxWorld._41, gmtxWorld._42, gmtxWorld._43);
-    matrix mtxWorldViewProjection = mul(gmtxWorld, gmtxView);
-    mtxWorldViewProjection = mul(mtxWorldViewProjection, gmtxProjection);
-    output.position = mul(float4(input.position, 1.0f), mtxWorldViewProjection);
-    return(output);
-}
-//--------------------------------------------------------------------------------------
-// Pixel Shader
-//--------------------------------------------------------------------------------------
-float4 PSDiffusedColor(VS_DIFFUSED_COLOR_OUTPUT input) : SV_Target
-{
-    return input.color;
-}
-//조명의 영향을 계산하는 경우의 픽셀 쉐이더 함수이다.
-float4 PSLightingColor(VS_LIGHTING_OUTPUT input) : SV_Target
-{ 
-    input.normalW = normalize(input.normalW); 
-    float4 cIllumination = Lighting(input.positionW, input.normalW);
-    return(cIllumination);
-}
-
-float4 PSTexturedColor(VS_TEXTURED_OUTPUT input) : SV_Target
-{ 
-    float4 cColor = gtxtTexture.Sample(gSamplerState, input.tex2dcoord);
-
-    return(cColor);
-}
-
-float4 PSTexturedLighting(VS_TEXTURED_LIGHTING_OUTPUT input) : SV_Target
-{ 
-    input.normalW = normalize(input.normalW); 
-    float4 cIllumination = Lighting(input.positionW, input.normalW);
-    float4 cColor = gtxtTexture.Sample(gSamplerState, input.tex2dcoord) * cIllumination;
-
-    return(cColor);
-}
-
 VS_INSTANCED_TEXTURED_LIGHTING_OUTPUT VSInstancedTexturedLighting(VS_INSTANCED_TEXTURED_LIGHTING_INPUT input)
 {
     VS_INSTANCED_TEXTURED_LIGHTING_OUTPUT output = (VS_INSTANCED_TEXTURED_LIGHTING_OUTPUT)0;
@@ -383,6 +328,29 @@ VS_INSTANCED_TEXTURED_LIGHTING_OUTPUT VSInstancedTexturedLighting(VS_INSTANCED_T
 
     return(output);
 }
+
+
+
+
+//--------------------------------------------------------------------------------------
+// Pixel Shader
+//--------------------------------------------------------------------------------------
+float4 PSTexturedColor(VS_TEXTURED_COLOR_OUTPUT input) : SV_Target
+{ 
+    float4 cColor = gtxtTexture.Sample(gSamplerState, input.tex2dCoord);
+
+	return(cColor);
+}
+
+float4 PSTexturedLighting(VS_TEXTURED_LIGHTING_OUTPUT input) : SV_Target
+{ 
+    input.normalW = normalize(input.normalW); 
+    float4 cIllumination = Lighting(input.positionW, input.normalW);
+    float4 cColor = gtxtTexture.Sample(gSamplerState, input.tex2dcoord) * cIllumination;
+
+    return(cColor);
+}
+
 
 float4 PSInstancedTexturedLighting(VS_INSTANCED_TEXTURED_LIGHTING_OUTPUT input) : SV_Target
 { 

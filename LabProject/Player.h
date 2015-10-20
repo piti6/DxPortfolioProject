@@ -28,14 +28,13 @@ protected:
 
 	CCamera						*m_pCamera;
 
-	CPlayerShader				*m_pShader;
+	CTexturedIlluminatedShader	*m_pShader;
 
 public:
-	 D3DXVECTOR3					m_d3dxvPosition;             
+	D3DXVECTOR3					m_d3dxvPosition;             
 	D3DXVECTOR3					m_d3dxvVelocity;   
 	CPlayer();	
 	~CPlayer();
-	CMaterial					*ppMaterials;
     D3DXVECTOR3 GetPosition() { return(m_d3dxvPosition); }
 	D3DXVECTOR3 GetLookVector() { return(m_d3dxvLook); }
 	D3DXVECTOR3 GetUpVector() { return(m_d3dxvUp); }

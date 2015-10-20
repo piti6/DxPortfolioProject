@@ -147,6 +147,9 @@
     <ClCompile Include="Material.cpp">
       <Filter>소스 파일\DX11</Filter>
     </ClCompile>
+    <ClCompile Include="Texture.cpp">
+      <Filter>소스 파일\DX11</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="LabProject07-3.rc">

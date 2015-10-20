@@ -179,12 +179,6 @@ void CGameFramework::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPA
 		{
 		case VK_SPACE:
 			break;
-		case 'Q':
-			if(m_pScene->m_pLights->m_pLights[1].m_bEnable==1.0f)
-				m_pScene->m_pLights->m_pLights[1].m_bEnable=0.0f;
-			else 
-				m_pScene->m_pLights->m_pLights[1].m_bEnable=1.0f;
-			break;
 		}
 		break;
 	case WM_KEYUP:
@@ -292,7 +286,9 @@ void CGameFramework::BuildObjects()
 
 	m_ppPlayers[0] = pGamePlayer;
 
-	if (m_pScene) m_pScene->BuildObjects(m_pd3dDevice);
+	if (m_pScene){
+		m_pScene->BuildObjects(m_pd3dDevice);
+	}
 }
 
 void CGameFramework::ReleaseObjects()
@@ -387,7 +383,7 @@ void CGameFramework::FrameAdvance()
 		}		
 	}
 	if (m_pScene){
-			m_pScene->Render(m_pd3dImmediateDeviceContext, pCamera);
+		m_pScene->Render(m_pd3dImmediateDeviceContext, pCamera);
 	}	
 
 	m_pDXGISwapChain->Present(0, 0);

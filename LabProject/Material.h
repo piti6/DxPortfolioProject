@@ -13,9 +13,10 @@ public:
 	CMaterial();
 	virtual ~CMaterial();
 
-	int m_nReferences;
+	
 	void AddRef();
 	void Release();
 
+	int		 m_nReferences;
 	MATERIAL m_Material;
 };

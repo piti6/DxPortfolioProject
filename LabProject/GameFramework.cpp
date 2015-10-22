@@ -5,9 +5,10 @@
 #include "stdafx.h"
 #include "Object.h"
 #include "GameFramework.h"
-DWORD dwDir = 0;
+
 CGameFramework::CGameFramework()
 {
+	
 	m_pd3dDevice = NULL;
 	m_pDXGISwapChain = NULL;
 	m_pd3dRenderTargetView = NULL;
@@ -17,7 +18,6 @@ CGameFramework::CGameFramework()
 
 	m_pScene = NULL;
 
-	m_bActive = true; 
 
 	_tcscpy_s(m_pszBuffer, _T("LapProject ("));
 
@@ -32,7 +32,7 @@ bool CGameFramework::OnCreate(HINSTANCE hInstance, HWND hMainWnd)
 {
 	m_hInstance = hInstance;
 	m_hWnd = hMainWnd;
-
+	InitializePhysxEngine();
 	if (!CreateDirect3DDisplay()) return(false); 
 
 	BuildObjects(); 
@@ -138,7 +138,8 @@ bool CGameFramework::CreateRenderTargetDepthStencilView()
 void CGameFramework::OnDestroy()
 {
 	ReleaseObjects();
-
+	ShutDownPhysxEngine();
+	
 	if (m_pd3dImmediateDeviceContext) m_pd3dImmediateDeviceContext->ClearState();
 	if (m_pd3dRenderTargetView) m_pd3dRenderTargetView->Release();
 	if (m_pd3dDepthStencilBuffer) m_pd3dDepthStencilBuffer->Release();	
@@ -212,6 +213,8 @@ void CGameFramework::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPA
 					dxgiTargetParameters.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
 					m_pDXGISwapChain->ResizeTarget(&dxgiTargetParameters);
 				}
+
+				//m_pPxScene->sl
 				m_pDXGISwapChain->SetFullscreenState(!bFullScreenState, NULL);
 				break;
 			}
@@ -287,7 +290,7 @@ void CGameFramework::BuildObjects()
 	m_ppPlayers[0] = pGamePlayer;
 
 	if (m_pScene){
-		m_pScene->BuildObjects(m_pd3dDevice);
+		m_pScene->BuildObjects(m_pd3dDevice,m_pPxPhysicsSDK,m_pPxScene);
 	}
 }
 
@@ -321,7 +324,6 @@ void CGameFramework::ProcessInput()
 			if (pKeyBuffer[VK_RIGHT] & 0xF0) dwDirection |= DIR_RIGHT;
 			//if (pKeyBuffer[VK_SPACE] & 0xF0) dwDirection |= DIR_UP;
 			if (pKeyBuffer[VK_NEXT] & 0xF0) dwDirection |= DIR_DOWN;
-			dwDir=dwDirection;
 		}	    
 		float cxDelta = 0.0f, cyDelta = 0.0f;
 		POINT ptCursorPos;
@@ -357,34 +359,36 @@ void CGameFramework::ProcessInput()
 
 void CGameFramework::AnimateObjects()
 {
-	if (m_pScene) m_pScene->AnimateObjects(m_GameTimer.GetTimeElapsed());
+	if (m_pScene) m_pScene->AnimateObjects(m_GameTimer.GetTimeElapsed(),m_pPxScene);
 }
 
 void CGameFramework::FrameAdvance()
 {    
-	if (!m_bActive) return;
 
 	m_GameTimer.Tick();
 
 	ProcessInput();
 
+	if(m_pPxScene){
+		m_pPxScene->simulate(m_GameTimer.GetTimeElapsed());
+		m_pPxScene->fetchResults(true);
+	}
 	AnimateObjects();
 
 	float fClearColor[4] = { 0.0f, 0.125f, 0.3f, 1.0f }; 
 	if (m_pd3dRenderTargetView) m_pd3dImmediateDeviceContext->ClearRenderTargetView(m_pd3dRenderTargetView, fClearColor);
 	if (m_pd3dDepthStencilView) m_pd3dImmediateDeviceContext->ClearDepthStencilView(m_pd3dDepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
-	CCamera *pCamera = NULL;
 	for (int i = 0; i < m_nPlayers; ++i)
 	{
 		if (m_ppPlayers[i]) {
 			m_ppPlayers[i]->UpdateShaderVariables(m_pd3dImmediateDeviceContext);
 			m_ppPlayers[i]->Render(m_pd3dImmediateDeviceContext);
-			pCamera = m_ppPlayers[i]->GetCamera();
 		}		
 	}
-	if (m_pScene){
-		m_pScene->Render(m_pd3dImmediateDeviceContext, pCamera);
-	}	
+	if (m_pScene)
+		m_pScene->Render(m_pd3dImmediateDeviceContext, m_ppPlayers[0]->GetCamera());
+
+	
 
 	m_pDXGISwapChain->Present(0, 0);
 
@@ -392,3 +396,34 @@ void CGameFramework::FrameAdvance()
 	::SetWindowText(m_hWnd, m_pszBuffer);
 }
 
+void CGameFramework::InitializePhysxEngine(){
+	m_pPxFoundation = PxCreateFoundation(PX_PHYSICS_VERSION,m_PxDefaultAllocatorCallback,m_PxDefaultErrorCallback);
+	m_pPxPhysicsSDK = PxCreatePhysics(PX_PHYSICS_VERSION,*m_pPxFoundation,PxTolerancesScale());
+	if(m_pPxPhysicsSDK == NULL){
+		cout << "PhysicsSDK Initialize Failed" << endl;
+	}
+	else{
+		cout << "PhysicsSDK Initialize Succeed" << endl;
+	}
+
+	PxInitExtensions(*m_pPxPhysicsSDK);
+
+	PxSceneDesc sceneDesc(m_pPxPhysicsSDK->getTolerancesScale());
+	sceneDesc.gravity = PxVec3(0.0f,-9.8f,0.0f);
+
+	if(!sceneDesc.cpuDispatcher)
+	{
+		PxDefaultCpuDispatcher* pCpuDispatcher = PxDefaultCpuDispatcherCreate(1);
+		sceneDesc.cpuDispatcher = pCpuDispatcher;
+	}	
+	if(!sceneDesc.filterShader)
+		sceneDesc.filterShader = PxDefaultSimulationFilterShader;
+	m_pPxScene = m_pPxPhysicsSDK->createScene(sceneDesc);
+}
+
+void CGameFramework::ShutDownPhysxEngine(){
+	if(m_pPxScene) m_pPxScene->release();
+	if(m_pPxPhysicsSDK) m_pPxPhysicsSDK->release();
+	if(m_pPxFoundation) m_pPxFoundation->release();
+	
+}

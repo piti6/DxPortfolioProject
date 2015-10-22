@@ -50,18 +50,18 @@ bool CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 	return(false);
 }
 
-void CScene::BuildObjects(ID3D11Device *pd3dDevice)
+void CScene::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhysics, PxScene *pPxScene)
 {
 	m_nShaders = 2;
 	m_ppShaders = new CShader*[m_nShaders];
 	//m_pShaders = new CTexturedIlluminatedShader[m_nShaders];
 	m_ppShaders[0] = new CInstancingShader();
 	m_ppShaders[0]->CreateShader(pd3dDevice);
-	m_ppShaders[0]->BuildObjects(pd3dDevice);
+	m_ppShaders[0]->BuildObjects(pd3dDevice,pPxPhysics,pPxScene);
 	
 	m_ppShaders[1] = new CSkyBoxShader();
 	m_ppShaders[1]->CreateShader(pd3dDevice);
-	m_ppShaders[1]->BuildObjects(pd3dDevice);
+	m_ppShaders[1]->BuildObjects(pd3dDevice,pPxPhysics,pPxScene);
 	
 	BuildLights(pd3dDevice);
 }
@@ -81,11 +81,11 @@ bool CScene::ProcessInput()
 	return(false);
 }
 
-void CScene::AnimateObjects(float fTimeElapsed)
+void CScene::AnimateObjects(float fTimeElapsed,PxScene *pPxScene)
 {
 	for (int i = 0; i < m_nShaders; i++)
 	{
-		m_ppShaders[i]->AnimateObjects(fTimeElapsed);
+		m_ppShaders[i]->AnimateObjects(fTimeElapsed,pPxScene);
 	}
 }
 void CScene::Render(ID3D11DeviceContext	*pd3dImmediateDeviceContext, CCamera *pCamera)

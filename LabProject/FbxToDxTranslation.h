@@ -11,3 +11,5 @@ FbxAMatrix GetPoseMatrix(FbxPose* pPose, int pNodeIndex);
 // Get the global position of the node for the current pose.
 // If the specified node is not part of the pose or no pose is specified, get its global position at the current time.
 FbxAMatrix GetGlobalPosition(FbxNode* pNode, const FbxTime& pTime, FbxPose* pPose=NULL, FbxAMatrix* pParentGlobalPosition=NULL);
+
+D3DXMATRIX GetD3DMatrixFromPxMat(PxMat44* pPxMat);

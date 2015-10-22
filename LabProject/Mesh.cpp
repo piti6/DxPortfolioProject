@@ -33,6 +33,7 @@ CMesh::CMesh(ID3D11Device *pd3dDevice)
 
 CMesh::~CMesh()
 {
+
     if (m_pd3dRasterizerState) m_pd3dRasterizerState->Release();
     if (m_ppd3dVertexBuffers)
 	{

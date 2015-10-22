@@ -26,11 +26,11 @@ public:
 
 	void CreateShaders(ID3D11Device *pd3dDevice);
 
-	void BuildObjects(ID3D11Device *pd3dDevice);
+	void BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhysics, PxScene *pPxScene);
 	void ReleaseObjects();
 
 	bool ProcessInput();
-    void AnimateObjects(float fTimeElapsed);
+    void AnimateObjects(float fTimeElapsed,PxScene *pPxScene);
 
     void Render(ID3D11DeviceContext	*pD3DImmediateDeviceContext, CCamera *pCamera);
 	

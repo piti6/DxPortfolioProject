@@ -28,8 +28,8 @@ public:
 	virtual void OnPostRender(ID3D11DeviceContext *pd3dDeviceContext);
 	virtual void Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, CCamera *pCamera);
 	
-	virtual void AnimateObjects(float fTimeElapsed);
-	virtual void BuildObjects(ID3D11Device *pd3dDevice);
+	virtual void AnimateObjects(float fTimeElapsed,PxScene *pPxScene);
+	virtual void BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhysics, PxScene *pPxScene);
 	virtual void ReleaseObjects();
 	
 protected:
@@ -56,9 +56,9 @@ public:
 	virtual void UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext, MATERIAL *pMaterial=NULL);
 	virtual void UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext, CTexture *pTexture);
 
-	virtual void BuildObjects(ID3D11Device *pd3dDevice);
+	virtual void BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhysics, PxScene *pPxScene);
 	virtual void ReleaseObjects();
-    virtual void AnimateObjects(float fTimeElapsed);
+	//virtual void AnimateObjects(float fTimeElapsed,PxScene *pPxScene);
 	virtual void Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, CCamera *pCamera=NULL);
 };
 
@@ -84,15 +84,13 @@ public:
 	virtual void CreateShader(ID3D11Device *pd3dDevice);
 	virtual void UpdateShaderVariables(ID3D11DeviceContext *pd3dImmediateDeviceContext, CCamera *pCamera);
 
-	virtual void BuildObjects(ID3D11Device *pd3dDevice);
+	virtual void BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhysics, PxScene *pPxScene);
 	virtual void ReleaseObjects();
-	virtual void AnimateObjects(float fTimeElapsed);
+	//virtual void AnimateObjects(float fTimeElapsed,PxScene *pPxScene);
 	virtual void Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, CCamera *pCamera=NULL);
 	ID3D11Buffer* CreateInstanceBuffer(ID3D11Device *pd3dDevice, int nObjects, UINT nBufferStride, void *pBufferData);
 
 private:
-	bool				isFirstRenderTexture;
-	bool				isFirstRenderMaterial;
 	int					m_nVisibleInstances;
 //객체의 인스턴스 버퍼이다.
 	ID3D11Buffer		*m_pd3dInstances;
@@ -122,6 +120,6 @@ public:
     CSkyBoxShader();
     virtual ~CSkyBoxShader();
 
-	virtual void BuildObjects(ID3D11Device *pd3dDevice);
+	virtual void BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhysics, PxScene *pPxScene);
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, CCamera *pCamera);
 };

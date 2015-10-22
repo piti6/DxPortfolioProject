@@ -30,6 +30,19 @@
 
 #include <vector>
 #include <fbxsdk.h>
+#include <PxPhysicsAPI.h>
+#include <iostream>
+
+
+
+#pragma comment(linker, "/entry:wWinMainCRTStartup /subsystem:console" )
+/*
+#pragma comment(lib, "PhysX3_x86.lib")
+#pragma comment(lib, "PhysX3Common_x86.lib")
+#pragma comment(lib, "PhysX3Extensions.lib")
+*/
+using namespace physx;
+using namespace std;
 
 #define GET_SET_FUNC_IMPL(TYPE, FUNC_NAME, PROP) \
 	TYPE Get##FUNC_NAME() \

@@ -3,6 +3,7 @@
 //-----------------------------------------------------------------------------
 #include "stdafx.h"
 #include "Object.h"
+#include "FbxToDxTranslation.h"
 
 CGameObject::CGameObject()
 {
@@ -10,18 +11,16 @@ CGameObject::CGameObject()
 	m_pMesh = NULL;
 	m_pMaterial = NULL;
 	m_pTexture = NULL;
-
-
+	
 }
-
 
 CGameObject::~CGameObject()
 {
-	if (m_pMesh) m_pMesh->Release();
-	if (m_pMaterial) m_pMaterial->Release();
-	if (m_pTexture) m_pTexture->Release();
-
+	if (m_pMesh)			m_pMesh->Release();
+	if (m_pMaterial)		m_pMaterial->Release();
+	if (m_pTexture)			m_pTexture->Release();
 }
+
 void CGameObject::SetTexture(CTexture *pTexture)
 {
 	if (m_pTexture) m_pTexture->Release();
@@ -44,7 +43,11 @@ void CGameObject::SetMesh(CMesh *pMesh)
 	if (m_pMesh) m_pMesh->AddRef();
 }
 
-void CGameObject::Animate(float fTimeElapsed)
+void CGameObject::BuildObjects(PxPhysics *pPxPhysics, PxScene *pPxScene){
+
+}
+
+void CGameObject::Animate(float fTimeElapsed,PxScene *pPxScene)
 {
 }
 
@@ -56,15 +59,15 @@ void CGameObject::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, CCamer
 void CGameObject::SetPosition(float x, float y, float z) 
 { 
 	m_d3dxmtxWorld._41 = x; 
-	m_d3dxmtxWorld._42 = y; 
-	m_d3dxmtxWorld._43 = z; 
+	m_d3dxmtxWorld._42 = y;
+	m_d3dxmtxWorld._43 = z;
 }
 
 void CGameObject::SetPosition(D3DXVECTOR3 d3dxvPosition) 
 { 
 	m_d3dxmtxWorld._41 = d3dxvPosition.x; 
-	m_d3dxmtxWorld._42 = d3dxvPosition.y; 
-	m_d3dxmtxWorld._43 = d3dxvPosition.z; 
+	m_d3dxmtxWorld._42 = d3dxvPosition.y;
+	m_d3dxmtxWorld._43 = d3dxvPosition.z;
 }
 
 D3DXVECTOR3 CGameObject::GetPosition() 
@@ -106,7 +109,7 @@ void CGameObject::MoveUp(float fDistance)
 	D3DXVECTOR3 d3dxvPosition = GetPosition();
 	D3DXVECTOR3 d3dxvUp = GetUp();
 	d3dxvPosition += fDistance * d3dxvUp;
-	CGameObject::SetPosition(d3dxvPosition);
+	SetPosition(d3dxvPosition);
 }
 
 void CGameObject::MoveForward(float fDistance)
@@ -114,8 +117,9 @@ void CGameObject::MoveForward(float fDistance)
 	D3DXVECTOR3 d3dxvPosition = GetPosition();
 	D3DXVECTOR3 d3dxvLookAt = GetLookAt();
 	d3dxvPosition += fDistance * d3dxvLookAt;
-	CGameObject::SetPosition(d3dxvPosition);
+	SetPosition(d3dxvPosition);
 }
+
 
 void CGameObject::Rotate(float fPitch, float fYaw, float fRoll)
 {
@@ -133,34 +137,150 @@ void CGameObject::Rotate(D3DXVECTOR3 *pd3dxvAxis, float fAngle)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-CRotatingObject::CRotatingObject()
-{
-	m_fRotationSpeed = 15.0f;
+
+CStaticObject::CStaticObject(){
+	m_pPxMaterial = NULL;
+	m_pPxActor = NULL;
 }
 
-CRotatingObject::~CRotatingObject()
+CStaticObject::~CStaticObject(){
+	if(m_pPxMaterial) m_pPxMaterial->release();
+	if(m_pPxActor) m_pPxActor->release();
+}
+
+void CStaticObject::BuildObjects(PxPhysics *pPxPhysics, PxScene *pPxScene){
+
+	m_pPxMaterial = pPxPhysics->createMaterial(0.1,0.1,1);
+	PxTransform _PxTransform(GetPosition().x,GetPosition().y,GetPosition().z);
+
+	D3DXVECTOR3 _d3dxvBoundMinimum = m_pMesh->m_bcBoundingCube.GetMinimum();
+	D3DXVECTOR3 _d3dxvBoundMaximum = m_pMesh->m_bcBoundingCube.GetMaximum();
+	D3DXVECTOR3 _d3dxvExtents = 
+		D3DXVECTOR3((abs(_d3dxvBoundMinimum.x) + abs(_d3dxvBoundMaximum.x))/2,(abs(_d3dxvBoundMinimum.y) + abs(_d3dxvBoundMaximum.y))/2,(abs(_d3dxvBoundMinimum.z) + abs(_d3dxvBoundMaximum.z))/2);
+	PxBoxGeometry _PxBoxGeometry(_d3dxvExtents.x,_d3dxvExtents.y,_d3dxvExtents.z);
+
+	m_pPxActor = PxCreateStatic(*pPxPhysics,_PxTransform,_PxBoxGeometry,*m_pPxMaterial);
+	pPxScene->addActor(*m_pPxActor);
+
+	PxTransform pT = m_pPxActor->getGlobalPose();
+	PxMat44 m = PxMat44(pT);
+	m_d3dxmtxWorld = D3DXMATRIX(m.front());	
+	
+}
+
+void CStaticObject::Animate(float fTimeElapsed,PxScene *pPxScene)
+{
+	PxTransform pT = m_pPxActor->getGlobalPose();
+	PxMat44 m = PxMat44(pT);
+	m_d3dxmtxWorld = D3DXMATRIX(m.front());	
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+
+CDynamicObject::CDynamicObject(){
+	m_pPxMaterial = NULL;
+	m_pPxActor = NULL;
+}
+
+CDynamicObject::~CDynamicObject(){
+	if(m_pPxMaterial) m_pPxMaterial->release();
+	if(m_pPxActor) m_pPxActor->release();
+}
+
+void CDynamicObject::BuildObjects(PxPhysics *pPxPhysics, PxScene *pPxScene){
+
+	m_pPxMaterial = pPxPhysics->createMaterial(0.1,0.1,1);
+	PxTransform _PxTransform(GetPosition().x,GetPosition().y,GetPosition().z);
+
+	D3DXVECTOR3 _d3dxvBoundMinimum = m_pMesh->m_bcBoundingCube.GetMinimum();
+	D3DXVECTOR3 _d3dxvBoundMaximum = m_pMesh->m_bcBoundingCube.GetMaximum();
+	D3DXVECTOR3 _d3dxvExtents = 
+		D3DXVECTOR3((abs(_d3dxvBoundMinimum.x) + abs(_d3dxvBoundMaximum.x))/2,(abs(_d3dxvBoundMinimum.y) + abs(_d3dxvBoundMaximum.y))/2,(abs(_d3dxvBoundMinimum.z) + abs(_d3dxvBoundMaximum.z))/2);
+	PxBoxGeometry _PxBoxGeometry(_d3dxvExtents.x,_d3dxvExtents.y,_d3dxvExtents.z);
+	m_pPxActor = PxCreateDynamic(*pPxPhysics,_PxTransform,_PxBoxGeometry,*m_pPxMaterial,2.0f);
+	pPxScene->addActor(*m_pPxActor);
+
+	PxTransform pT = m_pPxActor->getGlobalPose();
+	PxMat44 m = PxMat44(pT);
+	m_d3dxmtxWorld = D3DXMATRIX(m.front());	
+}
+
+void CDynamicObject::Animate(float fTimeElapsed,PxScene *pPxScene)
+{
+	PxTransform pT = m_pPxActor->getGlobalPose();
+	PxMat44 m = PxMat44(pT);
+	m_d3dxmtxWorld = D3DXMATRIX(m.front());	
+}
+
+void CDynamicObject::MoveStrafe(float fDistance)
+{
+	D3DXVECTOR3 d3dxvPosition = GetPosition();
+	D3DXVECTOR3 d3dxvRight = GetRight();
+	d3dxvPosition += fDistance * d3dxvRight;
+	SetPosition(d3dxvPosition);
+}
+
+void CDynamicObject::MoveUp(float fDistance)
+{
+	D3DXVECTOR3 d3dxvPosition = GetPosition();
+	D3DXVECTOR3 d3dxvUp = GetUp();
+	d3dxvPosition += fDistance * d3dxvUp;
+	SetPosition(d3dxvPosition);
+}
+
+void CDynamicObject::MoveForward(float fDistance)
+{
+	D3DXVECTOR3 d3dxvPosition = GetPosition();
+	D3DXVECTOR3 d3dxvLookAt = GetLookAt();
+	d3dxvPosition += fDistance * d3dxvLookAt;
+	SetPosition(d3dxvPosition);
+}
+
+void CDynamicObject::SetPosition(float x, float y, float z) 
+{ 
+	if(m_pPxActor)
+		m_pPxActor->setGlobalPose(PxTransform(PxVec3(x,y,z)));
+	else
+		CGameObject::SetPosition(x,y,z);
+}
+
+void CDynamicObject::SetPosition(D3DXVECTOR3 d3dxvPosition) 
+{
+	if(m_pPxActor)
+		m_pPxActor->setGlobalPose(PxTransform(PxVec3(d3dxvPosition.x,d3dxvPosition.y,d3dxvPosition.z)));
+	else
+		CGameObject::SetPosition(d3dxvPosition);
+}
+
+D3DXVECTOR3 CDynamicObject::GetPosition() 
+{ 
+	D3DXVECTOR3 _d3dxvPosition;
+	if(m_pPxActor)
+		_d3dxvPosition = D3DXVECTOR3(m_pPxActor->getGlobalPose().p.x,m_pPxActor->getGlobalPose().p.y,m_pPxActor->getGlobalPose().p.z);
+	else
+		_d3dxvPosition = CGameObject::GetPosition();
+	return _d3dxvPosition;
+}
+
+void CDynamicObject::Rotate(float fPitch, float fYaw, float fRoll){
+	m_pPxActor->setAngularVelocity(PxVec3(fPitch,fYaw,fRoll));
+}
+	
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+
+CSkyBox::CSkyBox()
 {
 }
 
-void CRotatingObject::Animate(float fTimeElapsed)
-{
-	CGameObject::Rotate(0, m_fRotationSpeed * fTimeElapsed,0);
-}
-
-void CRotatingObject::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, CCamera *pCamera)
-{
-	CGameObject::Render(pd3dImmediateDeviceContext, pCamera);
-}
-
-CSkyBox::CSkyBox(ID3D11Device *pd3dDevice)
-{
-}
 
 CSkyBox::~CSkyBox()
 {
 }
 
-void CSkyBox::Render(ID3D11DeviceContext *pd3dDeviceContext, CCamera *pCamera)
-{
-	if (m_pMesh) m_pMesh->Render(pd3dDeviceContext);
-}
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+

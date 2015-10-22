@@ -165,3 +165,26 @@ FbxAMatrix GetGlobalPosition(FbxNode* pNode, const FbxTime& pTime, FbxPose* pPos
 
     return lGlobalPosition;
 }
+
+D3DXMATRIX GetD3DMatrixFromPxMat(PxMat44* pPxMat){
+	D3DXMATRIX Dst;
+	Dst._11 = pPxMat->column0.x;
+	Dst._12 = pPxMat->column0.y;
+	Dst._13 = pPxMat->column0.z;
+	Dst._14 = pPxMat->column0.w;
+	Dst._21 = pPxMat->column1.x;
+	Dst._22 = pPxMat->column1.y;
+	Dst._23 = pPxMat->column1.z;
+	Dst._24 = pPxMat->column1.w;
+	Dst._31 = pPxMat->column2.x;
+	Dst._32 = pPxMat->column2.y;
+	Dst._33 = pPxMat->column2.z;
+	Dst._34 = pPxMat->column2.w;
+	Dst._41 = pPxMat->column3.x;
+	Dst._42 = pPxMat->column3.y;
+	Dst._43 = pPxMat->column3.z;
+	Dst._44 = pPxMat->column3.w;
+
+	return Dst;
+
+}

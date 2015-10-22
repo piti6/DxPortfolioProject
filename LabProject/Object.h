@@ -27,18 +27,19 @@ public:
 	CGameObject();
     virtual ~CGameObject();
 	
-
-
-    D3DXMATRIX						m_d3dxmtxWorld;         
+    D3DXMATRIX						m_d3dxmtxWorld;  
+	
 	CMesh							*m_pMesh;
 	CMaterial						*m_pMaterial;
 	CTexture						*m_pTexture;
 
+	virtual void Animate(float fTimeElapsed,PxScene *pPxScene);
+	virtual void BuildObjects(PxPhysics *pPxPhysics, PxScene *pPxScene);
+
 	void SetMaterial(CMaterial *pMaterial);
 	void SetTexture(CTexture *pTexture);
-
-	virtual void SetMesh(CMesh *pMesh);
-	virtual void Animate(float fTimeElapsed);
+	void SetMesh(CMesh *pMesh);
+	
 	virtual void Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, CCamera *pCamera=NULL);
 
 	virtual void SetPosition(float x, float y, float z);
@@ -51,34 +52,63 @@ public:
 	virtual void Rotate(float fPitch=10.0f, float fYaw=10.0f, float fRoll=10.0f);
 	virtual void Rotate(D3DXVECTOR3 *pd3dxvAxis, float fAngle);
 
-	D3DXVECTOR3 GetPosition();
-	D3DXVECTOR3 GetLookAt();
-	D3DXVECTOR3 GetUp();
-	D3DXVECTOR3 GetRight();
+	virtual D3DXVECTOR3 GetPosition();
+	virtual D3DXVECTOR3 GetLookAt();
+	virtual D3DXVECTOR3 GetUp();
+	virtual D3DXVECTOR3 GetRight();
 };
 
-class CRotatingObject : public CGameObject
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+
+class CDynamicObject : public CGameObject
 {
 public:
-	CRotatingObject();
-    virtual ~CRotatingObject();
+	CDynamicObject();
+    virtual ~CDynamicObject();
 
-	virtual void Animate(float fTimeElapsed);
-	virtual void Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, CCamera *pCamera=NULL);
+	virtual void BuildObjects(PxPhysics *pPxPhysics, PxScene *pPxScene);
+	virtual void Animate(float fTimeElapsed,PxScene *pPxScene);
 
-	void SetRotationSpeed(float fRotationSpeed) { m_fRotationSpeed = fRotationSpeed; }	
-	void SetRotationAxis(D3DXVECTOR3 d3dxvRotationAxis) { m_d3dxvRotationAxis = d3dxvRotationAxis; }	
+	virtual void SetPosition(float x, float y, float z);
+	virtual void SetPosition(D3DXVECTOR3 d3dxvPosition);
+
+	virtual void MoveStrafe(float fDistance=1.0f);
+	virtual void MoveUp(float fDistance=1.0f);
+	virtual void MoveForward(float fDistance=1.0f);
+
+	virtual void Rotate(float fPitch=10.0f, float fYaw=10.0f, float fRoll=10.0f);
+
+	virtual D3DXVECTOR3 GetPosition();
 
 private:
-	D3DXVECTOR3					m_d3dxvRotationAxis;
-	float						m_fRotationSpeed;
+	PxRigidDynamic				*m_pPxActor;
+	PxMaterial					*m_pPxMaterial;	
 };
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+
+class CStaticObject : public CGameObject
+{
+public:
+	CStaticObject();
+    virtual ~CStaticObject();
+
+	virtual void BuildObjects(PxPhysics *pPxPhysics, PxScene *pPxScene);
+	virtual void Animate(float fTimeElapsed,PxScene *pPxScene);
+
+private:
+	PxRigidStatic				*m_pPxActor;
+	PxMaterial					*m_pPxMaterial;	
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//
 
 class CSkyBox : public CGameObject
 {
 public:
-	CSkyBox(ID3D11Device *pd3dDevice);
+	CSkyBox();
 	virtual ~CSkyBox();
-
-	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, CCamera *pCamera);
 };

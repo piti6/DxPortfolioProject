@@ -1,5 +1,7 @@
 #pragma once
 
+
+
 #define FRAME_BUFFER_WIDTH			640
 #define FRAME_BUFFER_HEIGHT			480
 #define ASPECT_RATIO				(float(FRAME_BUFFER_WIDTH)/float(FRAME_BUFFER_HEIGHT))
@@ -7,13 +9,14 @@
 #define FIRST_PERSON_CAMERA			0x01
 #define THIRD_PERSON_CAMERA			0x03
 
+class CPlayer;
+
 struct VS_CB_VIEWPROJECTION_MATRIX
 {
 	D3DXMATRIX						m_d3dxmtxView;         	
     D3DXMATRIX						m_d3dxmtxProjection;   
 };
 
-class CPlayer;
 
 class CCamera
 {

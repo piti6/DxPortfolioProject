@@ -25,26 +25,23 @@ class CGameObject
 {
 public:
 	CGameObject();
-    virtual ~CGameObject();
-	
-    D3DXMATRIX						m_d3dxmtxWorld;  
-	
-	CMesh							*m_pMesh;
-	CMaterial						*m_pMaterial;
-	CTexture						*m_pTexture;
+	virtual ~CGameObject();
 
-	virtual void Animate(float fTimeElapsed,PxScene *pPxScene);
-	virtual void BuildObjects(PxPhysics *pPxPhysics, PxScene *pPxScene);
+	bool isActive();
 
+	virtual void SetActive(bool isActive);
+	virtual void SetPosition(D3DXVECTOR3 d3dxvPosition);
+	
 	void SetMaterial(CMaterial *pMaterial);
 	void SetTexture(CTexture *pTexture);
 	void SetMesh(CMesh *pMesh);
+
+	CMaterial*			GetMaterial();
+	CTexture*			GetTexture();
+	CMesh*				GetMesh();
+	D3DXMATRIX			GetWorldMatrix();
+	virtual D3DXVECTOR3 GetPosition();
 	
-	virtual void Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, CCamera *pCamera=NULL);
-
-	virtual void SetPosition(float x, float y, float z);
-	virtual void SetPosition(D3DXVECTOR3 d3dxvPosition);
-
 	virtual void MoveStrafe(float fDistance=1.0f);
 	virtual void MoveUp(float fDistance=1.0f);
 	virtual void MoveForward(float fDistance=1.0f);
@@ -52,10 +49,24 @@ public:
 	virtual void Rotate(float fPitch=10.0f, float fYaw=10.0f, float fRoll=10.0f);
 	virtual void Rotate(D3DXVECTOR3 *pd3dxvAxis, float fAngle);
 
-	virtual D3DXVECTOR3 GetPosition();
+	// Get Vector
 	virtual D3DXVECTOR3 GetLookAt();
 	virtual D3DXVECTOR3 GetUp();
 	virtual D3DXVECTOR3 GetRight();
+
+	virtual void Animate(float fTimeElapsed,PxScene *pPxScene);
+	virtual void BuildObjects(PxPhysics *pPxPhysics, PxScene *pPxScene);
+
+	virtual void Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, CCamera *pCamera=NULL);
+
+protected:
+	bool							m_bIsActive;
+
+	CMesh							*m_pMesh;
+	CMaterial						*m_pMaterial;
+	CTexture						*m_pTexture;
+
+	D3DXMATRIX						m_d3dxmtxWorld;  
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -65,12 +76,13 @@ class CDynamicObject : public CGameObject
 {
 public:
 	CDynamicObject();
-    virtual ~CDynamicObject();
+	virtual ~CDynamicObject();
+
+	virtual void SetActive(bool isActive);
 
 	virtual void BuildObjects(PxPhysics *pPxPhysics, PxScene *pPxScene);
 	virtual void Animate(float fTimeElapsed,PxScene *pPxScene);
 
-	virtual void SetPosition(float x, float y, float z);
 	virtual void SetPosition(D3DXVECTOR3 d3dxvPosition);
 
 	virtual void MoveStrafe(float fDistance=1.0f);
@@ -79,7 +91,7 @@ public:
 
 	virtual void Rotate(float fPitch=10.0f, float fYaw=10.0f, float fRoll=10.0f);
 
-	virtual D3DXVECTOR3 GetPosition();
+	void AddForce(float fx, float fy, float fz);
 
 private:
 	PxRigidDynamic				*m_pPxActor;
@@ -93,10 +105,11 @@ class CStaticObject : public CGameObject
 {
 public:
 	CStaticObject();
-    virtual ~CStaticObject();
+	virtual ~CStaticObject();
 
 	virtual void BuildObjects(PxPhysics *pPxPhysics, PxScene *pPxScene);
-	virtual void Animate(float fTimeElapsed,PxScene *pPxScene);
+
+	virtual void SetPosition(D3DXVECTOR3 d3dxvPosition);
 
 private:
 	PxRigidStatic				*m_pPxActor;

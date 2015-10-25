@@ -15,30 +15,37 @@ public:
     CMesh(ID3D11Device *pd3dDevice);
     virtual ~CMesh();
 
-	int								m_nReferences;
 	void AddRef();
 	void Release();
-
-	D3D11_PRIMITIVE_TOPOLOGY		m_d3dPrimitiveTopology;
-
-	ID3D11Buffer					**m_ppd3dVertexBuffers;
-	UINT							m_nVertices;
-	UINT							*m_nStride;
-	UINT							*m_nOffset;
-	UINT							m_nVertexBuffers;
-	ID3D11Buffer					*m_pd3dIndexBuffer;
-	UINT							m_nIndices;
-	UINT							m_nStartIndex;
-	int								m_nBaseVertex;
-
-	ID3D11RasterizerState			*m_pd3dRasterizerState;
-	
-	AABB							m_bcBoundingCube;
 
 	virtual void SetRasterizerState(ID3D11Device *pd3dDevice);
 	virtual void Render(ID3D11DeviceContext *pd3dImmediateDeviceContext);
 	virtual void RenderInstanced(ID3D11DeviceContext *pd3dDeviceContext, int nInstances, int nStartInstance);
 	virtual void AppendVertexBuffer(int nBuffers,ID3D11Buffer **pd3dBuffer, UINT *nStride, UINT *nOffset);
+
+	GET_SET_FUNC_IMPL(AABB,BoundingCube,m_bcBoundingCube);
+
+protected:
+
+	int								m_nReferences;
+
+	D3D11_PRIMITIVE_TOPOLOGY		m_d3dPrimitiveTopology;
+	ID3D11RasterizerState			*m_pd3dRasterizerState;
+
+	UINT							m_nVertices;
+	UINT							m_nIndices;
+	
+	UINT							*m_nStride;
+	UINT							*m_nOffset;
+
+	ID3D11Buffer					**m_ppd3dVertexBuffers;	
+	UINT							m_nVertexBuffers;
+
+	ID3D11Buffer					*m_pd3dIndexBuffer;
+
+	AABB							m_bcBoundingCube;
+
+	
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -53,6 +60,8 @@ protected:
 	ID3D11Buffer					*m_pd3dTexCoordBuffer;
 };
 
+/////////////////////////////////////////////////////////////////////////////////////////////////
+//
 class CMeshIlluminated : public CMesh
 {
 public:
@@ -69,6 +78,9 @@ public:
 
 	virtual void Render(ID3D11DeviceContext *pd3dImmediateDeviceContext);
 };
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+//
 class CCubeMeshIlluminated : public CMeshIlluminated
 {
 public:
@@ -79,6 +91,8 @@ public:
 	virtual void Render(ID3D11DeviceContext *pd3dImmediateDeviceContext);
 };
 
+/////////////////////////////////////////////////////////////////////////////////////////////////
+//
 class CCubeMeshIlluminatedTextured : public CMeshIlluminated
 {
 public:
@@ -89,6 +103,8 @@ public:
     virtual void Render(ID3D11DeviceContext *pd3dDeviceContext);
 };
 
+/////////////////////////////////////////////////////////////////////////////////////////////////
+//
 class CSkyBoxMesh : public CMeshTextured
 {
 public:
@@ -98,3 +114,25 @@ public:
 	virtual void SetRasterizerState(ID3D11Device *pd3dDevice);
 };
 
+/////////////////////////////////////////////////////////////////////////////////////////////////
+//
+class CHeightMapGridMesh : public CCubeMeshIlluminatedTextured
+{
+protected:
+	int							m_nWidth;
+	int							m_nLength;
+	D3DXVECTOR3					m_d3dxvScale;
+
+public:
+	CHeightMapGridMesh(ID3D11Device *pd3dDevice, int xStart, int zStart, int nWidth, int nLength, D3DXVECTOR3 d3dxvScale = D3DXVECTOR3(1.0f, 1.0f, 1.0f), void *pContext = NULL);
+	virtual ~CHeightMapGridMesh();
+
+	D3DXVECTOR3 GetScale() { return(m_d3dxvScale); }
+	int GetWidth() { return(m_nWidth); }
+	int GetLength() { return(m_nLength); }
+
+	virtual float OnGetHeight(int x, int z, void *pContext);
+};
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+//

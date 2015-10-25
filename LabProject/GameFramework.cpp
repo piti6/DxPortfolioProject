@@ -3,12 +3,11 @@
 //-----------------------------------------------------------------------------
 
 #include "stdafx.h"
-#include "Object.h"
 #include "GameFramework.h"
 
 CGameFramework::CGameFramework()
 {
-	
+
 	m_pd3dDevice = NULL;
 	m_pDXGISwapChain = NULL;
 	m_pd3dRenderTargetView = NULL;
@@ -139,7 +138,7 @@ void CGameFramework::OnDestroy()
 {
 	ReleaseObjects();
 	ShutDownPhysxEngine();
-	
+
 	if (m_pd3dImmediateDeviceContext) m_pd3dImmediateDeviceContext->ClearState();
 	if (m_pd3dRenderTargetView) m_pd3dRenderTargetView->Release();
 	if (m_pd3dDepthStencilBuffer) m_pd3dDepthStencilBuffer->Release();	
@@ -272,8 +271,6 @@ LRESULT CALLBACK CGameFramework::OnProcessingWindowMessage(HWND hWnd, UINT nMess
 
 void CGameFramework::BuildObjects()
 {
-	m_pScene = new CScene();
-
 	m_nPlayers = 1;
 	m_ppPlayers = new CPlayer*[m_nPlayers];
 
@@ -288,6 +285,8 @@ void CGameFramework::BuildObjects()
 	pGamePlayer->SetPosition(D3DXVECTOR3(0.0f, 0.0f, -50.0f));
 
 	m_ppPlayers[0] = pGamePlayer;
+
+	m_pScene = new CScene(m_pPxPhysicsSDK, m_pPxScene,m_ppPlayers);
 
 	if (m_pScene){
 		m_pScene->BuildObjects(m_pd3dDevice,m_pPxPhysicsSDK,m_pPxScene);
@@ -309,7 +308,7 @@ void CGameFramework::ReleaseObjects()
 void CGameFramework::ProcessInput()
 {
 	long double Dist=0;
-	DWORD dwDirection = 0;
+	DWORD dwForward = 0,dwBackward = 0,dwLeft = 0,dwRight = 0;
 	bool bProcessedByScene = false;
 	if (m_pScene) bProcessedByScene = m_pScene->ProcessInput();
 	if (!bProcessedByScene)
@@ -318,12 +317,13 @@ void CGameFramework::ProcessInput()
 
 		if (GetKeyboardState(pKeyBuffer))
 		{
-			if (pKeyBuffer[VK_UP] & 0xF0) dwDirection |= DIR_FORWARD;
-			if (pKeyBuffer[VK_DOWN] & 0xF0) dwDirection |= DIR_BACKWARD;
-			if (pKeyBuffer[VK_LEFT] & 0xF0) dwDirection |= DIR_LEFT;
-			if (pKeyBuffer[VK_RIGHT] & 0xF0) dwDirection |= DIR_RIGHT;
-			//if (pKeyBuffer[VK_SPACE] & 0xF0) dwDirection |= DIR_UP;
-			if (pKeyBuffer[VK_NEXT] & 0xF0) dwDirection |= DIR_DOWN;
+			if (pKeyBuffer['W'] & 0xF0) dwForward |= DIR_FORWARD;
+			if (pKeyBuffer['S'] & 0xF0) dwBackward |= DIR_BACKWARD;
+			if (pKeyBuffer['A'] & 0xF0) dwLeft |= DIR_LEFT;
+			if (pKeyBuffer['D'] & 0xF0) dwRight |= DIR_RIGHT;
+			/*
+			if (pKeyBuffer[VK_SPACE] & 0xF0) dwDirection |= DIR_UP;
+			if (pKeyBuffer[VK_NEXT] & 0xF0) dwDirection |= DIR_DOWN;*/
 		}	    
 		float cxDelta = 0.0f, cyDelta = 0.0f;
 		POINT ptCursorPos;
@@ -335,23 +335,21 @@ void CGameFramework::ProcessInput()
 			cyDelta = (float)(ptCursorPos.y - m_ptOldCursorPos.y) / 3.0f;
 			SetCursorPos(m_ptOldCursorPos.x, m_ptOldCursorPos.y);
 		} 
-		if ((dwDirection != 0) || (cxDelta != 0.0f) || (cyDelta != 0.0f))
+		if ((dwForward != 0) || (dwBackward != 0) || (dwLeft != 0) || (dwRight != 0) || (cxDelta != 0.0f) || (cyDelta != 0.0f))
 		{
 			if (cxDelta || cyDelta) 
 			{
 				if (pKeyBuffer[VK_RBUTTON] & 0xF0)
 					m_ppPlayers[0]->Rotate(cyDelta, cxDelta, 0.0f);
-				else
-					m_ppPlayers[0]->Rotate(cyDelta, cxDelta, 0.0f);        
 			}
-			if(dwDirection==DIR_FORWARD)
-						m_ppPlayers[0]->Move(dwDirection, 80.0f * m_GameTimer.GetTimeElapsed(),false);
-					if(dwDirection==DIR_BACKWARD)
-						m_ppPlayers[0]->Move(dwDirection, 80.0f * m_GameTimer.GetTimeElapsed(),false);
-					if(dwDirection==DIR_LEFT)
-						m_ppPlayers[0]->Rotate(0.0f, -50.0f * m_GameTimer.GetTimeElapsed(), 0.0f);
-					if(dwDirection==DIR_RIGHT)
-						m_ppPlayers[0]->Rotate(0.0f, 50.0f * m_GameTimer.GetTimeElapsed(), 0.0f);
+			if(dwForward==DIR_FORWARD)
+				m_ppPlayers[0]->Move(dwForward, 300.0f * m_GameTimer.GetTimeElapsed(),false);
+			if(dwBackward==DIR_BACKWARD)
+				m_ppPlayers[0]->Move(dwBackward, 300.0f * m_GameTimer.GetTimeElapsed(),false);
+			if(dwLeft==DIR_LEFT)
+				m_ppPlayers[0]->Move(dwLeft, 300.0f * m_GameTimer.GetTimeElapsed(),false);
+			if(dwRight==DIR_RIGHT)
+				m_ppPlayers[0]->Move(dwRight, 300.0f * m_GameTimer.GetTimeElapsed(),false);
 		}
 		m_ppPlayers[0]->Update(m_GameTimer.GetTimeElapsed());
 	}
@@ -388,7 +386,7 @@ void CGameFramework::FrameAdvance()
 	if (m_pScene)
 		m_pScene->Render(m_pd3dImmediateDeviceContext, m_ppPlayers[0]->GetCamera());
 
-	
+
 
 	m_pDXGISwapChain->Present(0, 0);
 
@@ -409,7 +407,7 @@ void CGameFramework::InitializePhysxEngine(){
 	PxInitExtensions(*m_pPxPhysicsSDK);
 
 	PxSceneDesc sceneDesc(m_pPxPhysicsSDK->getTolerancesScale());
-	sceneDesc.gravity = PxVec3(0.0f,-9.8f,0.0f);
+	sceneDesc.gravity = PxVec3(0.0f,-98,0.0f);
 
 	if(!sceneDesc.cpuDispatcher)
 	{
@@ -425,5 +423,5 @@ void CGameFramework::ShutDownPhysxEngine(){
 	if(m_pPxScene) m_pPxScene->release();
 	if(m_pPxPhysicsSDK) m_pPxPhysicsSDK->release();
 	if(m_pPxFoundation) m_pPxFoundation->release();
-	
+
 }

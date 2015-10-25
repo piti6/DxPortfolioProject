@@ -9,16 +9,25 @@
 #include "Camera.h"
 #include "Shader.h"
 #include "Light.h"
+#include "Player.h"
 
 class CScene
 {
 private:
 	CShader										**m_ppShaders;
 	int											m_nShaders;
+
+	CInstancingShader							*m_pInstancingShader;
+	
 	LIGHTS										*m_pLights;
 	ID3D11Buffer								*m_pd3dcbLights;
+
+	PxPhysics									*m_pPxPhysicsSDK;
+	PxScene										*m_pPxScene;
+
+	CPlayer										**m_ppPlayers;
 public:
-    CScene();
+    CScene(PxPhysics *pPxPhysicsSDK, PxScene *pPxScene, CPlayer **ppPlayers);
     ~CScene();
 
 	bool OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);

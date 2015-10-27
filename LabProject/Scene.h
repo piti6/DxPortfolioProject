@@ -35,7 +35,7 @@ public:
 
 	void CreateShaders(ID3D11Device *pd3dDevice);
 
-	void BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhysics, PxScene *pPxScene);
+	void BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhysics, PxScene *pPxScene, FbxManager *pFbxSdkManager);
 	void ReleaseObjects();
 
 	bool ProcessInput();

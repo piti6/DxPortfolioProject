@@ -67,8 +67,6 @@ class CMeshIlluminated : public CMesh
 public:
     CMeshIlluminated(ID3D11Device *pd3dDevice);
     virtual ~CMeshIlluminated();
-
-public:
 //정점이 포함된 삼각형의 법선벡터를 계산하는 함수이다.
 	D3DXVECTOR3 CalculateTriAngleNormal(BYTE *pVertices, UINT nIndex0, UINT nIndex1, UINT nIndex2);
 	void SetTriAngleListVertexNormal(BYTE *pVertices);
@@ -109,12 +107,6 @@ public:
 
 class CHeightMap
 {
-private:
-	BYTE						*m_pHeightMapImage;
-	int							m_nWidth;
-	int							m_nLength;
-	D3DXVECTOR3					m_d3dxvScale;
-
 public:
 	CHeightMap(LPCTSTR pFileName, int nWidth, int nLength, D3DXVECTOR3 d3dxvScale);
 	virtual ~CHeightMap();
@@ -126,16 +118,18 @@ public:
 	BYTE *GetHeightMapImage() { return(m_pHeightMapImage); }
 	int GetHeightMapWidth() { return(m_nWidth); }
 	int GetHeightMapLength() { return(m_nLength); }
+
+private:
+	BYTE						*m_pHeightMapImage;
+	int							m_nWidth;
+	int							m_nLength;
+	D3DXVECTOR3					m_d3dxvScale;
+
 };
 
 
 class CHeightMapGridMesh : public CMeshIlluminated
 {
-protected:
-	int							m_nWidth;
-	int							m_nLength;
-	D3DXVECTOR3					m_d3dxvScale;
-
 public:
 	CHeightMapGridMesh(ID3D11Device *pd3dDevice, int xStart, int zStart, int nWidth, int nLength, D3DXVECTOR3 d3dxvScale = D3DXVECTOR3(1.0f, 1.0f, 1.0f), void *pContext = NULL);
 	virtual ~CHeightMapGridMesh();
@@ -145,7 +139,27 @@ public:
 	int GetLength() { return(m_nLength); }
 
 	virtual float OnGetHeight(int x, int z, void *pContext);
+
+private:
+	int							m_nWidth;
+	int							m_nLength;
+	D3DXVECTOR3					m_d3dxvScale;
+
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
 //
+
+class CFbxMeshIlluminatedTextured : public CMesh
+{
+public:
+    CFbxMeshIlluminatedTextured(ID3D11Device *pd3dDevice, FbxManager *pFbxSdkManager, char * filename, float fx, float fy, float fz);
+    virtual ~CFbxMeshIlluminatedTextured();
+
+	//HRESULT LoadFBXFromFile(ID3D11Device *pd3dDevice, FbxManager *pFbxSdkManager, char * filename, bool isAnim);
+
+private:
+
+	FbxScene					*m_pFbxScene;
+
+};

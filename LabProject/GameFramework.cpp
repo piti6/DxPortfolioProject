@@ -32,6 +32,7 @@ bool CGameFramework::OnCreate(HINSTANCE hInstance, HWND hMainWnd)
 	m_hInstance = hInstance;
 	m_hWnd = hMainWnd;
 	InitializePhysxEngine();
+	InitializeFbxManager();
 	if (!CreateDirect3DDisplay()) return(false); 
 
 	BuildObjects(); 
@@ -137,8 +138,9 @@ bool CGameFramework::CreateRenderTargetDepthStencilView()
 void CGameFramework::OnDestroy()
 {
 	ReleaseObjects();
+	ShutDownFbxManager();
 	ShutDownPhysxEngine();
-
+	
 	if (m_pd3dImmediateDeviceContext) m_pd3dImmediateDeviceContext->ClearState();
 	if (m_pd3dRenderTargetView) m_pd3dRenderTargetView->Release();
 	if (m_pd3dDepthStencilBuffer) m_pd3dDepthStencilBuffer->Release();	
@@ -286,10 +288,10 @@ void CGameFramework::BuildObjects()
 
 	m_ppPlayers[0] = pGamePlayer;
 
-	m_pScene = new CScene(m_pPxPhysicsSDK, m_pPxScene,m_ppPlayers);
+	m_pScene = new CScene(m_pPxPhysicsSDK, m_pPxScene, m_ppPlayers);
 
 	if (m_pScene){
-		m_pScene->BuildObjects(m_pd3dDevice,m_pPxPhysicsSDK,m_pPxScene);
+		m_pScene->BuildObjects(m_pd3dDevice, m_pPxPhysicsSDK, m_pPxScene, m_pFbxSdkManager);
 	}
 }
 
@@ -397,7 +399,8 @@ void CGameFramework::FrameAdvance()
 	::SetWindowText(m_hWnd, m_pszBuffer);
 }
 
-void CGameFramework::InitializePhysxEngine(){
+void CGameFramework::InitializePhysxEngine()
+{
 	m_pPxFoundation = PxCreateFoundation(PX_PHYSICS_VERSION,m_PxDefaultAllocatorCallback,m_PxDefaultErrorCallback);
 	m_pPxPhysicsSDK = PxCreatePhysics(PX_PHYSICS_VERSION,*m_pPxFoundation,PxTolerancesScale());
 	if(m_pPxPhysicsSDK == NULL){
@@ -422,9 +425,29 @@ void CGameFramework::InitializePhysxEngine(){
 	m_pPxScene = m_pPxPhysicsSDK->createScene(sceneDesc);
 }
 
-void CGameFramework::ShutDownPhysxEngine(){
+void CGameFramework::ShutDownPhysxEngine()
+{
 	if(m_pPxScene) m_pPxScene->release();
 	if(m_pPxPhysicsSDK) m_pPxPhysicsSDK->release();
 	if(m_pPxFoundation) m_pPxFoundation->release();
 
+}
+
+void CGameFramework::InitializeFbxManager()
+{
+	if(m_pFbxSdkManager == NULL) 
+    {
+       m_pFbxSdkManager = FbxManager::Create(); // fbxManager를 만든다.
+
+       FbxIOSettings* pIOsettings = FbxIOSettings::Create(m_pFbxSdkManager, IOSROOT ); // FbxIO를 셋팅한다.
+       m_pFbxSdkManager->SetIOSettings(pIOsettings);
+    }
+}
+
+void CGameFramework::ShutDownFbxManager()
+{
+	if(m_pFbxSdkManager)
+	{
+		m_pFbxSdkManager->Destroy();
+	}
 }

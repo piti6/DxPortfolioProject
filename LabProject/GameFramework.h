@@ -13,6 +13,14 @@ public:
 	bool OnCreate(HINSTANCE hInstance, HWND hMainWnd);
 	void OnDestroy();
 
+/*						Input Callbacks					*/
+
+	void OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
+	void OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
+	LRESULT CALLBACK OnProcessingWindowMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
+
+/*						DirectX SDK Member Function					*/
+
 	bool CreateRenderTargetDepthStencilView();
 	bool CreateDirect3DDisplay();
     
@@ -23,15 +31,19 @@ public:
     void AnimateObjects();
     void FrameAdvance();
 
-	
-	void OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
-	void OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
-	LRESULT CALLBACK OnProcessingWindowMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
+/*						Physx SDK Member Function					*/
 
 	void InitializePhysxEngine();
 	void ShutDownPhysxEngine();
 
-private:   
+/*						FBX SDK Member Function					*/
+
+	void InitializeFbxManager();
+	void ShutDownFbxManager();
+
+
+private:  
+
 /*						Windows Member Variables					*/
 	HINSTANCE						m_hInstance;
 	HWND							m_hWnd; 
@@ -42,6 +54,7 @@ private:
         
 	POINT							m_ptOldCursorPos;    
 	_TCHAR							m_pszBuffer[50];
+
 /*						DirectX SDK Member Variables					*/
 
 	ID3D11Device					*m_pd3dDevice;
@@ -58,6 +71,10 @@ private:
 	PxDefaultAllocator				m_PxDefaultAllocatorCallback;
 	PxScene							*m_pPxScene;
 	PxFoundation					*m_pPxFoundation;
+
+/*						FBX SDK Member Variables					*/
+
+	FbxManager						*m_pFbxSdkManager;
 
 /*						User Defined Member Variables					*/
 

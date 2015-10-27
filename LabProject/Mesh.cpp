@@ -71,7 +71,7 @@ void CMesh::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext)
 	if (m_pd3dIndexBuffer) pd3dImmediateDeviceContext->IASetIndexBuffer(m_pd3dIndexBuffer, DXGI_FORMAT_R16_UINT, 0);
 	if (m_d3dPrimitiveTopology) pd3dImmediateDeviceContext->IASetPrimitiveTopology(m_d3dPrimitiveTopology);
 	if (m_pd3dRasterizerState) pd3dImmediateDeviceContext->RSSetState(m_pd3dRasterizerState);
-	
+
 	if (m_pd3dIndexBuffer) 
 		pd3dImmediateDeviceContext->DrawIndexed(m_nIndices, 0, 0);
 	else
@@ -96,7 +96,7 @@ void CMesh::AppendVertexBuffer(int nBuffers,ID3D11Buffer **pd3dBuffer, UINT *nSt
 	//기존의 배열들 보다 하나 큰 배열을 생성하고 기존의 배열을 복사한 후 새로운 원소를 추가한다.
 	UINT *pnVertexStrides = new UINT[m_nVertexBuffers+nBuffers];
 	UINT *pnVertexOffsets = new UINT[m_nVertexBuffers+nBuffers];
-	
+
 	if(m_nVertexBuffers >0)
 	{
 		for (UINT i = 0; i < m_nVertexBuffers; i++) 
@@ -388,7 +388,7 @@ CSkyBoxMesh::CSkyBoxMesh(ID3D11Device *pd3dDevice, float fWidth, float fHeight, 
 	m_nOffset = new UINT[1];
 	m_nOffset[0] = 0;
 	m_ppd3dVertexBuffers = new ID3D11Buffer*[m_nVertexBuffers];
-	
+
 	CTexturedVertex *pVertices = new CTexturedVertex[m_nVertices];
 	int i = 0;
 	float fx = fWidth, fy = fHeight , fz = fDepth;
@@ -411,7 +411,7 @@ CSkyBoxMesh::CSkyBoxMesh(ID3D11Device *pd3dDevice, float fWidth, float fHeight, 
 	ZeroMemory(&d3dBufferData, sizeof(D3D11_SUBRESOURCE_DATA));
 	d3dBufferData.pSysMem = pVertices;
 	pd3dDevice->CreateBuffer(&d3dBufferDesc, &d3dBufferData, &m_ppd3dVertexBuffers[0]);
-	
+
 	m_bcBoundingCube.SetMinimum(D3DXVECTOR3(-fx, -fy, -fz));
 	m_bcBoundingCube.SetMaximum(D3DXVECTOR3(+fx, +fy, +fz));
 
@@ -454,7 +454,7 @@ CHeightMap::CHeightMap(LPCTSTR pFileName, int nWidth, int nLength, D3DXVECTOR3 d
 	::CloseHandle(hFile);
 
 	m_pHeightMapImage = new BYTE[m_nWidth * m_nLength];
-	
+
 	for (int y = 0; y < m_nLength; y++)
 	{
 		for (int x = 0; x < m_nWidth; x++)
@@ -509,22 +509,22 @@ float CHeightMap::GetHeight(float fx, float fz, bool bReverseQuad)
 	float fBottomRight = (float)m_pHeightMapImage[(x + 1) + (z*m_nWidth)];
 	float fTopLeft = (float)m_pHeightMapImage[x + ((z + 1)*m_nWidth)];
 	float fTopRight = (float)m_pHeightMapImage[(x + 1) + ((z + 1)*m_nWidth)];
-#ifdef _WITH_APPROXIMATE_OPPOSITE_CORNER
+	#ifdef _WITH_APPROXIMATE_OPPOSITE_CORNER
 	if (bReverseQuad)
 	{
-		if (fzPercent >= fxPercent)
-			fBottomRight = fBottomLeft + (fTopRight - fTopLeft);
-		else
-			fTopLeft = fTopRight + (fBottomLeft - fBottomRight);
+	if (fzPercent >= fxPercent)
+	fBottomRight = fBottomLeft + (fTopRight - fTopLeft);
+	else
+	fTopLeft = fTopRight + (fBottomLeft - fBottomRight);
 	}
 	else
 	{
-		if (fzPercent < (1.0f - fxPercent))
-			fTopRight = fTopLeft + (fBottomRight - fBottomLeft);
-		else
-			fBottomLeft = fTopLeft + (fBottomRight - fTopRight);
+	if (fzPercent < (1.0f - fxPercent))
+	fTopRight = fTopLeft + (fBottomRight - fBottomLeft);
+	else
+	fBottomLeft = fTopLeft + (fBottomRight - fTopRight);
 	}
-#endif
+	#endif
 	float fTopHeight = fTopLeft * (1 - fxPercent) + fTopRight * fxPercent;
 	float fBottomHeight = fBottomLeft * (1 - fxPercent) + fBottomRight * fxPercent;
 	float fHeight = fBottomHeight * (1 - fzPercent) + fTopHeight * fzPercent;
@@ -535,7 +535,7 @@ float CHeightMap::GetHeight(float fx, float fz, bool bReverseQuad)
 	float fBottomRight = m_pHeightMapImage[(x+1)+((z+1)*m_nWidth)];
 	//return(fHeight * m_d3dxvScale.y);
 	//return fHeight;
-	#ifdef _WITH_APPROXIMATE_OPPOSITE_CORNER
+#ifdef _WITH_APPROXIMATE_OPPOSITE_CORNER
 	if (bReverseQuad)
 	{
 		if (fxPercent <= fzPercent)
@@ -595,7 +595,7 @@ CHeightMapGridMesh::CHeightMapGridMesh(ID3D11Device *pd3dDevice, int xStart, int
 		}
 	}
 
-	
+
 	D3D11_BUFFER_DESC d3dBufferDesc;
 	ZeroMemory(&d3dBufferDesc, sizeof(D3D11_BUFFER_DESC));
 	d3dBufferDesc.Usage = D3D11_USAGE_DEFAULT;
@@ -606,7 +606,7 @@ CHeightMapGridMesh::CHeightMapGridMesh(ID3D11Device *pd3dDevice, int xStart, int
 	ZeroMemory(&d3dBufferData, sizeof(D3D11_SUBRESOURCE_DATA));
 	d3dBufferData.pSysMem = pVertices;
 	pd3dDevice->CreateBuffer(&d3dBufferDesc, &d3dBufferData, &m_ppd3dVertexBuffers[0]);
-	
+
 
 	m_nIndices = ((nWidth * 2)*(nLength - 1)) + ((nLength - 1) - 1);
 	UINT *pIndices  = new UINT[m_nIndices];
@@ -634,7 +634,7 @@ CHeightMapGridMesh::CHeightMapGridMesh(ID3D11Device *pd3dDevice, int xStart, int
 
 	//CalculateVertexNormal((BYTE *)pVertices, pIndices);
 
-	
+
 
 	ZeroMemory(&d3dBufferDesc, sizeof(D3D11_BUFFER_DESC));
 	d3dBufferDesc.Usage = D3D11_USAGE_DEFAULT;
@@ -645,7 +645,7 @@ CHeightMapGridMesh::CHeightMapGridMesh(ID3D11Device *pd3dDevice, int xStart, int
 	d3dBufferData.pSysMem = pIndices;
 	pd3dDevice->CreateBuffer(&d3dBufferDesc, &d3dBufferData, &m_pd3dIndexBuffer);
 
-	
+
 
 	m_bcBoundingCube.SetMinimum(D3DXVECTOR3(xStart*m_d3dxvScale.x, fMinHeight, zStart*m_d3dxvScale.z));
 	m_bcBoundingCube.SetMaximum(D3DXVECTOR3((xStart+nWidth)*m_d3dxvScale.x, fMaxHeight, (zStart+nLength)*m_d3dxvScale.z));
@@ -668,4 +668,224 @@ float CHeightMapGridMesh::OnGetHeight(int x, int z, void *pContext)
 	int nWidth = pHeightMap->GetHeightMapWidth();
 	float fHeight = pHeightMapImage[x + (z*nWidth)] * d3dxvScale.y;
 	return(fHeight);
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+//
+
+/*
+CFbxMeshIlluminatedTextured::CFbxMeshIlluminatedTextured(ID3D11Device *pd3dDevice) : CMesh(pd3dDevice)
+{
+
+}*/
+CFbxMeshIlluminatedTextured::~CFbxMeshIlluminatedTextured(){
+	//m_pFbxScene->Destroy(
+}
+
+//HRESULT CFbxMeshIlluminatedTextured::LoadFBXFromFile(ID3D11Device *pd3dDevice, FbxManager *pFbxSdkManager, char * filename, bool isAnim){
+CFbxMeshIlluminatedTextured::CFbxMeshIlluminatedTextured(ID3D11Device *pd3dDevice, FbxManager *pFbxSdkManager, char * filename, float fx=1.0f, float fy=1.0f, float fz=1.0f) : CMesh(pd3dDevice)
+{
+	m_d3dPrimitiveTopology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+	m_nStride = new UINT[1];
+	m_nStride[0] = sizeof(CTexturedNormalVertex);
+	m_nOffset = new UINT[1];
+	m_nOffset[0] = 0;
+	m_ppd3dVertexBuffers = new ID3D11Buffer*[m_nVertexBuffers];
+
+	FbxImporter* pImporter = FbxImporter::Create(pFbxSdkManager,""); // 임포트 생성
+	m_pFbxScene = FbxScene::Create(pFbxSdkManager,""); // fbx 씬 생성
+
+	// Convert Axis System to what is used in this example, if needed
+	FbxAxisSystem SceneAxisSystem = m_pFbxScene->GetGlobalSettings().GetAxisSystem();
+	FbxAxisSystem OurAxisSystem(FbxAxisSystem::eDirectX);
+
+	if( SceneAxisSystem != OurAxisSystem )
+	{
+		OurAxisSystem.ConvertScene(m_pFbxScene);
+	}
+	FbxAxisSystem OurAxisSystem2(FbxAxisSystem::Max);
+	OurAxisSystem2.ConvertScene(m_pFbxScene);
+	/*
+	if ( m_isPivot == true )
+	{
+	FbxAxisSystem OurAxisSystem(FbxAxisSystem::Max);
+
+	if( SceneAxisSystem != OurAxisSystem )
+	{
+	OurAxisSystem.ConvertScene(m_pFbxScene);
+	}
+	}*/
+
+
+
+
+	// Convert mesh, NURBS and patch into triangle mesh
+	FbxGeometryConverter lGeomConverter(pFbxSdkManager);
+	lGeomConverter.Triangulate(m_pFbxScene, /*replace*/true);
+
+	// Convert Unit System to what is used in this example, if needed
+	FbxSystemUnit SceneSystemUnit = m_pFbxScene->GetGlobalSettings().GetSystemUnit();
+	/*
+	if( SceneSystemUnit.GetScaleFactor() != 1.0 )
+	{
+		//The unit in this example is centimeter.
+		FbxSystemUnit::cm.ConvertScene( m_pFbxScene);
+	}
+	*/
+
+	// 모델 이니셜라이즈
+	bool bSuccess = pImporter->Initialize( filename , -1, pFbxSdkManager->GetIOSettings() );
+	//pImporter->sca
+	//if(!bSuccess) return E_FAIL;
+	// 씬 임포트
+	bSuccess = pImporter->Import(m_pFbxScene);
+	//if(!bSuccess) return E_FAIL;
+
+	pImporter->Destroy();
+
+	// 씬의 루트 노드 얻어옴
+	FbxNode* pFbxRootNode = m_pFbxScene->GetRootNode();
+	pFbxRootNode->EvaluateGlobalTransform();
+	int nVertex = 0;
+	int VertexArrayIndex = 0;
+	std::vector<CTexturedNormalVertex> VertexVector;
+	// 루트 노드가 있으면 데이터 얻어옴
+	if(pFbxRootNode)
+	{
+		// 루트 노드의 자식을 참조하여 얻어옴
+		for(int i = 0; i < pFbxRootNode->GetChildCount(); ++i)
+		{
+			FbxNode* pFbxChildNode = pFbxRootNode->GetChild(i);
+			if(pFbxChildNode->GetNodeAttribute() == NULL)
+				continue;
+
+
+			FbxNodeAttribute::EType AttributeType = pFbxChildNode->GetNodeAttribute()->GetAttributeType();
+
+			if(AttributeType != FbxNodeAttribute::eMesh)
+				continue;
+
+			FbxMesh * pMesh;
+			pMesh = (FbxMesh*) pFbxChildNode->GetNodeAttribute();
+
+			FbxVector4* pVertices = pMesh->GetControlPoints(); 
+
+			// UV를 얻기위한 것들 
+			FbxStringList lUVSetNameList;
+			pMesh->GetUVSetNames(lUVSetNameList);
+
+			// Get the list of all the animation stack.
+			//m_pFbxScene->FillAnimStackNameArray(m_AnimStackNameArray);
+			// Get the list of pose in the scene
+			//FillPoseArray(m_pFbxScene, m_PoseArray);
+
+			D3DXVECTOR3 tempMin ;
+			D3DXVECTOR3	tempMax;
+			tempMin = tempMax = D3DXVECTOR3(0,0,0); // 메쉬의 최대최소점 저장
+
+
+			// 폴리곤 회전에 쓰임
+			D3DXMATRIX ID;
+			D3DXMatrixRotationX( &ID, 90.0f );
+
+			// 폴리곤 숫자만큼 버텍스를 읽어옴
+			for (int j = 0; j < pMesh->GetPolygonCount(); j++) // j가 폴리곤 인덱스
+			{
+				int iNumVertices = pMesh->GetPolygonSize(j); 
+				// assert( iNumVertices == 3 );
+
+				for (int k = 0; k < iNumVertices; k++) // k가 포인트 인덱스
+				{
+					int iControlPointIndex = pMesh->GetPolygonVertex(j, k);
+
+					CTexturedNormalVertex Vertex;
+
+					// 노말벡터 설정
+					FbxVector4 Normal;
+					pMesh->GetPolygonVertexNormal(j, k, Normal );
+
+					FbxVector2 tex;
+					bool isMapped;
+					pMesh->GetPolygonVertexUV(j, k, lUVSetNameList[0], tex, isMapped);
+
+
+
+
+					Vertex.SetPosition(D3DXVECTOR3((float)pVertices[iControlPointIndex].mData[0] * fx,(float)pVertices[iControlPointIndex].mData[1] * fy,(float)pVertices[iControlPointIndex].mData[2] * fz));
+					Vertex.SetNormal(D3DXVECTOR3((float)Normal.mData[0],(float)Normal.mData[1],(float)Normal.mData[2]));
+					Vertex.SetTexCoord(D3DXVECTOR2(tex[0], -tex[1]));
+					//if ( m_isPivot == true )
+					//	D3DXVec3TransformCoord( &Vertex.m_d3dxvPosition, &Vertex.m_d3dxvPosition, &ID);
+
+
+
+					if( Vertex.GetPosition().x > tempMax.x )
+						tempMax.x = Vertex.GetPosition().x;
+					if( Vertex.GetPosition().y > tempMax.y )
+						tempMax.y = Vertex.GetPosition().y;
+					if( Vertex.GetPosition().z > tempMax.z )
+						tempMax.z = Vertex.GetPosition().z;
+
+					if( Vertex.GetPosition().x < tempMin.x )
+						tempMin.x = Vertex.GetPosition().x;
+					if( Vertex.GetPosition().y < tempMin.y )
+						tempMin.y = Vertex.GetPosition().y;
+					if( Vertex.GetPosition().z < tempMin.z )
+						tempMin.z = Vertex.GetPosition().z;
+
+
+
+
+					//Vertex.m_d3dxvPosition.x = -Vertex.m_d3dxvPosition.x;
+
+					VertexVector.push_back( Vertex );
+
+
+				}
+			}
+			m_bcBoundingCube.SetMinimum(tempMin);
+			m_bcBoundingCube.SetMaximum(tempMax);
+
+		}
+		m_nVertices = VertexVector.size();
+
+
+	}
+	/*
+	//push_back cluster index and weight
+	if(isAnim)
+	{
+	int BoneIndex = 0;
+	SetBoneAtVertecis( pFbxRootNode, BoneIndex , VertexVector);
+
+	}*/
+	CTexturedNormalVertex *pVertices = new CTexturedNormalVertex[m_nVertices];
+	for ( int i = 0;  i < m_nVertices; ++i )
+	{
+		pVertices[i] = VertexVector[i];
+	}
+
+	D3D11_BUFFER_DESC d3dBufferDesc;
+	ZeroMemory(&d3dBufferDesc, sizeof(D3D11_BUFFER_DESC));
+	d3dBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+	d3dBufferDesc.ByteWidth = m_nStride[0] * m_nVertices;
+	d3dBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	d3dBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	D3D11_SUBRESOURCE_DATA d3dBufferData;
+	ZeroMemory(&d3dBufferData, sizeof(D3D11_SUBRESOURCE_DATA));
+	d3dBufferData.pSysMem = pVertices;
+	pd3dDevice->CreateBuffer(&d3dBufferDesc, &d3dBufferData, &m_ppd3dVertexBuffers[0]);
+
+	SetRasterizerState(pd3dDevice);
+
+	/*
+	if ( isAnim )
+	{
+	SetCurrentAnimStack(0);
+	// Initialize the frame period.
+	m_pFbxScene->GetGlobalSettings().SetTimeMode(  FbxTime::eFrames100  ) ;
+	m_FrameTime.SetTime(0, 0, 0, 1, 0, m_pFbxScene->GetGlobalSettings().GetTimeMode());
+	}*/
+	//return m_nVertices;
+
 }

@@ -92,7 +92,7 @@ void CShader::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, CCamera *p
 
 
 
-void CShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhysics, PxScene *pPxScene)
+void CShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhysics, PxScene *pPxScene, FbxManager *pFbxSdkManager)
 {
 }
 
@@ -149,7 +149,7 @@ void CTexturedIlluminatedShader::CreateShaderVariables(ID3D11Device *pd3dDevice)
 	pd3dDevice->CreateBuffer(&d3dBufferDesc, NULL, &m_pd3dcbMaterial);
 
 }
-void CTexturedIlluminatedShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhysics, PxScene *pPxScene){
+void CTexturedIlluminatedShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhysics, PxScene *pPxScene, FbxManager *pFbxSdkManager){
 
 }
 void CTexturedIlluminatedShader::UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext, CTexture *pTexture)
@@ -364,7 +364,7 @@ void CInstancingShader::CreateShader(ID3D11Device *pd3dDevice){
 	CreatePixelShaderFromFile(pd3dDevice, L"Effect.fx", "PSInstancedTexturedLighting", "ps_5_0", &m_pd3dPixelShader);
 }
 
-void CInstancingShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhysics, PxScene *pPxScene){
+void CInstancingShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhysics, PxScene *pPxScene, FbxManager *pFbxSdkManager){
 	CreateShaderVariables(pd3dDevice);
 	CMaterial *pMaterial = new CMaterial;
 	pMaterial->m_Material.m_d3dxcDiffuse = D3DXCOLOR(1.0f,1.0f,1.0f,1.0f);
@@ -428,6 +428,18 @@ void CInstancingShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhy
 		pPlaneObject->BuildObjects(pPxPhysics,pPxScene);
 		pPlaneObject->SetPosition(D3DXVECTOR3(0, -100, 0));
 		m_ObjectsVector.push_back(make_pair(1,pPlaneObject));
+	}
+
+	m_InstanceDataVector.push_back(InstanceData(new CFbxMeshIlluminatedTextured(pd3dDevice,pFbxSdkManager,"Data/Model/a.fbx",100,100,100),CreateInstanceBuffer(pd3dDevice,MAX_INSTANCE,sizeof(D3DXMATRIX),NULL),1));
+	CStaticObject *pBarrelObject = NULL;
+	for(int i=0; i<m_InstanceDataVector[2].m_nObjects; ++i){
+		pBarrelObject = new CStaticObject();
+		pBarrelObject->SetMesh(m_InstanceDataVector[2].GetMesh());
+		pBarrelObject->SetMaterial(pMaterial);
+		pBarrelObject->SetTexture(m_TexturesVector[1]);
+		pBarrelObject->BuildObjects(pPxPhysics,pPxScene);
+		pBarrelObject->SetPosition(D3DXVECTOR3(0, 0, 0));
+		m_ObjectsVector.push_back(make_pair(2,pBarrelObject));
 	}
 	//인스턴스 데이터(렌더링할 객체들의 위치 벡터 배열)를 메쉬의 정점 버퍼에 추가한다.
 	for(int i=0; i<m_InstanceDataVector.size();++i){
@@ -547,7 +559,7 @@ CSkyBoxShader::~CSkyBoxShader()
 {
 }
 
-void CSkyBoxShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhysics, PxScene *pPxScene)
+void CSkyBoxShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhysics, PxScene *pPxScene, FbxManager *pFbxSdkManager)
 {
 	CreateShaderVariables(pd3dDevice);
 	/*
@@ -647,7 +659,7 @@ CTerrainShader::~CTerrainShader()
 {
 }
 
-void CTerrainShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhysics, PxScene *pPxScene)
+void CTerrainShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhysics, PxScene *pPxScene, FbxManager *pFbxSdkManager)
 {
 	CTexturedIlluminatedShader::CreateShaderVariables(pd3dDevice);
 

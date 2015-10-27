@@ -308,7 +308,7 @@ void CGameFramework::ReleaseObjects()
 void CGameFramework::ProcessInput()
 {
 	long double Dist=0;
-	DWORD dwForward = 0,dwBackward = 0,dwLeft = 0,dwRight = 0;
+	DWORD dwForward=0, dwBackward=0, dwLeft=0, dwRight=0, dwUp=0, dwDown=0;
 	bool bProcessedByScene = false;
 	if (m_pScene) bProcessedByScene = m_pScene->ProcessInput();
 	if (!bProcessedByScene)
@@ -321,9 +321,8 @@ void CGameFramework::ProcessInput()
 			if (pKeyBuffer['S'] & 0xF0) dwBackward |= DIR_BACKWARD;
 			if (pKeyBuffer['A'] & 0xF0) dwLeft |= DIR_LEFT;
 			if (pKeyBuffer['D'] & 0xF0) dwRight |= DIR_RIGHT;
-			/*
-			if (pKeyBuffer[VK_SPACE] & 0xF0) dwDirection |= DIR_UP;
-			if (pKeyBuffer[VK_NEXT] & 0xF0) dwDirection |= DIR_DOWN;*/
+			if (pKeyBuffer['Q'] & 0xF0) {dwUp |= DIR_UP;}
+			if (pKeyBuffer['Z'] & 0xF0) dwDown |= DIR_DOWN;
 		}	    
 		float cxDelta = 0.0f, cyDelta = 0.0f;
 		POINT ptCursorPos;
@@ -335,7 +334,7 @@ void CGameFramework::ProcessInput()
 			cyDelta = (float)(ptCursorPos.y - m_ptOldCursorPos.y) / 3.0f;
 			SetCursorPos(m_ptOldCursorPos.x, m_ptOldCursorPos.y);
 		} 
-		if ((dwForward != 0) || (dwBackward != 0) || (dwLeft != 0) || (dwRight != 0) || (cxDelta != 0.0f) || (cyDelta != 0.0f))
+		if ((dwForward != 0) || (dwBackward != 0) || (dwLeft != 0) || (dwRight != 0) || (dwUp != 0) || (dwDown != 0) ||(cxDelta != 0.0f) || (cyDelta != 0.0f))
 		{
 			if (cxDelta || cyDelta) 
 			{
@@ -350,6 +349,10 @@ void CGameFramework::ProcessInput()
 				m_ppPlayers[0]->Move(dwLeft, 300.0f * m_GameTimer.GetTimeElapsed(),false);
 			if(dwRight==DIR_RIGHT)
 				m_ppPlayers[0]->Move(dwRight, 300.0f * m_GameTimer.GetTimeElapsed(),false);
+			if(dwUp==DIR_UP)
+				m_ppPlayers[0]->Move(dwUp, 300.0f * m_GameTimer.GetTimeElapsed(),false);
+			if(dwDown==DIR_DOWN)
+				m_ppPlayers[0]->Move(dwDown, 300.0f * m_GameTimer.GetTimeElapsed(),false);
 		}
 		m_ppPlayers[0]->Update(m_GameTimer.GetTimeElapsed());
 	}

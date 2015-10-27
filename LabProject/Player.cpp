@@ -194,7 +194,7 @@ void CPlayer::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext)
 		m_pShader->UpdateShaderVariables(pd3dImmediateDeviceContext, &m_d3dxmtxWorld);
 		m_pShader->Render(pd3dImmediateDeviceContext,m_pCamera);
 	}
-	if (m_pMesh) m_pMesh->Render(pd3dImmediateDeviceContext);
+	CGameObject::Render(pd3dImmediateDeviceContext);
 }
 
 void CPlayer::OnPlayerUpdated(float fTimeElapsed)
@@ -267,7 +267,7 @@ CGamePlayer::~CGamePlayer()
 void CGamePlayer::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext)
 {
 	DWORD nCurrentCameraMode = (m_pCamera) ? m_pCamera->GetMode() : 0x00;
-    if ((nCurrentCameraMode == THIRD_PERSON_CAMERA) && m_pMesh)
+    if ((nCurrentCameraMode == THIRD_PERSON_CAMERA) && m_MeshesVector[0])
 	{
 		D3DXMATRIX mtxRotate;
 		D3DXMatrixRotationYawPitchRoll(&mtxRotate, 0.0f, (float)D3DXToRadian(90.0f), 0.0f);

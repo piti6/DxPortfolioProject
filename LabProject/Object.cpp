@@ -8,7 +8,6 @@
 CGameObject::CGameObject()
 {
 	D3DXMatrixIdentity(&m_d3dxmtxWorld);
-	m_pMesh = NULL;
 	m_pMaterial = NULL;
 	m_pTexture = NULL;
 	m_bIsActive = true;
@@ -16,7 +15,9 @@ CGameObject::CGameObject()
 
 CGameObject::~CGameObject()
 {
-	if (m_pMesh)			m_pMesh->Release();
+	for(int i=0; i<m_MeshesVector.size(); ++i){
+		if(m_MeshesVector[i]) m_MeshesVector[i]->Release();
+	}
 	if (m_pMaterial)		m_pMaterial->Release();
 	if (m_pTexture)			m_pTexture->Release();
 }
@@ -45,9 +46,7 @@ void CGameObject::SetMaterial(CMaterial *pMaterial)
 
 void CGameObject::SetMesh(CMesh *pMesh)
 {
-	if (m_pMesh) m_pMesh->Release();
-	m_pMesh = pMesh;
-	if (m_pMesh) m_pMesh->AddRef();
+	m_MeshesVector.push_back(pMesh);
 }
 
 CMaterial* CGameObject::GetMaterial()
@@ -60,9 +59,11 @@ CTexture* CGameObject::GetTexture()
 	return m_pTexture;
 }
 
-CMesh* CGameObject::GetMesh()
+CMesh* CGameObject::GetMesh(int _Index)
 {
-	return m_pMesh;
+	if(0 <= _Index  && _Index < m_MeshesVector.size())
+		return m_MeshesVector[_Index];
+	return NULL;
 }
 
 D3DXMATRIX CGameObject::GetWorldMatrix()
@@ -78,9 +79,10 @@ void CGameObject::Animate(float fTimeElapsed,PxScene *pPxScene)
 {
 }
 
-void CGameObject::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, CCamera *pCamera)
+void CGameObject::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext)
 {
-	if (m_pMesh) m_pMesh->Render(pd3dImmediateDeviceContext);
+	for(int i=0; i<m_MeshesVector.size(); ++i)
+		if (m_MeshesVector[i]) m_MeshesVector[i]->Render(pd3dImmediateDeviceContext);
 }
 
 void CGameObject::SetPosition(D3DXVECTOR3 d3dxvPosition) 
@@ -173,9 +175,8 @@ void CStaticObject::BuildObjects(PxPhysics *pPxPhysics, PxScene *pPxScene)
 {
 	m_pPxMaterial = pPxPhysics->createMaterial(0.9,0.9,0.001);
 	PxTransform _PxTransform(GetPosition().x,GetPosition().y,GetPosition().z);
-
-	D3DXVECTOR3 _d3dxvBoundMinimum = m_pMesh->GetBoundingCube().GetMinimum();
-	D3DXVECTOR3 _d3dxvBoundMaximum = m_pMesh->GetBoundingCube().GetMaximum();
+	D3DXVECTOR3 _d3dxvBoundMinimum = m_MeshesVector[0]->GetBoundingCube().GetMinimum();
+	D3DXVECTOR3 _d3dxvBoundMaximum = m_MeshesVector[0]->GetBoundingCube().GetMaximum();
 	D3DXVECTOR3 _d3dxvExtents = 
 		D3DXVECTOR3((abs(_d3dxvBoundMinimum.x) + abs(_d3dxvBoundMaximum.x))/2,(abs(_d3dxvBoundMinimum.y) + abs(_d3dxvBoundMaximum.y))/2,(abs(_d3dxvBoundMinimum.z) + abs(_d3dxvBoundMaximum.z))/2);
 	PxBoxGeometry _PxBoxGeometry(_d3dxvExtents.x,_d3dxvExtents.y,_d3dxvExtents.z);
@@ -216,8 +217,8 @@ void CDynamicObject::BuildObjects(PxPhysics *pPxPhysics, PxScene *pPxScene)
 	m_pPxMaterial = pPxPhysics->createMaterial(0.9,0.9,0.0001f);
 	PxTransform _PxTransform(GetPosition().x,GetPosition().y,GetPosition().z);
 
-	D3DXVECTOR3 _d3dxvBoundMinimum = m_pMesh->GetBoundingCube().GetMinimum();
-	D3DXVECTOR3 _d3dxvBoundMaximum = m_pMesh->GetBoundingCube().GetMaximum();
+	D3DXVECTOR3 _d3dxvBoundMinimum = m_MeshesVector[0]->GetBoundingCube().GetMinimum();
+	D3DXVECTOR3 _d3dxvBoundMaximum = m_MeshesVector[0]->GetBoundingCube().GetMaximum();
 	D3DXVECTOR3 _d3dxvExtents = 
 		D3DXVECTOR3((abs(_d3dxvBoundMinimum.x) + abs(_d3dxvBoundMaximum.x))/2,(abs(_d3dxvBoundMinimum.y) + abs(_d3dxvBoundMaximum.y))/2,(abs(_d3dxvBoundMinimum.z) + abs(_d3dxvBoundMaximum.z))/2);
 	PxBoxGeometry _PxBoxGeometry(_d3dxvExtents.x,_d3dxvExtents.y,_d3dxvExtents.z);
@@ -292,6 +293,43 @@ CSkyBox::CSkyBox()
 
 CSkyBox::~CSkyBox()
 {
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+
+CHeightMapTerrain::CHeightMapTerrain(ID3D11Device *pd3dDevice, LPCTSTR pFileName, int nWidth, int nLength, int nBlockWidth, int nBlockLength, D3DXVECTOR3 d3dxvScale)
+{
+	m_nWidth = nWidth;
+	m_nLength = nLength;
+
+	int cxQuadsPerBlock = nBlockWidth - 1;
+	int czQuadsPerBlock = nBlockLength - 1;
+
+	m_d3dxvScale = d3dxvScale;
+
+	m_pHeightMap = new CHeightMap(pFileName, nWidth, nLength, d3dxvScale);
+
+	long cxBlocks = (m_nWidth - 1) / cxQuadsPerBlock;
+	long czBlocks = (m_nLength - 1) / czQuadsPerBlock;
+
+	CHeightMapGridMesh *pHeightMapGridMesh = NULL;
+	for (int z = 0, zStart = 0; z < czBlocks; ++z)
+	{
+		for (int x = 0, xStart = 0; x < cxBlocks; ++x)
+		{
+			xStart = x * (nBlockWidth - 1);
+			zStart = z * (nBlockLength - 1);
+			pHeightMapGridMesh = new CHeightMapGridMesh(pd3dDevice, xStart, zStart, nBlockWidth, nBlockLength, d3dxvScale, m_pHeightMap);
+			SetMesh(pHeightMapGridMesh);
+		}
+	}
+	//D3DXMatrixIdentity(&m_d3dxmtxWorld);
+}
+
+CHeightMapTerrain::~CHeightMapTerrain(void)
+{
+	if (m_pHeightMap) delete m_pHeightMap;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

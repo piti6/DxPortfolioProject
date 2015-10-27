@@ -38,7 +38,7 @@ public:
 
 	CMaterial*			GetMaterial();
 	CTexture*			GetTexture();
-	CMesh*				GetMesh();
+	CMesh*				GetMesh(int _Index);
 	D3DXMATRIX			GetWorldMatrix();
 	virtual D3DXVECTOR3 GetPosition();
 	
@@ -57,12 +57,18 @@ public:
 	virtual void Animate(float fTimeElapsed,PxScene *pPxScene);
 	virtual void BuildObjects(PxPhysics *pPxPhysics, PxScene *pPxScene);
 
-	virtual void Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, CCamera *pCamera=NULL);
+	virtual void Render(ID3D11DeviceContext *pd3dImmediateDeviceContext);
 
 protected:
 	bool							m_bIsActive;
 
-	CMesh							*m_pMesh;
+	/*
+	CMesh							**m_ppMeshes;
+	int								m_nMeshes;
+	*/
+
+	vector<CMesh*>					m_MeshesVector;
+
 	CMaterial						*m_pMaterial;
 	CTexture						*m_pTexture;
 
@@ -125,3 +131,37 @@ public:
 	CSkyBox();
 	virtual ~CSkyBox();
 };
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+
+class CHeightMapTerrain : public CGameObject
+{
+public:
+	CHeightMapTerrain(ID3D11Device *pd3dDevice, LPCTSTR pFileName, int nWidth, int nLength, int nBlockWidth, int nBlockLength, D3DXVECTOR3 d3dxvScale);
+	virtual ~CHeightMapTerrain();
+
+private:
+	CHeightMap					*m_pHeightMap;
+
+	int							m_nWidth;
+	int							m_nLength;
+
+	D3DXVECTOR3					m_d3dxvScale;
+
+public:
+	float GetHeight(float x, float z, bool bReverseQuad = false) { return(m_pHeightMap->GetHeight(x, z, bReverseQuad) * m_d3dxvScale.y); } //World
+	D3DXVECTOR3 GetNormal(float x, float z) { return(m_pHeightMap->GetHeightMapNormal(int(x / m_d3dxvScale.x), int(z / m_d3dxvScale.z))); }
+
+	int GetHeightMapWidth() { return(m_pHeightMap->GetHeightMapWidth()); }
+	int GetHeightMapLength() { return(m_pHeightMap->GetHeightMapLength()); }
+
+	D3DXVECTOR3 GetScale() { return(m_d3dxvScale); }
+	float GetWidth() { return(m_nWidth * m_d3dxvScale.x); }
+	float GetLength() { return(m_nLength * m_d3dxvScale.z); }
+
+	//float GetPeakHeight() { return(m_bcMeshBoundingCube.m_d3dxvMaximum.y); }
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//

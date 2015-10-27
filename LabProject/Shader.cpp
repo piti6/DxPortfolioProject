@@ -191,19 +191,21 @@ void CTexturedIlluminatedShader::Render(ID3D11DeviceContext *pd3dImmediateDevice
 		if (m_ObjectsVector[i].second->isActive())
 		{
 			//객체의 메쉬의 바운딩 박스(모델 좌표계)를 객체의 월드 변환 행렬로 변환하고 새로운 바운딩 박스를 계산한다.
-			bcBoundingCube = m_ObjectsVector[i].second->GetMesh()->GetBoundingCube();
+			bcBoundingCube = m_ObjectsVector[i].second->GetMesh(0)->GetBoundingCube();
 			bcBoundingCube.Transform(&m_ObjectsVector[i].second->GetWorldMatrix());
 			//바운딩 박스(월드 좌표계)가 카메라의 절두체에 포함되는 가를 검사하고 포함되는 경우에 렌더링한다. 
 			bIsVisible = pCamera->IsInFrustum(bcBoundingCube.GetMinimum(), bcBoundingCube.GetMaximum());
+			//bIsVisible = true;
+			
 			if (bIsVisible)
 			{
-
+			
 				if (m_ObjectsVector[i].second->GetTexture()) 
 					UpdateShaderVariables(pd3dImmediateDeviceContext, m_ObjectsVector[i].second->GetTexture());
 				if (m_ObjectsVector[i].second->GetMaterial()) 
 					UpdateShaderVariables(pd3dImmediateDeviceContext, &m_ObjectsVector[i].second->GetMaterial()->m_Material);
 				UpdateShaderVariables(pd3dImmediateDeviceContext, &m_ObjectsVector[i].second->GetWorldMatrix());
-				m_ObjectsVector[i].second->Render(pd3dImmediateDeviceContext, pCamera);
+				m_ObjectsVector[i].second->Render(pd3dImmediateDeviceContext);
 			}
 		}
 	}
@@ -514,7 +516,7 @@ void CInstancingShader::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, 
 				if (m_ObjectsVector[j].second->isActive())
 				{
 					//객체의 메쉬의 바운딩 박스(모델 좌표계)를 객체의 월드 변환 행렬로 변환하고 새로운 바운딩 박스를 계산한다.
-					bcBoundingCube = m_ObjectsVector[j].second->GetMesh()->GetBoundingCube();
+					bcBoundingCube = m_ObjectsVector[j].second->GetMesh(0)->GetBoundingCube();
 					bcBoundingCube.Transform(&m_ObjectsVector[j].second->GetWorldMatrix());
 					//바운딩 박스(월드 좌표계)가 카메라의 절두체에 포함되는 가를 검사하고 포함되는 경우에 렌더링한다. 
 					bIsVisible = pCamera->IsInFrustum(bcBoundingCube.GetMinimum(), bcBoundingCube.GetMaximum());
@@ -629,6 +631,74 @@ void CSkyBoxShader::Render(ID3D11DeviceContext *pd3dDeviceContext, CCamera *pCam
 		if (m_ObjectsVector[i].second->GetTexture()) 
 			CTexturedShader::UpdateShaderVariables(pd3dDeviceContext, m_ObjectsVector[i].second->GetTexture());
 		CTexturedShader::UpdateShaderVariables(pd3dDeviceContext, &m_ObjectsVector[i].second->GetWorldMatrix());
-		m_ObjectsVector[i].second->Render(pd3dDeviceContext, pCamera);
+		m_ObjectsVector[i].second->Render(pd3dDeviceContext);
 	}
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+
+
+CTerrainShader::CTerrainShader()
+{
+}
+
+CTerrainShader::~CTerrainShader()
+{
+}
+
+void CTerrainShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhysics, PxScene *pPxScene)
+{
+	CTexturedIlluminatedShader::CreateShaderVariables(pd3dDevice);
+
+	CMaterial *pTerrainMaterial = new CMaterial();
+	pTerrainMaterial->m_Material.m_d3dxcDiffuse = D3DXCOLOR(1.0f,1.0f,1.0f,1.0f);
+	pTerrainMaterial->m_Material.m_d3dxcAmbient = D3DXCOLOR(1.0f,1.0f,1.0f,1.0f);
+	pTerrainMaterial->m_Material.m_d3dxcSpecular = D3DXCOLOR(1.0f,1.0f,1.0f,1.0f);
+	pTerrainMaterial->m_Material.m_d3dxcEmissive = D3DXCOLOR(1.0f,1.0f,1.0f,1.0f);
+	
+
+	ID3D11SamplerState *pd3dBaseSamplerState = NULL;
+    D3D11_SAMPLER_DESC d3dSamplerDesc;
+    ZeroMemory(&d3dSamplerDesc, sizeof(D3D11_SAMPLER_DESC));
+    d3dSamplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+    d3dSamplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+    d3dSamplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+    d3dSamplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+    d3dSamplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+    d3dSamplerDesc.MinLOD = 0;
+    d3dSamplerDesc.MaxLOD = 0;
+    pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &pd3dBaseSamplerState);
+
+	ID3D11SamplerState *pd3dDetailSamplerState = NULL;
+    d3dSamplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+    d3dSamplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+    d3dSamplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+    pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &pd3dDetailSamplerState);
+
+	CTexture *pTerrainTexture = new CTexture(1);
+    ID3D11ShaderResourceView *pd3dsrvBaseTexture = NULL;    
+    D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("Data/Image/Terrain/Base_Texture2.jpg"), NULL, NULL, &pd3dsrvBaseTexture, NULL);
+	pTerrainTexture->SetTexture(0, pd3dsrvBaseTexture,pd3dBaseSamplerState);
+	pd3dsrvBaseTexture->Release();
+	pd3dBaseSamplerState->Release();
+	/*
+	ID3D11ShaderResourceView *pd3dsrvDetailTexture = NULL;    
+    D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("Assets/Image/Terrain/Detail_Texture_7.jpg"), NULL, NULL, &pd3dsrvDetailTexture, NULL);
+	pTerrainTexture->SetTexture(1, pd3dsrvDetailTexture,pd3dDetailSamplerState);
+	pd3dsrvDetailTexture->Release();
+	pd3dDetailSamplerState->Release();
+	*/
+	D3DXVECTOR3 d3dxvScale(8.0f, 2.0f, 8.0f);
+	CHeightMapTerrain *pHeightMapTerrain = new CHeightMapTerrain(pd3dDevice, _T("Data/Terrain/HeightMap2.raw"), 257, 257, 257, 257, d3dxvScale);
+	pHeightMapTerrain->SetPosition(D3DXVECTOR3(0,0,0));
+	pHeightMapTerrain->SetMaterial(pTerrainMaterial);
+	pHeightMapTerrain->SetTexture(pTerrainTexture);
+	//pHeightMapTerrain->Rotate(180,0,0);
+	m_ObjectsVector.push_back(make_pair(0, pHeightMapTerrain));
+}
+
+CHeightMapTerrain *CTerrainShader::GetTerrain()
+{
+	return((CHeightMapTerrain *)m_ObjectsVector[0].second);
 }

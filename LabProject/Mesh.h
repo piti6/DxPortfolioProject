@@ -70,13 +70,11 @@ public:
 
 public:
 //정점이 포함된 삼각형의 법선벡터를 계산하는 함수이다.
-	D3DXVECTOR3 CalculateTriAngleNormal(BYTE *pVertices, USHORT nIndex0, USHORT nIndex1, USHORT nIndex2);
+	D3DXVECTOR3 CalculateTriAngleNormal(BYTE *pVertices, UINT nIndex0, UINT nIndex1, UINT nIndex2);
 	void SetTriAngleListVertexNormal(BYTE *pVertices);
 //정점의 법선벡터의 평균을 계산하는 함수이다.
-	void SetAverageVertexNormal(BYTE *pVertices, WORD *pIndices, int nPrimitives, int nOffset, bool bStrip);
-	void CalculateVertexNormal(BYTE *pVertices, WORD *pIndices);
-
-	virtual void Render(ID3D11DeviceContext *pd3dImmediateDeviceContext);
+	void SetAverageVertexNormal(BYTE *pVertices, UINT *pIndices, int nPrimitives, int nOffset, bool bStrip);
+	void CalculateVertexNormal(BYTE *pVertices, UINT *pIndices);
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -86,9 +84,6 @@ class CCubeMeshIlluminated : public CMeshIlluminated
 public:
 	CCubeMeshIlluminated(ID3D11Device *pd3dDevice, float fWidth=2.0f, float fHeight=2.0f, float fDepth=2.0f);
 	virtual ~CCubeMeshIlluminated();
-
-	virtual void SetRasterizerState(ID3D11Device *pd3dDevice);
-	virtual void Render(ID3D11DeviceContext *pd3dImmediateDeviceContext);
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -96,11 +91,8 @@ public:
 class CCubeMeshIlluminatedTextured : public CMeshIlluminated
 {
 public:
-    CCubeMeshIlluminatedTextured(ID3D11Device *pd3dDevice, float fWidth=2.0f,       float fHeight=2.0f, float fDepth=2.0f);
+    CCubeMeshIlluminatedTextured(ID3D11Device *pd3dDevice, float fWidth=2.0f, float fHeight=2.0f, float fDepth=2.0f);
     virtual ~CCubeMeshIlluminatedTextured();
-
-    virtual void SetRasterizerState(ID3D11Device *pd3dDevice);
-    virtual void Render(ID3D11DeviceContext *pd3dDeviceContext);
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -110,13 +102,34 @@ class CSkyBoxMesh : public CMeshTextured
 public:
 	CSkyBoxMesh(ID3D11Device *pd3dDevice, float fWidth=20.0f, float fHeight=20.0f, float fDepth=20.0f);
 	virtual ~CSkyBoxMesh();
-	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext);
-	virtual void SetRasterizerState(ID3D11Device *pd3dDevice);
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
 //
-class CHeightMapGridMesh : public CCubeMeshIlluminatedTextured
+
+class CHeightMap
+{
+private:
+	BYTE						*m_pHeightMapImage;
+	int							m_nWidth;
+	int							m_nLength;
+	D3DXVECTOR3					m_d3dxvScale;
+
+public:
+	CHeightMap(LPCTSTR pFileName, int nWidth, int nLength, D3DXVECTOR3 d3dxvScale);
+	virtual ~CHeightMap();
+
+	float GetHeight(float x, float z, bool bReverseQuad = false);
+	D3DXVECTOR3 GetHeightMapNormal(int x, int z);
+	D3DXVECTOR3 GetScale() { return(m_d3dxvScale); }
+
+	BYTE *GetHeightMapImage() { return(m_pHeightMapImage); }
+	int GetHeightMapWidth() { return(m_nWidth); }
+	int GetHeightMapLength() { return(m_nLength); }
+};
+
+
+class CHeightMapGridMesh : public CMeshIlluminated
 {
 protected:
 	int							m_nWidth;

@@ -58,7 +58,7 @@ bool CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 
 void CScene::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhysics, PxScene *pPxScene)
 {
-	m_nShaders = 2;
+	m_nShaders = 3;
 	m_ppShaders = new CShader*[m_nShaders];
 	m_pInstancingShader = new CInstancingShader();
 	m_ppShaders[0] = m_pInstancingShader;
@@ -68,6 +68,10 @@ void CScene::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhysics, PxSce
 	m_ppShaders[1] = new CSkyBoxShader();
 	m_ppShaders[1]->CreateShader(pd3dDevice);
 	m_ppShaders[1]->BuildObjects(pd3dDevice,pPxPhysics,pPxScene);
+
+	m_ppShaders[2] = new CTerrainShader();
+	m_ppShaders[2]->CreateShader(pd3dDevice);
+	m_ppShaders[2]->BuildObjects(pd3dDevice,pPxPhysics,pPxScene);
 
 	BuildLights(pd3dDevice);
 }
@@ -118,7 +122,7 @@ void CScene::BuildLights(ID3D11Device *pd3dDevice)
 	m_pLights = new LIGHTS;
 	//::ZeroMemory(m_pLights, sizeof(LIGHTS));
 	//게임 월드 전체를 비추는 주변조명을 설정한다.
-	m_pLights->m_d3dxcGlobalAmbient = D3DXCOLOR(0.1f, 0.1f, 0.1f, 1.0f);
+	m_pLights->m_d3dxcGlobalAmbient = D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f);
 
 	//3개의 조명(점 광원, 스팟 광원, 방향성 광원)을 설정한다.
 	m_pLights->m_pLights[0].m_bEnable = 1.0f;

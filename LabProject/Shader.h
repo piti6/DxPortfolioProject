@@ -158,3 +158,17 @@ public:
 	virtual void BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhysics, PxScene *pPxScene);
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, CCamera *pCamera);
 };
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+
+class CTerrainShader : public CTexturedIlluminatedShader
+{
+public:
+	CTerrainShader();
+	virtual ~CTerrainShader();
+
+	virtual void BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhysics, PxScene *pPxScene);
+
+	CHeightMapTerrain *GetTerrain();
+};

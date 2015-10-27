@@ -56,6 +56,13 @@ void CMesh::Release()
 
 void CMesh::SetRasterizerState(ID3D11Device *pd3dDevice)
 {
+	D3D11_RASTERIZER_DESC d3dRasterizerDesc;
+	ZeroMemory(&d3dRasterizerDesc, sizeof(D3D11_RASTERIZER_DESC));
+	d3dRasterizerDesc.CullMode = D3D11_CULL_BACK;
+	d3dRasterizerDesc.FillMode = D3D11_FILL_SOLID;
+	//d3dRasterizerDesc.FillMode = D3D11_FILL_WIREFRAME;
+	d3dRasterizerDesc.DepthClipEnable = true;
+	pd3dDevice->CreateRasterizerState(&d3dRasterizerDesc, &m_pd3dRasterizerState);
 }
 
 void CMesh::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext)
@@ -64,7 +71,7 @@ void CMesh::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext)
 	if (m_pd3dIndexBuffer) pd3dImmediateDeviceContext->IASetIndexBuffer(m_pd3dIndexBuffer, DXGI_FORMAT_R16_UINT, 0);
 	if (m_d3dPrimitiveTopology) pd3dImmediateDeviceContext->IASetPrimitiveTopology(m_d3dPrimitiveTopology);
 	if (m_pd3dRasterizerState) pd3dImmediateDeviceContext->RSSetState(m_pd3dRasterizerState);
-
+	
 	if (m_pd3dIndexBuffer) 
 		pd3dImmediateDeviceContext->DrawIndexed(m_nIndices, 0, 0);
 	else
@@ -134,7 +141,8 @@ CMeshIlluminated::CMeshIlluminated(ID3D11Device *pd3dDevice) : CMesh(pd3dDevice)
 CMeshIlluminated::~CMeshIlluminated()
 {
 }
-void CMeshIlluminated::CalculateVertexNormal(BYTE *pVertices, WORD *pIndices)
+
+void CMeshIlluminated::CalculateVertexNormal(BYTE *pVertices, UINT *pIndices)
 {
 	switch (m_d3dPrimitiveTopology)
 	{
@@ -172,7 +180,7 @@ void CMeshIlluminated::SetTriAngleListVertexNormal(BYTE *pVertices)
 	}
 }
 //삼각형의 세 정점을 사용하여 삼각형의 법선 벡터를 계산한다.
-D3DXVECTOR3 CMeshIlluminated::CalculateTriAngleNormal(BYTE *pVertices, USHORT nIndex0, USHORT nIndex1, USHORT nIndex2)
+D3DXVECTOR3 CMeshIlluminated::CalculateTriAngleNormal(BYTE *pVertices, UINT nIndex0, UINT nIndex1, UINT nIndex2)
 {
 	D3DXVECTOR3 d3dxvNormal(0.0f, 0.0f, 0.0f);
 	D3DXVECTOR3 d3dxvP0 = *((D3DXVECTOR3 *)(pVertices + (m_nStride[0] * nIndex0)));
@@ -185,7 +193,7 @@ D3DXVECTOR3 CMeshIlluminated::CalculateTriAngleNormal(BYTE *pVertices, USHORT nI
 	return(d3dxvNormal);
 }
 /*프리미티브가 인덱스 버퍼를 사용하는 삼각형 리스트 또는 삼각형 스트립인 경우 정점의 법선 벡터는 그 정점을 포함하는 삼각형의 법선 벡터들의 평균으로 계산한다.*/
-void CMeshIlluminated::SetAverageVertexNormal(BYTE *pVertices, WORD *pIndices, int nPrimitives, int nOffset, bool bStrip)
+void CMeshIlluminated::SetAverageVertexNormal(BYTE *pVertices, UINT *pIndices, int nPrimitives, int nOffset, bool bStrip)
 {
 	D3DXVECTOR3 d3dxvSumOfNormal(0.0f, 0.0f, 0.0f);
 	CNormalVertex *pVertex = NULL;
@@ -208,6 +216,9 @@ void CMeshIlluminated::SetAverageVertexNormal(BYTE *pVertices, WORD *pIndices, i
 		pVertex->SetNormal(d3dxvSumOfNormal);
 	}
 }
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+//
 
 CCubeMeshIlluminated::CCubeMeshIlluminated(ID3D11Device *pd3dDevice, float fWidth, float fHeight, float fDepth) : CMeshIlluminated(pd3dDevice)
 {
@@ -234,7 +245,7 @@ CCubeMeshIlluminated::CCubeMeshIlluminated(ID3D11Device *pd3dDevice, float fWidt
 	m_bcBoundingCube.SetMaximum(D3DXVECTOR3(+fx, +fy, +fz));
 	m_nIndices = 36;
 
-	WORD pIndices[36];
+	UINT pIndices[36];
 	pIndices[0] = 3; pIndices[1] = 1; pIndices[2] = 0;
 	pIndices[3] = 2; pIndices[4] = 1; pIndices[5] = 3;
 	pIndices[6] = 0; pIndices[7] = 5; pIndices[8] = 4;
@@ -277,23 +288,9 @@ CCubeMeshIlluminated::CCubeMeshIlluminated(ID3D11Device *pd3dDevice, float fWidt
 CCubeMeshIlluminated::~CCubeMeshIlluminated()
 {
 }
-void CCubeMeshIlluminated::SetRasterizerState(ID3D11Device *pd3dDevice)
-{
-	D3D11_RASTERIZER_DESC d3dRasterizerDesc;
-	ZeroMemory(&d3dRasterizerDesc, sizeof(D3D11_RASTERIZER_DESC));
-	d3dRasterizerDesc.CullMode = D3D11_CULL_BACK;
-	d3dRasterizerDesc.FillMode = D3D11_FILL_SOLID;
-	pd3dDevice->CreateRasterizerState(&d3dRasterizerDesc, &m_pd3dRasterizerState);
-}
 
-void CCubeMeshIlluminated::Render(ID3D11DeviceContext *pd3dDeviceContext)
-{
-	CMeshIlluminated::Render(pd3dDeviceContext);
-}
-void CMeshIlluminated::Render(ID3D11DeviceContext *pd3dDeviceContext)
-{
-	CMesh::Render(pd3dDeviceContext);
-}
+/////////////////////////////////////////////////////////////////////////////////////////////////
+//
 
 CCubeMeshIlluminatedTextured::CCubeMeshIlluminatedTextured(ID3D11Device *pd3dDevice, float fWidth, float fHeight, float fDepth) : CMeshIlluminated(pd3dDevice)
 {
@@ -379,19 +376,8 @@ CCubeMeshIlluminatedTextured::~CCubeMeshIlluminatedTextured()
 {
 }
 
-void CCubeMeshIlluminatedTextured::SetRasterizerState(ID3D11Device *pd3dDevice)
-{
-	D3D11_RASTERIZER_DESC d3dRasterizerDesc;
-	ZeroMemory(&d3dRasterizerDesc, sizeof(D3D11_RASTERIZER_DESC));
-	d3dRasterizerDesc.CullMode = D3D11_CULL_BACK;
-	d3dRasterizerDesc.FillMode = D3D11_FILL_SOLID;
-	pd3dDevice->CreateRasterizerState(&d3dRasterizerDesc, &m_pd3dRasterizerState);
-}
-
-void CCubeMeshIlluminatedTextured::Render(ID3D11DeviceContext *pd3dDeviceContext)
-{
-	CMeshIlluminated::Render(pd3dDeviceContext);
-}
+/////////////////////////////////////////////////////////////////////////////////////////////////
+//
 
 CSkyBoxMesh::CSkyBoxMesh(ID3D11Device *pd3dDevice, float fWidth, float fHeight, float fDepth) : CMeshTextured(pd3dDevice)
 {
@@ -402,7 +388,8 @@ CSkyBoxMesh::CSkyBoxMesh(ID3D11Device *pd3dDevice, float fWidth, float fHeight, 
 	m_nOffset = new UINT[1];
 	m_nOffset[0] = 0;
 	m_ppd3dVertexBuffers = new ID3D11Buffer*[m_nVertexBuffers];
-	CTexturedVertex pVertices[36];
+	
+	CTexturedVertex *pVertices = new CTexturedVertex[m_nVertices];
 	int i = 0;
 	float fx = fWidth, fy = fHeight , fz = fDepth;
 
@@ -424,33 +411,21 @@ CSkyBoxMesh::CSkyBoxMesh(ID3D11Device *pd3dDevice, float fWidth, float fHeight, 
 	ZeroMemory(&d3dBufferData, sizeof(D3D11_SUBRESOURCE_DATA));
 	d3dBufferData.pSysMem = pVertices;
 	pd3dDevice->CreateBuffer(&d3dBufferDesc, &d3dBufferData, &m_ppd3dVertexBuffers[0]);
-
+	
 	m_bcBoundingCube.SetMinimum(D3DXVECTOR3(-fx, -fy, -fz));
 	m_bcBoundingCube.SetMaximum(D3DXVECTOR3(+fx, +fy, +fz));
 
 	SetRasterizerState(pd3dDevice);
+
+	delete [] pVertices;
 }
 
 CSkyBoxMesh::~CSkyBoxMesh()
 {
 }
-void CSkyBoxMesh::SetRasterizerState(ID3D11Device *pd3dDevice)
-{
-	D3D11_RASTERIZER_DESC d3dRasterizerDesc;
-	ZeroMemory(&d3dRasterizerDesc, sizeof(D3D11_RASTERIZER_DESC));
-	d3dRasterizerDesc.CullMode = D3D11_CULL_NONE;
-	d3dRasterizerDesc.FillMode = D3D11_FILL_SOLID;
-	pd3dDevice->CreateRasterizerState(&d3dRasterizerDesc, &m_pd3dRasterizerState);
-}
-void CSkyBoxMesh::Render(ID3D11DeviceContext *pd3dDeviceContext)
-{
-	if (m_ppd3dVertexBuffers) pd3dDeviceContext->IASetVertexBuffers(0, m_nVertexBuffers, m_ppd3dVertexBuffers, m_nStride, m_nOffset);
-	if (m_pd3dIndexBuffer) pd3dDeviceContext->IASetIndexBuffer(m_pd3dIndexBuffer, DXGI_FORMAT_R16_UINT, 0);
-	if (m_d3dPrimitiveTopology) pd3dDeviceContext->IASetPrimitiveTopology(m_d3dPrimitiveTopology);
-	if (m_pd3dRasterizerState) pd3dDeviceContext->RSSetState(m_pd3dRasterizerState);
-	
-	pd3dDeviceContext->Draw(m_nVertices,0);
-}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+//
 
 CMeshTextured::CMeshTextured(ID3D11Device *pd3dDevice) : CMesh(pd3dDevice)
 {
@@ -462,16 +437,143 @@ CMeshTextured::~CMeshTextured()
 	if (m_pd3dTexCoordBuffer) m_pd3dTexCoordBuffer->Release();
 }
 
-CHeightMapGridMesh::CHeightMapGridMesh(ID3D11Device *pd3dDevice, int xStart, int zStart, int nWidth, int nLength, D3DXVECTOR3 d3dxvScale, void *pContext) : CMeshDetailTexturedIlluminated(pd3dDevice)
+/////////////////////////////////////////////////////////////////////////////////////////////////
+//
+
+CHeightMap::CHeightMap(LPCTSTR pFileName, int nWidth, int nLength, D3DXVECTOR3 d3dxvScale)
+{
+	m_nWidth = nWidth;
+	m_nLength = nLength;
+	m_d3dxvScale = d3dxvScale;
+
+	BYTE *pHeightMapImage = new BYTE[m_nWidth * m_nLength];
+
+	HANDLE hFile = ::CreateFile(pFileName, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | FILE_ATTRIBUTE_READONLY, NULL);
+	DWORD dwBytesRead;
+	::ReadFile(hFile, pHeightMapImage, (m_nWidth * m_nLength), &dwBytesRead, NULL);
+	::CloseHandle(hFile);
+
+	m_pHeightMapImage = new BYTE[m_nWidth * m_nLength];
+	
+	for (int y = 0; y < m_nLength; y++)
+	{
+		for (int x = 0; x < m_nWidth; x++)
+		{
+			m_pHeightMapImage[x + ((m_nLength - 1 - y)*m_nWidth)] = pHeightMapImage[x + (y*m_nWidth)];
+			//m_pHeightMapImage[x + y*m_nWidth] = pHeightMapImage[x + (y*m_nWidth)];
+		}
+	}
+
+	delete[] pHeightMapImage;
+}
+
+CHeightMap::~CHeightMap()
+{
+	if (m_pHeightMapImage) delete[] m_pHeightMapImage;
+}
+
+D3DXVECTOR3 CHeightMap::GetHeightMapNormal(int x, int z)
+{
+	if ((x < 0.0f) || (z < 0.0f) || (x >= m_nWidth) || (z >= m_nLength)) return(D3DXVECTOR3(0.0f, 1.0f, 0.0f));
+
+	int nHeightMapIndex = x + (z * m_nWidth);
+	int xHeightMapAdd, zHeightMapAdd;
+	xHeightMapAdd = (x < (m_nWidth - 1)) ? 1 : -1;
+	zHeightMapAdd = (z < (m_nLength - 1)) ? m_nWidth : -m_nWidth;
+	float y1 = (float)m_pHeightMapImage[nHeightMapIndex] * m_d3dxvScale.y;
+	float y2 = (float)m_pHeightMapImage[nHeightMapIndex + xHeightMapAdd] * m_d3dxvScale.y;
+	float y3 = (float)m_pHeightMapImage[nHeightMapIndex + zHeightMapAdd] * m_d3dxvScale.y;
+	D3DXVECTOR3 vEdge1 = D3DXVECTOR3(0.0f, y3 - y1, m_d3dxvScale.z);
+	D3DXVECTOR3 vEdge2 = D3DXVECTOR3(m_d3dxvScale.x, y2 - y1, 0.0f);
+	D3DXVECTOR3 vNormal;
+	D3DXVec3Cross(&vNormal, &vEdge1, &vEdge2);
+	D3DXVec3Normalize(&vNormal, &vNormal);
+	return(vNormal);
+}
+
+#define _WITH_APPROXIMATE_OPPOSITE_CORNER
+
+float CHeightMap::GetHeight(float fx, float fz, bool bReverseQuad)
+{
+	fx = fx / m_d3dxvScale.x;
+	fz = fz / m_d3dxvScale.z;
+	if ((fx < 0.0f) || (fz < 0.0f) || (fx >= m_nWidth) || (fz >= m_nLength)) 
+		return(0.0f);
+
+	int x = (int)fx;
+	int z = (int)fz;
+	float fxPercent = fx - x;
+	float fzPercent = fz - z;
+	/*
+	float fBottomLeft = (float)m_pHeightMapImage[x + (z*m_nWidth)];
+	float fBottomRight = (float)m_pHeightMapImage[(x + 1) + (z*m_nWidth)];
+	float fTopLeft = (float)m_pHeightMapImage[x + ((z + 1)*m_nWidth)];
+	float fTopRight = (float)m_pHeightMapImage[(x + 1) + ((z + 1)*m_nWidth)];
+#ifdef _WITH_APPROXIMATE_OPPOSITE_CORNER
+	if (bReverseQuad)
+	{
+		if (fzPercent >= fxPercent)
+			fBottomRight = fBottomLeft + (fTopRight - fTopLeft);
+		else
+			fTopLeft = fTopRight + (fBottomLeft - fBottomRight);
+	}
+	else
+	{
+		if (fzPercent < (1.0f - fxPercent))
+			fTopRight = fTopLeft + (fBottomRight - fBottomLeft);
+		else
+			fBottomLeft = fTopLeft + (fBottomRight - fTopRight);
+	}
+#endif
+	float fTopHeight = fTopLeft * (1 - fxPercent) + fTopRight * fxPercent;
+	float fBottomHeight = fBottomLeft * (1 - fxPercent) + fBottomRight * fxPercent;
+	float fHeight = fBottomHeight * (1 - fzPercent) + fTopHeight * fzPercent;
+	*/
+	float fTopLeft = m_pHeightMapImage[x+(z*m_nWidth)];
+	float fTopRight = m_pHeightMapImage[(x+1)+(z*m_nWidth)];
+	float fBottomLeft = m_pHeightMapImage[x+((z+1)*m_nWidth)];
+	float fBottomRight = m_pHeightMapImage[(x+1)+((z+1)*m_nWidth)];
+	//return(fHeight * m_d3dxvScale.y);
+	//return fHeight;
+	#ifdef _WITH_APPROXIMATE_OPPOSITE_CORNER
+	if (bReverseQuad)
+	{
+		if (fxPercent <= fzPercent)
+			fTopRight = fTopLeft + (fBottomRight - fBottomLeft);        
+		else
+			fBottomLeft = fTopLeft + (fBottomRight - fTopRight);
+	} 
+	else
+	{
+		if (fxPercent < (1.0f - fzPercent)) 
+			fBottomRight = fBottomLeft + (fTopRight - fTopLeft);        
+		else
+			fTopLeft = fTopRight + (fBottomLeft - fBottomRight);
+	} 
+#endif
+
+	float fTopHeight = fTopLeft * (1 - fxPercent) + fTopRight * fxPercent;
+	float fBottomHeight = fBottomLeft * (1 - fxPercent) + fBottomRight * fxPercent;
+	float fHeight = fTopHeight * (1 - fzPercent) + fBottomHeight * fzPercent;
+	return(fHeight * m_d3dxvScale.y);
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+//
+
+CHeightMapGridMesh::CHeightMapGridMesh(ID3D11Device *pd3dDevice, int xStart, int zStart, int nWidth, int nLength, D3DXVECTOR3 d3dxvScale, void *pContext) : CMeshIlluminated(pd3dDevice)
 {
 	m_nVertices = nWidth * nLength;
-	m_nType = VERTEX_POSITION_ELEMENT | VERTEX_COLOR_ELEMENT;
 	m_d3dPrimitiveTopology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;
 
-    m_pd3dxvPositions = new D3DXVECTOR3[m_nVertices];
-	D3DXVECTOR3 *pd3dxvNormals = new D3DXVECTOR3[m_nVertices];
-	D3DXVECTOR2 *pd3dxvTexCoords = new D3DXVECTOR2[m_nVertices];
-	D3DXVECTOR2 *pd3dxvDetailTexCoords = new D3DXVECTOR2[m_nVertices];
+	m_nStride = new UINT;
+	*m_nStride = sizeof(CTexturedNormalVertex);
+
+	m_nOffset = new UINT;
+	*m_nOffset = 0;
+
+	m_ppd3dVertexBuffers = new ID3D11Buffer*[m_nVertexBuffers];
+	CTexturedNormalVertex *pVertices = new CTexturedNormalVertex[m_nVertices];
 
 	m_nWidth = nWidth;
 	m_nLength = nLength;
@@ -481,74 +583,58 @@ CHeightMapGridMesh::CHeightMapGridMesh(ID3D11Device *pd3dDevice, int xStart, int
 	int cxHeightMap = pHeightMap->GetHeightMapWidth();
 	int czHeightMap = pHeightMap->GetHeightMapLength();
 	float fHeight = 0.0f, fMinHeight = +FLT_MAX, fMaxHeight = -FLT_MAX;
-	for (int i = 0, z = zStart; z < (zStart + nLength); z++)
+	for (int i = 0, z = zStart; z < (zStart + nLength); ++z)
 	{
-		for (int x = xStart; x < (xStart + nWidth); x++, i++)
+		for (int x = xStart; x < (xStart + nWidth); ++x, ++i)
 		{
 			fHeight = OnGetHeight(x, z, pContext);
-			m_pd3dxvPositions[i] = D3DXVECTOR3((x*m_d3dxvScale.x), fHeight, (z*m_d3dxvScale.z));
-			pd3dxvNormals[i] = pHeightMap->GetHeightMapNormal(x, z);
-			pd3dxvTexCoords[i] = D3DXVECTOR2(float(x)/float(cxHeightMap-1), float(czHeightMap-1-z)/float(czHeightMap-1));
-			pd3dxvDetailTexCoords[i] = D3DXVECTOR2(float(x)/float(m_d3dxvScale.x*0.125f), float(z)/float(m_d3dxvScale.z*0.125f));
+			//pVertices[i] = CTexturedNormalVertex(D3DXVECTOR3((x*m_d3dxvScale.x), fHeight, (z*m_d3dxvScale.z)), D3DXVECTOR3(0,0,0), D3DXVECTOR2(float(x)/float(cxHeightMap-1), float(czHeightMap-1-z)/float(czHeightMap-1)));
+			pVertices[i] = CTexturedNormalVertex(D3DXVECTOR3((x*m_d3dxvScale.x), fHeight, (z*m_d3dxvScale.z)), pHeightMap->GetHeightMapNormal(x, z), D3DXVECTOR2(float(x)/float(cxHeightMap-1), float(czHeightMap-1-z)/float(czHeightMap-1)));
 			if (fHeight < fMinHeight) fMinHeight = fHeight;
 			if (fHeight > fMaxHeight) fMaxHeight = fHeight;
 		}
 	}
 
+	
 	D3D11_BUFFER_DESC d3dBufferDesc;
 	ZeroMemory(&d3dBufferDesc, sizeof(D3D11_BUFFER_DESC));
-    d3dBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-    d3dBufferDesc.ByteWidth = sizeof(D3DXVECTOR3) * m_nVertices;
-    d3dBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	d3dBufferDesc.Usage = D3D11_USAGE_DEFAULT;
+	d3dBufferDesc.ByteWidth = m_nStride[0] * m_nVertices;
+	d3dBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 	d3dBufferDesc.CPUAccessFlags = 0;
-    D3D11_SUBRESOURCE_DATA d3dBufferData;
+	D3D11_SUBRESOURCE_DATA d3dBufferData;
 	ZeroMemory(&d3dBufferData, sizeof(D3D11_SUBRESOURCE_DATA));
-    d3dBufferData.pSysMem = m_pd3dxvPositions;
-    pd3dDevice->CreateBuffer(&d3dBufferDesc, &d3dBufferData, &m_pd3dPositionBuffer);
-
-	d3dBufferDesc.ByteWidth = sizeof(D3DXVECTOR3) * m_nVertices;
-	d3dBufferData.pSysMem = pd3dxvNormals;
-	pd3dDevice->CreateBuffer(&d3dBufferDesc, &d3dBufferData, &m_pd3dNormalBuffer);
-
-	d3dBufferDesc.ByteWidth = sizeof(D3DXVECTOR2) * m_nVertices;
-	d3dBufferData.pSysMem = pd3dxvTexCoords;
-	pd3dDevice->CreateBuffer(&d3dBufferDesc, &d3dBufferData, &m_pd3dTexCoordBuffer);
-
-	d3dBufferData.pSysMem = pd3dxvDetailTexCoords;
-	pd3dDevice->CreateBuffer(&d3dBufferDesc, &d3dBufferData, &m_pd3dDetailTexCoordBuffer);
-
-	if (pd3dxvNormals) delete[] pd3dxvNormals;
-	if (pd3dxvTexCoords) delete[] pd3dxvTexCoords;
-	if (pd3dxvDetailTexCoords) delete [] pd3dxvDetailTexCoords;
-
-	ID3D11Buffer *pd3dBuffers[4] = { m_pd3dPositionBuffer, m_pd3dNormalBuffer, m_pd3dTexCoordBuffer, m_pd3dDetailTexCoordBuffer };
-	UINT pnBufferStrides[4] = { sizeof(D3DXVECTOR3), sizeof(D3DXVECTOR3), sizeof(D3DXVECTOR2), sizeof(D3DXVECTOR2) };
-	UINT pnBufferOffsets[4] = { 0, 0, 0, 0 };
-	AssembleToVertexBuffer(4, pd3dBuffers, pnBufferStrides, pnBufferOffsets);
+	d3dBufferData.pSysMem = pVertices;
+	pd3dDevice->CreateBuffer(&d3dBufferDesc, &d3dBufferData, &m_ppd3dVertexBuffers[0]);
+	
 
 	m_nIndices = ((nWidth * 2)*(nLength - 1)) + ((nLength - 1) - 1);
-	m_pnIndices = new UINT[m_nIndices];
-	for (int j = 0, z = 0; z < nLength - 1; z++)
+	UINT *pIndices  = new UINT[m_nIndices];
+	for (int j = 0, z = 0; z < nLength - 1; ++z)
 	{
 		if ((z % 2) == 0)
 		{
-			for (int x = 0; x < nWidth; x++)
+			for (int x = 0; x < nWidth; ++x)
 			{
-				if ((x == 0) && (z > 0)) m_pnIndices[j++] = (UINT)(x + (z * nWidth));
-				m_pnIndices[j++] = (UINT)(x + (z * nWidth));
-				m_pnIndices[j++] = (UINT)((x + (z * nWidth)) + nWidth);
+				if ((x == 0) && (z > 0)) pIndices[j++] = (UINT)(x + (z * nWidth));
+				pIndices[j++] = (UINT)(x + (z * nWidth));
+				pIndices[j++] = (UINT)((x + (z * nWidth)) + nWidth);
 			}
 		}
 		else
 		{
-			for (int x = nWidth - 1; x >= 0; x--)
+			for (int x = nWidth - 1; x >= 0; --x)
 			{
-				if (x == (nWidth - 1)) m_pnIndices[j++] = (UINT)(x + (z * nWidth));
-				m_pnIndices[j++] = (UINT)(x + (z * nWidth));
-				m_pnIndices[j++] = (UINT)((x + (z * nWidth)) + nWidth);
+				if (x == (nWidth - 1)) pIndices[j++] = (UINT)(x + (z * nWidth));
+				pIndices[j++] = (UINT)(x + (z * nWidth));
+				pIndices[j++] = (UINT)((x + (z * nWidth)) + nWidth);
 			}
 		}
 	}
+
+	//CalculateVertexNormal((BYTE *)pVertices, pIndices);
+
+	
 
 	ZeroMemory(&d3dBufferDesc, sizeof(D3D11_BUFFER_DESC));
 	d3dBufferDesc.Usage = D3D11_USAGE_DEFAULT;
@@ -556,13 +642,18 @@ CHeightMapGridMesh::CHeightMapGridMesh(ID3D11Device *pd3dDevice, int xStart, int
 	d3dBufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
 	d3dBufferDesc.CPUAccessFlags = 0;
 	ZeroMemory(&d3dBufferData, sizeof(D3D11_SUBRESOURCE_DATA));
-	d3dBufferData.pSysMem = m_pnIndices;
+	d3dBufferData.pSysMem = pIndices;
 	pd3dDevice->CreateBuffer(&d3dBufferDesc, &d3dBufferData, &m_pd3dIndexBuffer);
 
-	m_bcBoundingCube.m_d3dxvMinimum = D3DXVECTOR3(xStart*m_d3dxvScale.x, fMinHeight, zStart*m_d3dxvScale.z);
-	m_bcBoundingCube.m_d3dxvMaximum = D3DXVECTOR3((xStart+nWidth)*m_d3dxvScale.x, fMaxHeight, (zStart+nLength)*m_d3dxvScale.z);
+	
 
-	CreateRasterizerState(pd3dDevice);
+	m_bcBoundingCube.SetMinimum(D3DXVECTOR3(xStart*m_d3dxvScale.x, fMinHeight, zStart*m_d3dxvScale.z));
+	m_bcBoundingCube.SetMaximum(D3DXVECTOR3((xStart+nWidth)*m_d3dxvScale.x, fMaxHeight, (zStart+nLength)*m_d3dxvScale.z));
+
+	SetRasterizerState(pd3dDevice);
+
+	delete []pVertices;
+	delete []pIndices;
 }
 
 CHeightMapGridMesh::~CHeightMapGridMesh()

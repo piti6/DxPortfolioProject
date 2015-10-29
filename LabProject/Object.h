@@ -35,10 +35,13 @@ public:
 	void SetMaterial(CMaterial *pMaterial);
 	void SetTexture(CTexture *pTexture);
 	void SetMesh(CMesh *pMesh);
+	void SetOffset(D3DXVECTOR3 _Offset);
 
 	CMaterial*			GetMaterial();
 	CTexture*			GetTexture();
 	CMesh*				GetMesh(int _Index);
+	D3DXVECTOR3			GetOffset();
+
 	D3DXMATRIX			GetWorldMatrix();
 	virtual D3DXVECTOR3 GetPosition();
 	
@@ -72,7 +75,9 @@ protected:
 	CMaterial						*m_pMaterial;
 	CTexture						*m_pTexture;
 
-	D3DXMATRIX						m_d3dxmtxWorld;  
+	D3DXMATRIX						m_d3dxmtxWorld; 
+
+	D3DXVECTOR3						m_d3dxvOffset;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

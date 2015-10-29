@@ -64,7 +64,7 @@ FbxAMatrix GetPoseMatrix(FbxPose* pPose, int pNodeIndex)
     return lPoseMatrix;
 }
 
-D3DXMATRIX& GetD3DMatrix( FbxAMatrix & SrcFbxMtx )
+D3DXMATRIX GetD3DMatrix( FbxAMatrix SrcFbxMtx )
 {
 	D3DXMATRIX Dst;
 	Dst._11 = (float)SrcFbxMtx.mData[0][0];

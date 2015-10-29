@@ -153,7 +153,7 @@ private:
 class CFbxMeshIlluminatedTextured : public CMesh
 {
 public:
-    CFbxMeshIlluminatedTextured(ID3D11Device *pd3dDevice, FbxManager *pFbxSdkManager, char * filename, float fx, float fy, float fz);
+    CFbxMeshIlluminatedTextured(ID3D11Device *pd3dDevice, FbxManager *pFbxSdkManager, char * filename, float fScaleMultiplier=1.0f);
     virtual ~CFbxMeshIlluminatedTextured();
 
 	//HRESULT LoadFBXFromFile(ID3D11Device *pd3dDevice, FbxManager *pFbxSdkManager, char * filename, bool isAnim);

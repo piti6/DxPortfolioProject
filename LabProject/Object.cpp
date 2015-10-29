@@ -11,6 +11,7 @@ CGameObject::CGameObject()
 	m_pMaterial = NULL;
 	m_pTexture = NULL;
 	m_bIsActive = true;
+	m_d3dxvOffset = D3DXVECTOR3(0,0,0);
 }
 
 CGameObject::~CGameObject()
@@ -156,6 +157,16 @@ void CGameObject::Rotate(D3DXVECTOR3 *pd3dxvAxis, float fAngle)
 	m_d3dxmtxWorld = mtxRotate * m_d3dxmtxWorld;
 }
 
+void CGameObject::SetOffset(D3DXVECTOR3 _Offset)
+{
+	m_d3dxvOffset = _Offset;
+}
+
+D3DXVECTOR3 CGameObject::GetOffset()
+{
+	return m_d3dxvOffset;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 
@@ -180,7 +191,6 @@ void CStaticObject::BuildObjects(PxPhysics *pPxPhysics, PxScene *pPxScene)
 	D3DXVECTOR3 _d3dxvExtents = 
 		D3DXVECTOR3((abs(_d3dxvBoundMinimum.x) + abs(_d3dxvBoundMaximum.x))/2,(abs(_d3dxvBoundMinimum.y) + abs(_d3dxvBoundMaximum.y))/2,(abs(_d3dxvBoundMinimum.z) + abs(_d3dxvBoundMaximum.z))/2);
 	PxBoxGeometry _PxBoxGeometry(_d3dxvExtents.x,_d3dxvExtents.y,_d3dxvExtents.z);
-
 	m_pPxActor = PxCreateStatic(*pPxPhysics,_PxTransform,_PxBoxGeometry,*m_pPxMaterial);
 	pPxScene->addActor(*m_pPxActor);
 
@@ -192,7 +202,7 @@ void CStaticObject::BuildObjects(PxPhysics *pPxPhysics, PxScene *pPxScene)
 void CStaticObject::SetPosition(D3DXVECTOR3 d3dxvPosition) 
 {
 	CGameObject::SetPosition(d3dxvPosition);
-	m_pPxActor->setGlobalPose(PxTransform(PxVec3(d3dxvPosition.x,d3dxvPosition.y,d3dxvPosition.z)));
+	m_pPxActor->setGlobalPose(PxTransform(PxVec3(d3dxvPosition.x+m_d3dxvOffset.x,d3dxvPosition.y+m_d3dxvOffset.y,d3dxvPosition.z+m_d3dxvOffset.z)));
 }
 
 
@@ -215,7 +225,7 @@ void CDynamicObject::BuildObjects(PxPhysics *pPxPhysics, PxScene *pPxScene)
 {
 
 	m_pPxMaterial = pPxPhysics->createMaterial(0.9,0.9,0.0001f);
-	PxTransform _PxTransform(GetPosition().x,GetPosition().y,GetPosition().z);
+	PxTransform _PxTransform(GetPosition().x + m_d3dxvOffset.x,GetPosition().y + m_d3dxvOffset.y,GetPosition().z + m_d3dxvOffset.z);
 
 	D3DXVECTOR3 _d3dxvBoundMinimum = m_MeshesVector[0]->GetBoundingCube().GetMinimum();
 	D3DXVECTOR3 _d3dxvBoundMaximum = m_MeshesVector[0]->GetBoundingCube().GetMaximum();
@@ -224,16 +234,20 @@ void CDynamicObject::BuildObjects(PxPhysics *pPxPhysics, PxScene *pPxScene)
 	PxBoxGeometry _PxBoxGeometry(_d3dxvExtents.x,_d3dxvExtents.y,_d3dxvExtents.z);
 	m_pPxActor = PxCreateDynamic(*pPxPhysics,_PxTransform,_PxBoxGeometry,*m_pPxMaterial,2000.0f);
 	pPxScene->addActor(*m_pPxActor);
-	
+	/*
 	PxTransform pT = m_pPxActor->getGlobalPose();
 	PxMat44 m = PxMat44(pT);
-	m_d3dxmtxWorld = D3DXMATRIX(m.front());	
+	m.setPosition(PxVec3(m.column3.x,m.column3.y,m.column3.z));
+	m_d3dxmtxWorld = D3DXMATRIX(m.front());	*/
 }
 
 void CDynamicObject::Animate(float fTimeElapsed,PxScene *pPxScene)
 {
 	PxTransform pT = m_pPxActor->getGlobalPose();
 	PxMat44 m = PxMat44(pT);
+	m = m * PxMat44(PxTransform(m_d3dxvOffset.x,m_d3dxvOffset.y,m_d3dxvOffset.z));
+	//m.setPosition(PxVec3(m.column3.x + m_d3dxvOffset.x,m.column3.y + m_d3dxvOffset.y,m.column3.z + m_d3dxvOffset.z));
+	
 	m_d3dxmtxWorld = D3DXMATRIX(m.front());	
 }
 
@@ -263,7 +277,7 @@ void CDynamicObject::MoveForward(float fDistance)
 
 void CDynamicObject::SetPosition(D3DXVECTOR3 d3dxvPosition) 
 {
-	m_pPxActor->setGlobalPose(PxTransform(PxVec3(d3dxvPosition.x,d3dxvPosition.y,d3dxvPosition.z)));
+		m_pPxActor->setGlobalPose(PxTransform(PxVec3(d3dxvPosition.x,d3dxvPosition.y,d3dxvPosition.z)));
 }
 
 void CDynamicObject::Rotate(float fPitch, float fYaw, float fRoll){

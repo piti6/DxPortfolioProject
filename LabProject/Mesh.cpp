@@ -4,7 +4,7 @@
 
 #include "stdafx.h"
 #include "Mesh.h"
-
+#include "FbxToDxTranslation.h"
 #define RANDOM_COLOR	D3DXCOLOR((rand() * 0xFFFFFF) / RAND_MAX)
 
 CMesh::CMesh(ID3D11Device *pd3dDevice)
@@ -58,10 +58,10 @@ void CMesh::SetRasterizerState(ID3D11Device *pd3dDevice)
 {
 	D3D11_RASTERIZER_DESC d3dRasterizerDesc;
 	ZeroMemory(&d3dRasterizerDesc, sizeof(D3D11_RASTERIZER_DESC));
-	d3dRasterizerDesc.CullMode = D3D11_CULL_BACK;
+	d3dRasterizerDesc.CullMode = D3D11_CULL_NONE;
 	d3dRasterizerDesc.FillMode = D3D11_FILL_SOLID;
 	//d3dRasterizerDesc.FillMode = D3D11_FILL_WIREFRAME;
-	d3dRasterizerDesc.DepthClipEnable = true;
+	//d3dRasterizerDesc.DepthClipEnable = true;
 	pd3dDevice->CreateRasterizerState(&d3dRasterizerDesc, &m_pd3dRasterizerState);
 }
 
@@ -683,7 +683,7 @@ CFbxMeshIlluminatedTextured::~CFbxMeshIlluminatedTextured(){
 }
 
 //HRESULT CFbxMeshIlluminatedTextured::LoadFBXFromFile(ID3D11Device *pd3dDevice, FbxManager *pFbxSdkManager, char * filename, bool isAnim){
-CFbxMeshIlluminatedTextured::CFbxMeshIlluminatedTextured(ID3D11Device *pd3dDevice, FbxManager *pFbxSdkManager, char * filename, float fx=1.0f, float fy=1.0f, float fz=1.0f) : CMesh(pd3dDevice)
+CFbxMeshIlluminatedTextured::CFbxMeshIlluminatedTextured(ID3D11Device *pd3dDevice, FbxManager *pFbxSdkManager, char * filename, float fScaleMultiplier) : CMesh(pd3dDevice)
 {
 	m_d3dPrimitiveTopology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 	m_nStride = new UINT[1];
@@ -695,60 +695,37 @@ CFbxMeshIlluminatedTextured::CFbxMeshIlluminatedTextured(ID3D11Device *pd3dDevic
 	FbxImporter* pImporter = FbxImporter::Create(pFbxSdkManager,""); // 임포트 생성
 	m_pFbxScene = FbxScene::Create(pFbxSdkManager,""); // fbx 씬 생성
 
-	// Convert Axis System to what is used in this example, if needed
-	FbxAxisSystem SceneAxisSystem = m_pFbxScene->GetGlobalSettings().GetAxisSystem();
-	FbxAxisSystem OurAxisSystem(FbxAxisSystem::eDirectX);
-
-	if( SceneAxisSystem != OurAxisSystem )
+	if(!pImporter->Initialize( filename , -1, pFbxSdkManager->GetIOSettings()))
 	{
-		OurAxisSystem.ConvertScene(m_pFbxScene);
+		cout << "Fbx SDK Initialize Failed" << endl;
+		return;
 	}
-	FbxAxisSystem OurAxisSystem2(FbxAxisSystem::Max);
-	OurAxisSystem2.ConvertScene(m_pFbxScene);
-	/*
-	if ( m_isPivot == true )
-	{
-	FbxAxisSystem OurAxisSystem(FbxAxisSystem::Max);
-
-	if( SceneAxisSystem != OurAxisSystem )
-	{
-	OurAxisSystem.ConvertScene(m_pFbxScene);
+	if(!pImporter->Import(m_pFbxScene)){
+		cout << "Fbx SDK Scene Import Failed" << endl;
+		return;
 	}
-	}*/
-
-
-
-
+	
+	
 	// Convert mesh, NURBS and patch into triangle mesh
 	FbxGeometryConverter lGeomConverter(pFbxSdkManager);
-	lGeomConverter.Triangulate(m_pFbxScene, /*replace*/true);
-
-	// Convert Unit System to what is used in this example, if needed
-	FbxSystemUnit SceneSystemUnit = m_pFbxScene->GetGlobalSettings().GetSystemUnit();
+	lGeomConverter.Triangulate(m_pFbxScene, true);
+	
+	// Convert Axis System to what is used in this example, if needed
+	
+	FbxSystemUnit ScaleMultiplier = FbxSystemUnit(1,fScaleMultiplier);
+	ScaleMultiplier.ConvertScene(m_pFbxScene);
+	
 	/*
-	if( SceneSystemUnit.GetScaleFactor() != 1.0 )
-	{
-		//The unit in this example is centimeter.
-		FbxSystemUnit::cm.ConvertScene( m_pFbxScene);
-	}
+	//FbxAxisSystem OurAxisSystem(FbxAxisSystem(FbxAxisSystem::EUpVector::eYAxis,FbxAxisSystem::EFrontVector::,FbxAxisSystem::ECoordSystem::eLeftHanded));
+	FbxAxisSystem OurAxisSystem(FbxAxisSystem::DirectX);
+	OurAxisSystem.ConvertScene(m_pFbxScene);
 	*/
-
-	// 모델 이니셜라이즈
-	bool bSuccess = pImporter->Initialize( filename , -1, pFbxSdkManager->GetIOSettings() );
-	//pImporter->sca
-	//if(!bSuccess) return E_FAIL;
-	// 씬 임포트
-	bSuccess = pImporter->Import(m_pFbxScene);
-	//if(!bSuccess) return E_FAIL;
-
 	pImporter->Destroy();
 
 	// 씬의 루트 노드 얻어옴
 	FbxNode* pFbxRootNode = m_pFbxScene->GetRootNode();
-	pFbxRootNode->EvaluateGlobalTransform();
-	int nVertex = 0;
-	int VertexArrayIndex = 0;
-	std::vector<CTexturedNormalVertex> VertexVector;
+	
+	vector<CTexturedNormalVertex> VertexVector;
 	// 루트 노드가 있으면 데이터 얻어옴
 	if(pFbxRootNode)
 	{
@@ -759,16 +736,16 @@ CFbxMeshIlluminatedTextured::CFbxMeshIlluminatedTextured(ID3D11Device *pd3dDevic
 			if(pFbxChildNode->GetNodeAttribute() == NULL)
 				continue;
 
-
 			FbxNodeAttribute::EType AttributeType = pFbxChildNode->GetNodeAttribute()->GetAttributeType();
 
+			
 			if(AttributeType != FbxNodeAttribute::eMesh)
 				continue;
-
 			FbxMesh * pMesh;
 			pMesh = (FbxMesh*) pFbxChildNode->GetNodeAttribute();
 
-			FbxVector4* pVertices = pMesh->GetControlPoints(); 
+			FbxVector4* pVertices = pMesh->GetControlPoints();
+			
 
 			// UV를 얻기위한 것들 
 			FbxStringList lUVSetNameList;
@@ -783,22 +760,39 @@ CFbxMeshIlluminatedTextured::CFbxMeshIlluminatedTextured(ID3D11Device *pd3dDevic
 			D3DXVECTOR3	tempMax;
 			tempMin = tempMax = D3DXVECTOR3(0,0,0); // 메쉬의 최대최소점 저장
 
-
-			// 폴리곤 회전에 쓰임
-			D3DXMATRIX ID;
-			D3DXMatrixRotationX( &ID, 90.0f );
-
+			D3DXMATRIX d3dxmtxGlobal = GetD3DMatrix(pFbxChildNode->EvaluateGlobalTransform());
+			/*
+			cout << "11 : " << d3dxmtxGlobal._11 << " ";
+			cout << "12 : " << d3dxmtxGlobal._12 << " ";
+			cout << "13 : " << d3dxmtxGlobal._13 << " ";
+			cout << "14 : " << d3dxmtxGlobal._14 << endl;
+			cout << "21 : " << d3dxmtxGlobal._21 << " ";
+			cout << "22 : " << d3dxmtxGlobal._22 << " ";
+			cout << "23 : " << d3dxmtxGlobal._23 << " ";
+			cout << "24 : " << d3dxmtxGlobal._24 << endl;
+			cout << "31 : " << d3dxmtxGlobal._31 << " ";
+			cout << "32 : " << d3dxmtxGlobal._32 << " ";
+			cout << "33 : " << d3dxmtxGlobal._33 << " ";
+			cout << "34 : " << d3dxmtxGlobal._34 << endl;
+			cout << "41 : " << d3dxmtxGlobal._41 << " ";
+			cout << "42 : " << d3dxmtxGlobal._42 << " ";
+			cout << "43 : " << d3dxmtxGlobal._43 << " ";
+			cout << "44 : " << d3dxmtxGlobal._44 << endl;*/
+			//D3DXMatrixInverse(&d3dxmtxGlobal,NULL,&d3dxmtxGlobal);
 			// 폴리곤 숫자만큼 버텍스를 읽어옴
 			for (int j = 0; j < pMesh->GetPolygonCount(); j++) // j가 폴리곤 인덱스
 			{
 				int iNumVertices = pMesh->GetPolygonSize(j); 
-				// assert( iNumVertices == 3 );
 
 				for (int k = 0; k < iNumVertices; k++) // k가 포인트 인덱스
 				{
 					int iControlPointIndex = pMesh->GetPolygonVertex(j, k);
-
 					CTexturedNormalVertex Vertex;
+
+					
+					//D3DXMATRIX d3dxmtxLocal = GetD3DMatrix(pFbxChildNode->EvaluateLocalTransform());
+					D3DXVECTOR3 d3dxvPos = D3DXVECTOR3((float)pVertices[iControlPointIndex].mData[0],(float)pVertices[iControlPointIndex].mData[1],(float)pVertices[iControlPointIndex].mData[2]);
+					D3DXVec3TransformCoord(&d3dxvPos,&d3dxvPos,&d3dxmtxGlobal);
 
 					// 노말벡터 설정
 					FbxVector4 Normal;
@@ -807,18 +801,13 @@ CFbxMeshIlluminatedTextured::CFbxMeshIlluminatedTextured(ID3D11Device *pd3dDevic
 					FbxVector2 tex;
 					bool isMapped;
 					pMesh->GetPolygonVertexUV(j, k, lUVSetNameList[0], tex, isMapped);
-
-
-
-
-					Vertex.SetPosition(D3DXVECTOR3((float)pVertices[iControlPointIndex].mData[0] * fx,(float)pVertices[iControlPointIndex].mData[1] * fy,(float)pVertices[iControlPointIndex].mData[2] * fz));
+					
+					Vertex.SetPosition(d3dxvPos);
 					Vertex.SetNormal(D3DXVECTOR3((float)Normal.mData[0],(float)Normal.mData[1],(float)Normal.mData[2]));
 					Vertex.SetTexCoord(D3DXVECTOR2(tex[0], -tex[1]));
-					//if ( m_isPivot == true )
-					//	D3DXVec3TransformCoord( &Vertex.m_d3dxvPosition, &Vertex.m_d3dxvPosition, &ID);
-
-
-
+					
+					Vertex.SetPosition(D3DXVECTOR3(-Vertex.GetPosition().x,Vertex.GetPosition().y,Vertex.GetPosition().z));
+					
 					if( Vertex.GetPosition().x > tempMax.x )
 						tempMax.x = Vertex.GetPosition().x;
 					if( Vertex.GetPosition().y > tempMax.y )
@@ -833,21 +822,14 @@ CFbxMeshIlluminatedTextured::CFbxMeshIlluminatedTextured(ID3D11Device *pd3dDevic
 					if( Vertex.GetPosition().z < tempMin.z )
 						tempMin.z = Vertex.GetPosition().z;
 
-
-
-
-					//Vertex.m_d3dxvPosition.x = -Vertex.m_d3dxvPosition.x;
-
 					VertexVector.push_back( Vertex );
-
-
 				}
 			}
 			m_bcBoundingCube.SetMinimum(tempMin);
 			m_bcBoundingCube.SetMaximum(tempMax);
 
 		}
-		m_nVertices = VertexVector.size();
+		
 
 
 	}
@@ -859,6 +841,8 @@ CFbxMeshIlluminatedTextured::CFbxMeshIlluminatedTextured(ID3D11Device *pd3dDevic
 	SetBoneAtVertecis( pFbxRootNode, BoneIndex , VertexVector);
 
 	}*/
+
+	m_nVertices = VertexVector.size();
 	CTexturedNormalVertex *pVertices = new CTexturedNormalVertex[m_nVertices];
 	for ( int i = 0;  i < m_nVertices; ++i )
 	{
@@ -875,7 +859,7 @@ CFbxMeshIlluminatedTextured::CFbxMeshIlluminatedTextured(ID3D11Device *pd3dDevic
 	ZeroMemory(&d3dBufferData, sizeof(D3D11_SUBRESOURCE_DATA));
 	d3dBufferData.pSysMem = pVertices;
 	pd3dDevice->CreateBuffer(&d3dBufferDesc, &d3dBufferData, &m_ppd3dVertexBuffers[0]);
-
+	
 	SetRasterizerState(pd3dDevice);
 
 	/*

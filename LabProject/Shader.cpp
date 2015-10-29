@@ -396,7 +396,7 @@ void CInstancingShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhy
 	pTexture->SetTexture(0, pd3dTexture, pd3dSamplerState);
 	m_TexturesVector.push_back(pTexture);
 	pTexture = new CTexture(1);
-	D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("1.jpg"), NULL, NULL, &pd3dTexture, NULL);
+	D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("Data/Image/Model/robot_d.png"), NULL, NULL, &pd3dTexture, NULL);
 	pTexture->SetTexture(0, pd3dTexture, pd3dSamplerState);
 	m_TexturesVector.push_back(pTexture);
 
@@ -414,10 +414,10 @@ void CInstancingShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhy
 		pCubeObject->SetMaterial(pMaterial);
 		pCubeObject->SetTexture(m_TexturesVector[0]);
 		pCubeObject->BuildObjects(pPxPhysics,pPxScene);
-		pCubeObject->SetPosition(D3DXVECTOR3(0, i * 20, 0));
+		pCubeObject->SetPosition(D3DXVECTOR3(0, i*20, 0));
 		m_ObjectsVector.push_back(make_pair(0,pCubeObject));
 	}
-
+	
 	m_InstanceDataVector.push_back(InstanceData(new CCubeMeshIlluminatedTextured(pd3dDevice, 2000.0f, 10.0f, 2000.0f),CreateInstanceBuffer(pd3dDevice,MAX_INSTANCE,sizeof(D3DXMATRIX),NULL),1));
 	CStaticObject *pPlaneObject = NULL;
 	for(int i=0; i<m_InstanceDataVector[1].m_nObjects; ++i){
@@ -429,16 +429,17 @@ void CInstancingShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhy
 		pPlaneObject->SetPosition(D3DXVECTOR3(0, -100, 0));
 		m_ObjectsVector.push_back(make_pair(1,pPlaneObject));
 	}
-
-	m_InstanceDataVector.push_back(InstanceData(new CFbxMeshIlluminatedTextured(pd3dDevice,pFbxSdkManager,"Data/Model/a.fbx",100,100,100),CreateInstanceBuffer(pd3dDevice,MAX_INSTANCE,sizeof(D3DXMATRIX),NULL),1));
-	CStaticObject *pBarrelObject = NULL;
+	//
+	m_InstanceDataVector.push_back(InstanceData(new CFbxMeshIlluminatedTextured(pd3dDevice,pFbxSdkManager,"Data/Model/c.fbx",100),CreateInstanceBuffer(pd3dDevice,MAX_INSTANCE,sizeof(D3DXMATRIX),NULL),1));
+	CDynamicObject *pBarrelObject = NULL;
 	for(int i=0; i<m_InstanceDataVector[2].m_nObjects; ++i){
-		pBarrelObject = new CStaticObject();
+		pBarrelObject = new CDynamicObject();
 		pBarrelObject->SetMesh(m_InstanceDataVector[2].GetMesh());
 		pBarrelObject->SetMaterial(pMaterial);
-		pBarrelObject->SetTexture(m_TexturesVector[1]);
+		pBarrelObject->SetTexture(m_TexturesVector[2]);
+		pBarrelObject->SetOffset(D3DXVECTOR3(0,-180,0));
 		pBarrelObject->BuildObjects(pPxPhysics,pPxScene);
-		pBarrelObject->SetPosition(D3DXVECTOR3(0, 0, 0));
+		pBarrelObject->SetPosition(D3DXVECTOR3(0, 500, 0));
 		m_ObjectsVector.push_back(make_pair(2,pBarrelObject));
 	}
 	//인스턴스 데이터(렌더링할 객체들의 위치 벡터 배열)를 메쉬의 정점 버퍼에 추가한다.

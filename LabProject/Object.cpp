@@ -5,6 +5,7 @@
 #include "Object.h"
 #include "FbxToDxTranslation.h"
 
+
 CGameObject::CGameObject()
 {
 	D3DXMatrixIdentity(&m_d3dxmtxWorld);
@@ -78,12 +79,17 @@ void CGameObject::BuildObjects(PxPhysics *pPxPhysics, PxScene *pPxScene)
 
 void CGameObject::Animate(float fTimeElapsed,PxScene *pPxScene)
 {
+	//cout << fTimeElapsed << endl;
 }
 
 void CGameObject::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext)
 {
 	for(int i=0; i<m_MeshesVector.size(); ++i)
 		if (m_MeshesVector[i]) m_MeshesVector[i]->Render(pd3dImmediateDeviceContext);
+}
+
+void CGameObject::UpdateAnimation(ID3D11DeviceContext *pd3dImmediateDeviceContext){
+
 }
 
 void CGameObject::SetPosition(D3DXVECTOR3 d3dxvPosition) 
@@ -209,10 +215,12 @@ void CStaticObject::SetPosition(D3DXVECTOR3 d3dxvPosition)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 
-CDynamicObject::CDynamicObject()
+CDynamicObject::CDynamicObject(bool _HasAnimation)
 {
 	m_pPxMaterial = NULL;
 	m_pPxActor = NULL;
+	m_bHasAnimation = _HasAnimation;
+
 }
 
 CDynamicObject::~CDynamicObject()
@@ -243,11 +251,12 @@ void CDynamicObject::BuildObjects(PxPhysics *pPxPhysics, PxScene *pPxScene)
 
 void CDynamicObject::Animate(float fTimeElapsed,PxScene *pPxScene)
 {
+	m_AnimationController.UpdateTime(fTimeElapsed);
 	PxTransform pT = m_pPxActor->getGlobalPose();
 	PxMat44 m = PxMat44(pT);
 	m = m * PxMat44(PxTransform(m_d3dxvOffset.x,m_d3dxvOffset.y,m_d3dxvOffset.z));
 	//m.setPosition(PxVec3(m.column3.x + m_d3dxvOffset.x,m.column3.y + m_d3dxvOffset.y,m.column3.z + m_d3dxvOffset.z));
-	
+
 	m_d3dxmtxWorld = D3DXMATRIX(m.front());	
 }
 
@@ -277,14 +286,16 @@ void CDynamicObject::MoveForward(float fDistance)
 
 void CDynamicObject::SetPosition(D3DXVECTOR3 d3dxvPosition) 
 {
-		m_pPxActor->setGlobalPose(PxTransform(PxVec3(d3dxvPosition.x,d3dxvPosition.y,d3dxvPosition.z)));
+	m_pPxActor->setGlobalPose(PxTransform(PxVec3(d3dxvPosition.x,d3dxvPosition.y,d3dxvPosition.z)));
 }
 
-void CDynamicObject::Rotate(float fPitch, float fYaw, float fRoll){
+void CDynamicObject::Rotate(float fPitch, float fYaw, float fRoll)
+{
 	m_pPxActor->setAngularVelocity(PxVec3(fPitch,fYaw,fRoll));
 }
 
-void CDynamicObject::SetActive(bool isActive){
+void CDynamicObject::SetActive(bool isActive)
+{
 	m_bIsActive = isActive;
 	if(m_bIsActive)
 		m_pPxActor->wakeUp();
@@ -292,10 +303,51 @@ void CDynamicObject::SetActive(bool isActive){
 		m_pPxActor->putToSleep();
 }
 
-void CDynamicObject::AddForce(float fx, float fy, float fz){
+void CDynamicObject::AddForce(float fx, float fy, float fz)
+{
 	m_pPxActor->addForce(PxVec3(fx,fy,fz),PxForceMode::eVELOCITY_CHANGE);
 }
 
+void CDynamicObject::CreateShaderVariables(ID3D11Device *pd3dDevice)
+{
+	D3D11_BUFFER_DESC d3dBufferDesc;	// 본에 대한 행렬을 넣어줄 상수 버퍼 생성
+	ZeroMemory(&d3dBufferDesc, sizeof(D3D11_BUFFER_DESC));
+	d3dBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+	d3dBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	d3dBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	d3dBufferDesc.ByteWidth = sizeof(D3DXMATRIX) * MAX_BONE;
+	pd3dDevice->CreateBuffer(&d3dBufferDesc, NULL, &m_pd3dBoneMatrix);
+}
+
+void CDynamicObject::UpdateAnimation(ID3D11DeviceContext *pd3dImmediateDeviceContext)
+{
+	if(m_bHasAnimation)
+	{
+		if(m_AnimationController.m_bIsPlaying)
+		{
+			float fCurrentTimeClosest = 0;
+			for(auto i = m_AnimationController.m_vAnimationList.m_Animation[m_AnimationController.m_CurrentPlayingAnimationName].m_vAnimation.m_vBoneContainer.begin();
+				i!=m_AnimationController.m_vAnimationList.m_Animation[m_AnimationController.m_CurrentPlayingAnimationName].m_vAnimation.m_vBoneContainer.end();++i)
+			{
+				fCurrentTimeClosest = i->first;
+				if(m_AnimationController.m_fCurrentAnimTime < fCurrentTimeClosest/1000)
+				{
+					break;
+				}
+			}
+			D3D11_MAPPED_SUBRESOURCE d3dMappedResource;
+			pd3dImmediateDeviceContext->Map(m_pd3dBoneMatrix, 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
+			BONE_MATRIX *pd3dxmBone = (BONE_MATRIX*)d3dMappedResource.pData;
+			
+			for(int i=0;i<m_AnimationController.m_vAnimationList.m_Animation[m_AnimationController.m_CurrentPlayingAnimationName].m_vAnimation.m_vBoneContainer[fCurrentTimeClosest].m_vBoneList.size(); ++i)
+			{
+				pd3dxmBone->BONE[i] = m_AnimationController.m_vAnimationList.m_Animation[m_AnimationController.m_CurrentPlayingAnimationName].m_vAnimation.m_vBoneContainer[fCurrentTimeClosest].m_vBoneList[i];
+			}
+			pd3dImmediateDeviceContext->Unmap(m_pd3dBoneMatrix, 0);
+			pd3dImmediateDeviceContext->VSSetConstantBuffers(VS_SLOT_BONE_MATRIX, 1, &m_pd3dBoneMatrix);
+		}
+	}
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //

@@ -6,6 +6,8 @@
 #define POINT_LIGHT			1.0f
 #define SPOT_LIGHT			2.0f
 #define DIRECTIONAL_LIGHT	3.0f
+#define MAX_BONE			64
+#define NULL_IDX			100000
 
 #define _WITH_LOCAL_VIEWER_HIGHLIGHTING
 #define _WITH_THETA_PHI_CONES
@@ -96,6 +98,26 @@ struct VS_INSTANCED_TEXTURED_LIGHTING_OUTPUT
 	float2 tex2dcoord : TEXCOORD0;
 };
 
+struct VS_INSTANCED_TEXTURED_LIGHTING_ANIMATION_INPUT
+{
+    float3 position : POSITION;
+	float3 normal : NORMAL;
+	float2 tex2dcoord : TEXCOORD0;
+	uint4 boneindex : BLENDINDICES0;
+	float4 boneweight : BLENDWEIGHT0;
+
+    float4x4 mtxTransform : INSTANCEPOS;
+};
+
+struct VS_INSTANCED_TEXTURED_LIGHTING_ANIMATION_OUTPUT
+{
+    float4 position : SV_POSITION;
+    float3 positionW : POSITION;
+    float3 normalW : NORMAL;
+	float2 tex2dcoord : TEXCOORD0;
+};
+
+
 //--------------------------------------------------------------------------------------
 // Constant Buffer Variables
 //--------------------------------------------------------------------------------------
@@ -110,6 +132,11 @@ cbuffer cbWorldMatrix : register(b1)
 	matrix		gmtxWorld : packoffset(c0);
 };
 
+cbuffer cbBone : register(b2)
+{
+	float4x4 BoneMtx[MAX_BONE] : packoffset(c0);
+}
+
 //조명을 위한 상수버퍼를 선언한다. 
 cbuffer cbLight : register(b0)
 {
@@ -123,6 +150,8 @@ cbuffer cbMaterial : register(b1)
 {
 	MATERIAL gMaterial;
 };
+
+
 
 //--------------------------------------------------------------------------------------
 // Texture & Sampler
@@ -329,6 +358,51 @@ VS_INSTANCED_TEXTURED_LIGHTING_OUTPUT VSInstancedTexturedLighting(VS_INSTANCED_T
     return(output);
 }
 
+VS_INSTANCED_TEXTURED_LIGHTING_ANIMATION_OUTPUT VSInstancedTexturedLightingAnimation(VS_INSTANCED_TEXTURED_LIGHTING_ANIMATION_INPUT input)
+{
+    VS_INSTANCED_TEXTURED_LIGHTING_ANIMATION_OUTPUT output = (VS_INSTANCED_TEXTURED_LIGHTING_ANIMATION_OUTPUT)0;
+    
+
+	float3 Src = input.position;
+	
+	if ( input.boneindex.x < NULL_IDX)
+	{
+		float4x4 mtx = (float4x4)0;
+		Src = float3( 0.0f, 0.0f, 0.0f );
+		float weight[4];
+		weight[0] = input.boneweight.x;
+		weight[1] = input.boneweight.y;
+		weight[2] = input.boneweight.z;
+		weight[3] = input.boneweight.w;
+		float TotalWeight = 0.0f;
+		uint bone[4];
+		bone[0] = input.boneindex.x;
+		bone[1] = input.boneindex.y;
+		bone[2] = input.boneindex.z;
+		bone[3] = input.boneindex.w;
+	
+		for(int i=0; i<4; ++i)
+		{
+			if(weight[i]>0.0f)
+			{
+				mtx += weight[i] * BoneMtx[bone[i]];
+				TotalWeight += weight[i];
+			}
+		}
+		Src = mul(float4(input.position,1.0f),mtx);
+		Src /= TotalWeight;
+	}
+	
+	output.normalW = mul(input.normal, (float3x3)input.mtxTransform);
+	output.positionW = mul(float4(input.position, 1.0f), input.mtxTransform).xyz;
+	matrix mtxWorldViewProjection = mul(input.mtxTransform, gmtxView);
+    mtxWorldViewProjection = mul(mtxWorldViewProjection, gmtxProjection);
+    output.position = mul(float4(Src, 1.0f), mtxWorldViewProjection);
+    output.tex2dcoord = input.tex2dcoord;
+
+    return(output);
+}
+
 
 
 
@@ -353,6 +427,15 @@ float4 PSTexturedLighting(VS_TEXTURED_LIGHTING_OUTPUT input) : SV_Target
 
 
 float4 PSInstancedTexturedLighting(VS_INSTANCED_TEXTURED_LIGHTING_OUTPUT input) : SV_Target
+{ 
+    input.normalW = normalize(input.normalW); 
+    float4 cIllumination = Lighting(input.positionW, input.normalW);
+    float4 cColor = gtxtTexture.Sample(gSamplerState, input.tex2dcoord) * cIllumination;
+
+    return(cColor);
+}
+
+float4 PSInstancedTexturedLightingAnimation(VS_INSTANCED_TEXTURED_LIGHTING_ANIMATION_OUTPUT input) : SV_Target
 { 
     input.normalW = normalize(input.normalW); 
     float4 cIllumination = Lighting(input.positionW, input.normalW);

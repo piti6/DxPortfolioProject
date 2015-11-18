@@ -26,8 +26,11 @@
 // C++
 
 #include <vector>
+#include <unordered_map>
 #include <iostream>
-
+#include <string>
+#include <algorithm>
+#include <map>
 //DirectX Include
 
 #include <d3d11.h>
@@ -59,8 +62,11 @@ using namespace std;
 
 #define VS_SLOT_VIEWPROJECTION_MATRIX	0x00
 #define VS_SLOT_WORLD_MATRIX			0x01
+#define VS_SLOT_BONE_MATRIX			0x02
 
-#define MAX_BONE 60
+#define MAX_BONE 64
+#define MAX_WEIGHT 4
+#define NULL_IDX 100000
 
 #define GET_SET_FUNC_IMPL(TYPE, FUNC_NAME, PROP) \
 	TYPE Get##FUNC_NAME() \

@@ -9,6 +9,7 @@
 #include "Camera.h"
 #include "Texture.h"
 #include "Material.h"
+#include "AnimationController.h"
 
 #define DIR_FORWARD				0x01
 #define DIR_BACKWARD			0x02
@@ -18,8 +19,9 @@
 #define DIR_DOWN				0x20
 
 
-
-
+struct BONE_MATRIX {
+	D3DXMATRIX BONE[MAX_BONE];
+};
 
 class CGameObject
 {
@@ -60,15 +62,11 @@ public:
 	virtual void Animate(float fTimeElapsed,PxScene *pPxScene);
 	virtual void BuildObjects(PxPhysics *pPxPhysics, PxScene *pPxScene);
 
+	virtual void UpdateAnimation(ID3D11DeviceContext *pd3dImmediateDeviceContext);
 	virtual void Render(ID3D11DeviceContext *pd3dImmediateDeviceContext);
 
 protected:
 	bool							m_bIsActive;
-
-	/*
-	CMesh							**m_ppMeshes;
-	int								m_nMeshes;
-	*/
 
 	vector<CMesh*>					m_MeshesVector;
 
@@ -86,7 +84,7 @@ protected:
 class CDynamicObject : public CGameObject
 {
 public:
-	CDynamicObject();
+	CDynamicObject(bool _HasAnimation = false);
 	virtual ~CDynamicObject();
 
 	virtual void SetActive(bool isActive);
@@ -104,9 +102,23 @@ public:
 
 	void AddForce(float fx, float fy, float fz);
 
+	void CreateShaderVariables(ID3D11Device *pd3dDevice);
+	void UpdateAnimation(ID3D11DeviceContext *pd3dImmediateDeviceContext);
+	
+	CAnimationController		m_AnimationController;
+
 private:
+	
 	PxRigidDynamic				*m_pPxActor;
 	PxMaterial					*m_pPxMaterial;	
+
+/////////////// Animation Part ///////////////
+
+	//BONE_MATRIX					m_d3dxmtxBone;
+	ID3D11Buffer				*m_pd3dBoneMatrix;
+
+	
+	bool						m_bHasAnimation;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

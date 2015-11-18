@@ -65,3 +65,18 @@ public:
 	GET_SET_FUNC_IMPL(D3DXVECTOR3,Normal,m_d3dxvNormal);
 	GET_SET_FUNC_IMPL(D3DXVECTOR2,TexCoord,m_d3dxvTexCoord);
 };
+
+class CBoneWeightVertex : public CTexturedNormalVertex
+{
+	
+	
+public:
+	UINT							m_iBoneIndex[MAX_WEIGHT];
+	float							m_iBoneWeight[MAX_WEIGHT];
+	
+
+    CBoneWeightVertex(float x, float y, float z, float nx, float ny, float nz, float u, float v) : CTexturedNormalVertex(x,y,z,nx,ny,nz,u,v) {for(int i=0;i<MAX_WEIGHT;++i) { m_iBoneIndex[i] = NULL_IDX; m_iBoneWeight[i] = 0;} }
+    CBoneWeightVertex(D3DXVECTOR3 d3dxvPosition, D3DXVECTOR3 d3dxvNormal, D3DXVECTOR2 d3dxvTexCoord) : CTexturedNormalVertex(d3dxvPosition,d3dxvNormal,d3dxvTexCoord) {for(int i=0;i<MAX_WEIGHT;++i) { m_iBoneIndex[i] = NULL_IDX; m_iBoneWeight[i] = 0;} }
+	CBoneWeightVertex() : CTexturedNormalVertex() {	for(int i=0;i<MAX_WEIGHT;++i) { m_iBoneIndex[i] = NULL_IDX; m_iBoneWeight[i] = 0;}}
+    ~CBoneWeightVertex() { }
+};

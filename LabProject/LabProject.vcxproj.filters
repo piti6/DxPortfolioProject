@@ -40,6 +40,9 @@
     <Filter Include="헤더 파일\FBX\Animation">
       <UniqueIdentifier>{0f3b565e-724c-44a6-84d0-d3bdbee00aeb}</UniqueIdentifier>
     </Filter>
+    <Filter Include="소스 파일\FBX\Animation">
+      <UniqueIdentifier>{0e398302-b709-4caa-99a7-8c02473a6fbc}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />
@@ -106,6 +109,12 @@
     <ClInclude Include="Material.h">
       <Filter>헤더 파일\DX11</Filter>
     </ClInclude>
+    <ClInclude Include="Animation.h">
+      <Filter>헤더 파일\FBX\Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="AnimationController.h">
+      <Filter>헤더 파일\FBX\Animation</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Mesh.cpp">
@@ -149,6 +158,12 @@
     </ClCompile>
     <ClCompile Include="Texture.cpp">
       <Filter>소스 파일\DX11</Filter>
+    </ClCompile>
+    <ClCompile Include="Animation.cpp">
+      <Filter>소스 파일\FBX\Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="AnimationController.cpp">
+      <Filter>소스 파일\FBX\Animation</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -85,7 +85,12 @@ public:
 //
 class InstanceData{
 public:
-	InstanceData(CMesh* _Mesh, ID3D11Buffer* _Buffer, int _nObjects){ m_pMesh = _Mesh; m_pd3dInstances = _Buffer; m_nObjects = _nObjects;}
+	InstanceData(CMesh* _Mesh, ID3D11Buffer* _Buffer, int _nObjects)
+	{ 
+		m_pMesh = _Mesh; 
+		m_pd3dInstances = _Buffer; 
+		m_nObjects = _nObjects;
+	}
 	~InstanceData(){}
 
 	void SetMesh(CMesh* _Mesh){if(m_pMesh) m_pMesh->Release(); m_pMesh = _Mesh;}
@@ -102,7 +107,6 @@ public:
 private:
 	CMesh			*m_pMesh;
 	ID3D11Buffer	*m_pd3dInstances;
-	
 };
 
 class CInstancingShader : public CTexturedIlluminatedShader
@@ -112,6 +116,7 @@ public:
 	~CInstancingShader();
 
 	virtual void CreateShader(ID3D11Device *pd3dDevice);
+	//virtual void CreateShaderVariables(ID3D11Device *pd3dDevice);
 	virtual void UpdateShaderVariables(ID3D11DeviceContext *pd3dImmediateDeviceContext, CCamera *pCamera);
 
 	virtual void BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhysics, PxScene *pPxScene, FbxManager *pFbxSdkManager);
@@ -129,6 +134,8 @@ public:
 	UINT						m_nMatrixBufferOffset;
 	
 	vector<InstanceData>		m_InstanceDataVector;
+
+	
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

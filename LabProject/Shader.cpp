@@ -348,20 +348,24 @@ CInstancingShader::~CInstancingShader()
 	//if (m_pd3dInstances) m_pd3dInstances->Release();
 }
 
-void CInstancingShader::CreateShader(ID3D11Device *pd3dDevice){
+void CInstancingShader::CreateShader(ID3D11Device *pd3dDevice)
+{
 	D3D11_INPUT_ELEMENT_DESC d3dInputLayout[] =
 	{
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "INSTANCEPOS", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 1,0, D3D11_INPUT_PER_INSTANCE_DATA, 1 },
+		{ "BLENDINDICES", 0, DXGI_FORMAT_R32G32B32A32_UINT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "BLENDWEIGHT", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "INSTANCEPOS", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_INSTANCE_DATA, 1 },
 		{ "INSTANCEPOS", 1, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_INSTANCE_DATA, 1 },
 		{ "INSTANCEPOS", 2, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_INSTANCE_DATA, 1 },
 		{ "INSTANCEPOS", 3, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_INSTANCE_DATA, 1 }
+		
 	};
 	UINT nElements = ARRAYSIZE(d3dInputLayout);
-	CreateVertexShaderFromFile(pd3dDevice, L"Effect.fx", "VSInstancedTexturedLighting", "vs_5_0", &m_pd3dVertexShader, d3dInputLayout, nElements, &m_pd3dVertexLayout);
-	CreatePixelShaderFromFile(pd3dDevice, L"Effect.fx", "PSInstancedTexturedLighting", "ps_5_0", &m_pd3dPixelShader);
+	CreateVertexShaderFromFile(pd3dDevice, L"Effect.fx", "VSInstancedTexturedLightingAnimation", "vs_5_0", &m_pd3dVertexShader, d3dInputLayout, nElements, &m_pd3dVertexLayout);
+	CreatePixelShaderFromFile(pd3dDevice, L"Effect.fx", "PSInstancedTexturedLightingAnimation", "ps_5_0", &m_pd3dPixelShader);
 }
 
 void CInstancingShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhysics, PxScene *pPxScene, FbxManager *pFbxSdkManager){
@@ -396,7 +400,7 @@ void CInstancingShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhy
 	pTexture->SetTexture(0, pd3dTexture, pd3dSamplerState);
 	m_TexturesVector.push_back(pTexture);
 	pTexture = new CTexture(1);
-	D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("Data/Image/Model/robot_d.png"), NULL, NULL, &pd3dTexture, NULL);
+	D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("Data/Image/Model/mon_goblinWizard_df.png"), NULL, NULL, &pd3dTexture, NULL);
 	pTexture->SetTexture(0, pd3dTexture, pd3dSamplerState);
 	m_TexturesVector.push_back(pTexture);
 
@@ -405,7 +409,7 @@ void CInstancingShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhy
 	m_nMatrixBufferStride = sizeof(D3DXMATRIX);
 	m_nMatrixBufferOffset = 0;
 	//인스턴스 쉐이더에서 렌더링할 메쉬이다.
-
+	/*
 	m_InstanceDataVector.push_back(InstanceData(new CCubeMeshIlluminatedTextured(pd3dDevice, 25.0f, 25.0f, 25.0f),CreateInstanceBuffer(pd3dDevice,MAX_INSTANCE,sizeof(D3DXMATRIX),NULL),500));
 	CDynamicObject *pCubeObject = NULL;
 	for(int i=0; i<m_InstanceDataVector[0].m_nObjects; ++i){
@@ -417,30 +421,33 @@ void CInstancingShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhy
 		pCubeObject->SetPosition(D3DXVECTOR3(0, i*20, 0));
 		m_ObjectsVector.push_back(make_pair(0,pCubeObject));
 	}
-	
+	*/
 	m_InstanceDataVector.push_back(InstanceData(new CCubeMeshIlluminatedTextured(pd3dDevice, 2000.0f, 10.0f, 2000.0f),CreateInstanceBuffer(pd3dDevice,MAX_INSTANCE,sizeof(D3DXMATRIX),NULL),1));
 	CStaticObject *pPlaneObject = NULL;
-	for(int i=0; i<m_InstanceDataVector[1].m_nObjects; ++i){
+	for(int i=0; i<m_InstanceDataVector[0].m_nObjects; ++i){
 		pPlaneObject = new CStaticObject();
-		pPlaneObject->SetMesh(m_InstanceDataVector[1].GetMesh());
+		pPlaneObject->SetMesh(m_InstanceDataVector[0].GetMesh());
 		pPlaneObject->SetMaterial(pMaterial);
 		pPlaneObject->SetTexture(m_TexturesVector[1]);
 		pPlaneObject->BuildObjects(pPxPhysics,pPxScene);
 		pPlaneObject->SetPosition(D3DXVECTOR3(0, -100, 0));
-		m_ObjectsVector.push_back(make_pair(1,pPlaneObject));
+		m_ObjectsVector.push_back(make_pair(0,pPlaneObject));
 	}
 	//
-	m_InstanceDataVector.push_back(InstanceData(new CFbxMeshIlluminatedTextured(pd3dDevice,pFbxSdkManager,"Data/Model/c.fbx",100),CreateInstanceBuffer(pd3dDevice,MAX_INSTANCE,sizeof(D3DXMATRIX),NULL),1));
+	m_InstanceDataVector.push_back(InstanceData(new CFbxMeshIlluminatedTextured(pd3dDevice,pFbxSdkManager,"Data/Model/ExportScene01.fbx",1),CreateInstanceBuffer(pd3dDevice,MAX_INSTANCE,sizeof(D3DXMATRIX),NULL),1));
 	CDynamicObject *pBarrelObject = NULL;
-	for(int i=0; i<m_InstanceDataVector[2].m_nObjects; ++i){
-		pBarrelObject = new CDynamicObject();
-		pBarrelObject->SetMesh(m_InstanceDataVector[2].GetMesh());
+	for(int i=0; i<m_InstanceDataVector[1].m_nObjects; ++i){
+		pBarrelObject = new CDynamicObject(true);
+		pBarrelObject->CreateShaderVariables(pd3dDevice);
+		pBarrelObject->m_AnimationController.LoadAnimationFromFile(pFbxSdkManager,"Data/Model/ExportScene01.fbx","Attack",true);
+		pBarrelObject->m_AnimationController.Play("Attack");
+		pBarrelObject->SetMesh(m_InstanceDataVector[1].GetMesh());
 		pBarrelObject->SetMaterial(pMaterial);
 		pBarrelObject->SetTexture(m_TexturesVector[2]);
-		pBarrelObject->SetOffset(D3DXVECTOR3(0,-180,0));
+		//pBarrelObject->SetOffset(D3DXVECTOR3(0,-180,0));
 		pBarrelObject->BuildObjects(pPxPhysics,pPxScene);
 		pBarrelObject->SetPosition(D3DXVECTOR3(0, 500, 0));
-		m_ObjectsVector.push_back(make_pair(2,pBarrelObject));
+		m_ObjectsVector.push_back(make_pair(1,pBarrelObject));
 	}
 	//인스턴스 데이터(렌더링할 객체들의 위치 벡터 배열)를 메쉬의 정점 버퍼에 추가한다.
 	for(int i=0; i<m_InstanceDataVector.size();++i){
@@ -540,6 +547,7 @@ void CInstancingShader::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, 
 						if (m_ObjectsVector[j].second->GetMaterial()) 
 							CTexturedIlluminatedShader::UpdateShaderVariables(pd3dImmediateDeviceContext, &m_ObjectsVector[j].second->GetMaterial()->m_Material);
 						D3DXMatrixTranspose(&pd3dxmInstances[m_InstanceDataVector[i].m_nVisibleObjects++], &m_ObjectsVector[j].second->GetWorldMatrix());
+						m_ObjectsVector[j].second->UpdateAnimation(pd3dImmediateDeviceContext);
 					}
 				}
 			}

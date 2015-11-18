@@ -28,7 +28,7 @@ bool CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam,
 	{
 	case WM_LBUTTONDOWN:
 
-		m_pInstancingShader->AddObject(m_pPxPhysicsSDK, m_pPxScene, 0, 0, 0, m_ppPlayers[0]->GetPosition(), false, m_ppPlayers[0]->GetCamera()->GetLookVector() * 300);
+		m_pInstancingShader->AddObject(m_pPxPhysicsSDK, m_pPxScene, 0, 0, 2, m_ppPlayers[0]->GetPosition(), false, m_ppPlayers[0]->GetCamera()->GetLookVector() * 300);
 		break;
 	case WM_RBUTTONDOWN:
 		break;

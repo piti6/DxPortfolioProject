@@ -6,6 +6,7 @@
 #include "Vertex.h"
 #include "Timer.h"
 #include "AABB.h"
+#include "Animation.h"
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
 //
@@ -156,10 +157,21 @@ public:
     CFbxMeshIlluminatedTextured(ID3D11Device *pd3dDevice, FbxManager *pFbxSdkManager, char * filename, float fScaleMultiplier=1.0f);
     virtual ~CFbxMeshIlluminatedTextured();
 
-	//HRESULT LoadFBXFromFile(ID3D11Device *pd3dDevice, FbxManager *pFbxSdkManager, char * filename, bool isAnim);
+	void SetBoneNameIndex(FbxNode* pNode);
+	void SetBoneAtVertices(FbxNode* pNode, unordered_map<int,vector<pair<UINT,float>>> *pClusterIndexVector);
+	void SetVertices(FbxNode* pNode, vector<CBoneWeightVertex> *pVertexVector,unordered_map<int,vector<pair<UINT,float>>> *pClusterIndexVector);
 
+	vector<string>				m_vBoneName;
+	CBoneWeightVertex			*m_pVertices;
+	//vector<CAnimationList>		m_vAnimationList;
+	bool						m_bHasAnimation;
 private:
 
-	FbxScene					*m_pFbxScene;
+	
 
+	//FbxScene					*m_pFbxScene;
+
+	
+
+	
 };

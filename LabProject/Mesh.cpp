@@ -5,6 +5,7 @@
 #include "stdafx.h"
 #include "Mesh.h"
 #include "FbxToDxTranslation.h"
+
 #define RANDOM_COLOR	D3DXCOLOR((rand() * 0xFFFFFF) / RAND_MAX)
 
 CMesh::CMesh(ID3D11Device *pd3dDevice)
@@ -673,177 +674,81 @@ float CHeightMapGridMesh::OnGetHeight(int x, int z, void *pContext)
 /////////////////////////////////////////////////////////////////////////////////////////////////
 //
 
-/*
-CFbxMeshIlluminatedTextured::CFbxMeshIlluminatedTextured(ID3D11Device *pd3dDevice) : CMesh(pd3dDevice)
-{
-
-}*/
 CFbxMeshIlluminatedTextured::~CFbxMeshIlluminatedTextured(){
-	//m_pFbxScene->Destroy(
 }
 
 //HRESULT CFbxMeshIlluminatedTextured::LoadFBXFromFile(ID3D11Device *pd3dDevice, FbxManager *pFbxSdkManager, char * filename, bool isAnim){
 CFbxMeshIlluminatedTextured::CFbxMeshIlluminatedTextured(ID3D11Device *pd3dDevice, FbxManager *pFbxSdkManager, char * filename, float fScaleMultiplier) : CMesh(pd3dDevice)
 {
 	m_d3dPrimitiveTopology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+	//m_d3dPrimitiveTopology = D3D11_PRIMITIVE_TOPOLOGY_LINELIST;
 	m_nStride = new UINT[1];
-	m_nStride[0] = sizeof(CTexturedNormalVertex);
+	m_nStride[0] = sizeof(CBoneWeightVertex);
 	m_nOffset = new UINT[1];
 	m_nOffset[0] = 0;
 	m_ppd3dVertexBuffers = new ID3D11Buffer*[m_nVertexBuffers];
 
 	FbxImporter* pImporter = FbxImporter::Create(pFbxSdkManager,""); // 임포트 생성
-	m_pFbxScene = FbxScene::Create(pFbxSdkManager,""); // fbx 씬 생성
+	FbxScene *pFbxScene = FbxScene::Create(pFbxSdkManager,""); // fbx 씬 생성
 
 	if(!pImporter->Initialize( filename , -1, pFbxSdkManager->GetIOSettings()))
 	{
 		cout << "Fbx SDK Initialize Failed" << endl;
 		return;
 	}
-	if(!pImporter->Import(m_pFbxScene)){
+	if(!pImporter->Import(pFbxScene)){
 		cout << "Fbx SDK Scene Import Failed" << endl;
 		return;
 	}
+	pImporter->Destroy();
+
 	
+	//m_bHasAnimation = false;
+
+	if(pFbxScene->GetSrcObjectCount<FbxAnimStack>()>0)
+		m_bHasAnimation = true;
+	else 
+		m_bHasAnimation = false;
+	
+	FbxAxisSystem SceneAxisSystem = pFbxScene->GetGlobalSettings().GetAxisSystem();
+	FbxAxisSystem OurAxisSystem(FbxAxisSystem::DirectX);
+	
+	if( SceneAxisSystem != OurAxisSystem )
+    {
+        OurAxisSystem.ConvertScene(pFbxScene);
+    }
 	
 	// Convert mesh, NURBS and patch into triangle mesh
 	FbxGeometryConverter lGeomConverter(pFbxSdkManager);
-	lGeomConverter.Triangulate(m_pFbxScene, true);
-	
-	// Convert Axis System to what is used in this example, if needed
-	
-	FbxSystemUnit ScaleMultiplier = FbxSystemUnit(1,fScaleMultiplier);
-	ScaleMultiplier.ConvertScene(m_pFbxScene);
-	
+	lGeomConverter.Triangulate(pFbxScene, true);
+
 	/*
-	//FbxAxisSystem OurAxisSystem(FbxAxisSystem(FbxAxisSystem::EUpVector::eYAxis,FbxAxisSystem::EFrontVector::,FbxAxisSystem::ECoordSystem::eLeftHanded));
-	FbxAxisSystem OurAxisSystem(FbxAxisSystem::DirectX);
-	OurAxisSystem.ConvertScene(m_pFbxScene);
+	// Convert Axis System to what is used in this example, if needed
+	FbxSystemUnit ScaleMultiplier = FbxSystemUnit(1,fScaleMultiplier);
+	ScaleMultiplier.ConvertScene(pFbxScene);
 	*/
-	pImporter->Destroy();
 
 	// 씬의 루트 노드 얻어옴
-	FbxNode* pFbxRootNode = m_pFbxScene->GetRootNode();
-	
-	vector<CTexturedNormalVertex> VertexVector;
-	// 루트 노드가 있으면 데이터 얻어옴
-	if(pFbxRootNode)
+	FbxNode* pFbxRootNode = pFbxScene->GetRootNode();
+
+	vector<CBoneWeightVertex> VertexVector;
+	unordered_map<int,vector<pair<UINT,float>>> ClusterIndexVector;
+	if(m_bHasAnimation)
 	{
-		// 루트 노드의 자식을 참조하여 얻어옴
-		for(int i = 0; i < pFbxRootNode->GetChildCount(); ++i)
-		{
-			FbxNode* pFbxChildNode = pFbxRootNode->GetChild(i);
-			if(pFbxChildNode->GetNodeAttribute() == NULL)
-				continue;
-
-			FbxNodeAttribute::EType AttributeType = pFbxChildNode->GetNodeAttribute()->GetAttributeType();
-
-			
-			if(AttributeType != FbxNodeAttribute::eMesh)
-				continue;
-			FbxMesh * pMesh;
-			pMesh = (FbxMesh*) pFbxChildNode->GetNodeAttribute();
-
-			FbxVector4* pVertices = pMesh->GetControlPoints();
-			
-
-			// UV를 얻기위한 것들 
-			FbxStringList lUVSetNameList;
-			pMesh->GetUVSetNames(lUVSetNameList);
-
-			// Get the list of all the animation stack.
-			//m_pFbxScene->FillAnimStackNameArray(m_AnimStackNameArray);
-			// Get the list of pose in the scene
-			//FillPoseArray(m_pFbxScene, m_PoseArray);
-
-			D3DXVECTOR3 tempMin ;
-			D3DXVECTOR3	tempMax;
-			tempMin = tempMax = D3DXVECTOR3(0,0,0); // 메쉬의 최대최소점 저장
-
-			D3DXMATRIX d3dxmtxGlobal = GetD3DMatrix(pFbxChildNode->EvaluateGlobalTransform());
-			/*
-			cout << "11 : " << d3dxmtxGlobal._11 << " ";
-			cout << "12 : " << d3dxmtxGlobal._12 << " ";
-			cout << "13 : " << d3dxmtxGlobal._13 << " ";
-			cout << "14 : " << d3dxmtxGlobal._14 << endl;
-			cout << "21 : " << d3dxmtxGlobal._21 << " ";
-			cout << "22 : " << d3dxmtxGlobal._22 << " ";
-			cout << "23 : " << d3dxmtxGlobal._23 << " ";
-			cout << "24 : " << d3dxmtxGlobal._24 << endl;
-			cout << "31 : " << d3dxmtxGlobal._31 << " ";
-			cout << "32 : " << d3dxmtxGlobal._32 << " ";
-			cout << "33 : " << d3dxmtxGlobal._33 << " ";
-			cout << "34 : " << d3dxmtxGlobal._34 << endl;
-			cout << "41 : " << d3dxmtxGlobal._41 << " ";
-			cout << "42 : " << d3dxmtxGlobal._42 << " ";
-			cout << "43 : " << d3dxmtxGlobal._43 << " ";
-			cout << "44 : " << d3dxmtxGlobal._44 << endl;*/
-			//D3DXMatrixInverse(&d3dxmtxGlobal,NULL,&d3dxmtxGlobal);
-			// 폴리곤 숫자만큼 버텍스를 읽어옴
-			for (int j = 0; j < pMesh->GetPolygonCount(); j++) // j가 폴리곤 인덱스
-			{
-				int iNumVertices = pMesh->GetPolygonSize(j); 
-
-				for (int k = 0; k < iNumVertices; k++) // k가 포인트 인덱스
-				{
-					int iControlPointIndex = pMesh->GetPolygonVertex(j, k);
-					CTexturedNormalVertex Vertex;
-
-					
-					//D3DXMATRIX d3dxmtxLocal = GetD3DMatrix(pFbxChildNode->EvaluateLocalTransform());
-					D3DXVECTOR3 d3dxvPos = D3DXVECTOR3((float)pVertices[iControlPointIndex].mData[0],(float)pVertices[iControlPointIndex].mData[1],(float)pVertices[iControlPointIndex].mData[2]);
-					D3DXVec3TransformCoord(&d3dxvPos,&d3dxvPos,&d3dxmtxGlobal);
-
-					// 노말벡터 설정
-					FbxVector4 Normal;
-					pMesh->GetPolygonVertexNormal(j, k, Normal );
-
-					FbxVector2 tex;
-					bool isMapped;
-					pMesh->GetPolygonVertexUV(j, k, lUVSetNameList[0], tex, isMapped);
-					
-					Vertex.SetPosition(d3dxvPos);
-					Vertex.SetNormal(D3DXVECTOR3((float)Normal.mData[0],(float)Normal.mData[1],(float)Normal.mData[2]));
-					Vertex.SetTexCoord(D3DXVECTOR2(tex[0], -tex[1]));
-					
-					Vertex.SetPosition(D3DXVECTOR3(-Vertex.GetPosition().x,Vertex.GetPosition().y,Vertex.GetPosition().z));
-					
-					if( Vertex.GetPosition().x > tempMax.x )
-						tempMax.x = Vertex.GetPosition().x;
-					if( Vertex.GetPosition().y > tempMax.y )
-						tempMax.y = Vertex.GetPosition().y;
-					if( Vertex.GetPosition().z > tempMax.z )
-						tempMax.z = Vertex.GetPosition().z;
-
-					if( Vertex.GetPosition().x < tempMin.x )
-						tempMin.x = Vertex.GetPosition().x;
-					if( Vertex.GetPosition().y < tempMin.y )
-						tempMin.y = Vertex.GetPosition().y;
-					if( Vertex.GetPosition().z < tempMin.z )
-						tempMin.z = Vertex.GetPosition().z;
-
-					VertexVector.push_back( Vertex );
-				}
-			}
-			m_bcBoundingCube.SetMinimum(tempMin);
-			m_bcBoundingCube.SetMaximum(tempMax);
-
-		}
-		
-
-
+		SetBoneNameIndex(pFbxRootNode);
+		SetBoneAtVertices(pFbxRootNode,&ClusterIndexVector);
 	}
-	/*
-	//push_back cluster index and weight
-	if(isAnim)
-	{
-	int BoneIndex = 0;
-	SetBoneAtVertecis( pFbxRootNode, BoneIndex , VertexVector);
 
-	}*/
+
+	// 루트 노드가 있으면 데이터 얻어옴
+
+	SetVertices(pFbxRootNode,&VertexVector,&ClusterIndexVector);
+
+
 
 	m_nVertices = VertexVector.size();
-	CTexturedNormalVertex *pVertices = new CTexturedNormalVertex[m_nVertices];
+	CBoneWeightVertex *pVertices = new CBoneWeightVertex[m_nVertices];
+
 	for ( int i = 0;  i < m_nVertices; ++i )
 	{
 		pVertices[i] = VertexVector[i];
@@ -859,17 +764,165 @@ CFbxMeshIlluminatedTextured::CFbxMeshIlluminatedTextured(ID3D11Device *pd3dDevic
 	ZeroMemory(&d3dBufferData, sizeof(D3D11_SUBRESOURCE_DATA));
 	d3dBufferData.pSysMem = pVertices;
 	pd3dDevice->CreateBuffer(&d3dBufferDesc, &d3dBufferData, &m_ppd3dVertexBuffers[0]);
-	
+
+	m_pVertices = pVertices;
+
 	SetRasterizerState(pd3dDevice);
 
-	/*
-	if ( isAnim )
-	{
-	SetCurrentAnimStack(0);
-	// Initialize the frame period.
-	m_pFbxScene->GetGlobalSettings().SetTimeMode(  FbxTime::eFrames100  ) ;
-	m_FrameTime.SetTime(0, 0, 0, 1, 0, m_pFbxScene->GetGlobalSettings().GetTimeMode());
-	}*/
-	//return m_nVertices;
-
+	//delete []pVertices;
+	pFbxScene->Destroy(true);
 }
+
+void CFbxMeshIlluminatedTextured::SetBoneNameIndex(FbxNode* pNode){
+	if (pNode->GetNodeAttribute())
+	{
+		if( pNode->GetNodeAttribute()->GetAttributeType() == FbxNodeAttribute::eSkeleton){
+			m_vBoneName.push_back(pNode->GetName());
+		}
+	}
+	for(int iChildIndex=0; iChildIndex<pNode->GetChildCount(); ++iChildIndex)
+	{
+		SetBoneNameIndex(pNode->GetChild(iChildIndex));
+	}
+}
+void CFbxMeshIlluminatedTextured::SetVertices(FbxNode* pNode, vector<CBoneWeightVertex> *pVertexVector,unordered_map<int,vector<pair<UINT,float>>> *pClusterIndexVector)
+{
+	if (pNode->GetNodeAttribute())
+	{
+		if ( pNode->GetNodeAttribute()->GetAttributeType() == FbxNodeAttribute::eMesh) 
+		{
+
+			FbxMesh * pMesh = pNode->GetMesh();
+			FbxVector4* pVertices = pMesh->GetControlPoints();
+
+
+			// UV를 얻기위한 것들 
+			FbxStringList lUVSetNameList;
+			pMesh->GetUVSetNames(lUVSetNameList);
+
+			
+			D3DXVECTOR3 tempMin;
+			D3DXVECTOR3	tempMax;
+			tempMin = tempMax = D3DXVECTOR3(0,0,0); // 메쉬의 최대최소점 저장
+			D3DXMATRIX d3dxmtxGlobal;
+			
+				d3dxmtxGlobal = GetD3DMatrix(pNode->EvaluateGlobalTransform());
+			
+			//D3DXMatrixIdentity(&d3dxmtxGlobal);
+		
+			// 폴리곤 숫자만큼 버텍스를 읽어옴
+			for (int j = 0; j < pMesh->GetPolygonCount(); j++) // j가 폴리곤 인덱스
+			{
+				int iNumVertices = pMesh->GetPolygonSize(j); 
+
+				for (int k = 0; k < iNumVertices; k++) // k가 포인트 인덱스
+				{
+					int iControlPointIndex = pMesh->GetPolygonVertex(j, k);
+					CBoneWeightVertex Vertex = CBoneWeightVertex();
+
+
+					D3DXVECTOR3 d3dxvPos = D3DXVECTOR3((float)pVertices[iControlPointIndex].mData[0],(float)pVertices[iControlPointIndex].mData[1],(float)pVertices[iControlPointIndex].mData[2]);
+					//D3DXVec3TransformCoord(&d3dxvPos,&d3dxvPos,&d3dxmtxGlobal);
+
+					// 노말벡터 설정
+					FbxVector4 Normal;
+					pMesh->GetPolygonVertexNormal(j, k, Normal );
+
+					FbxVector2 textureUV;
+					bool isMapped;
+					pMesh->GetPolygonVertexUV(j, k, lUVSetNameList[0], textureUV, isMapped);
+
+					Vertex.SetPosition(d3dxvPos);
+					Vertex.SetNormal(D3DXVECTOR3((float)Normal.mData[0],(float)Normal.mData[1],(float)Normal.mData[2]));
+					Vertex.SetTexCoord(D3DXVECTOR2(textureUV[0], -textureUV[1]));
+
+					if(m_bHasAnimation)
+					{
+						if(pClusterIndexVector->find(iControlPointIndex)!=pClusterIndexVector->end())
+						{
+							for(int i=0;i<(*pClusterIndexVector)[iControlPointIndex].size();++i){
+									Vertex.m_iBoneIndex[i] = (*pClusterIndexVector)[iControlPointIndex][i].first;
+									Vertex.m_iBoneWeight[i] = (*pClusterIndexVector)[iControlPointIndex][i].second;
+							}
+						}
+					}
+
+					if( Vertex.GetPosition().x > tempMax.x )
+						tempMax.x = Vertex.GetPosition().x;
+					if( Vertex.GetPosition().y > tempMax.y )
+						tempMax.y = Vertex.GetPosition().y;
+					if( Vertex.GetPosition().z > tempMax.z )
+						tempMax.z = Vertex.GetPosition().z;
+
+					if( Vertex.GetPosition().x < tempMin.x )
+						tempMin.x = Vertex.GetPosition().x;
+					if( Vertex.GetPosition().y < tempMin.y )
+						tempMin.y = Vertex.GetPosition().y;
+					if( Vertex.GetPosition().z < tempMin.z )
+						tempMin.z = Vertex.GetPosition().z;
+
+					pVertexVector->push_back( Vertex );
+				}
+			}
+			m_bcBoundingCube.SetMinimum(tempMin);
+			m_bcBoundingCube.SetMaximum(tempMax);
+		}
+	}
+	for(int iChildIndex=0; iChildIndex<pNode->GetChildCount(); ++iChildIndex)
+	{
+		SetVertices(pNode->GetChild(iChildIndex),pVertexVector,pClusterIndexVector);
+	}
+}
+void CFbxMeshIlluminatedTextured::SetBoneAtVertices(FbxNode* pNode, unordered_map<int,vector<pair<UINT,float>>> *pClusterIndexVector)
+{
+
+	if (pNode->GetNodeAttribute())
+	{
+		if ( pNode->GetNodeAttribute()->GetAttributeType() == FbxNodeAttribute::eMesh) 
+		{
+
+			FbxMesh * pMesh = pNode->GetMesh();				//메쉬 가져옴
+			int nSkinCount = pMesh->GetDeformerCount(FbxDeformer::eSkin);
+			if(nSkinCount>0)
+			{
+				for(int iSkinIndex=0; iSkinIndex<nSkinCount; ++iSkinIndex)
+				{
+					FbxSkin *pSkin = (FbxSkin *)pMesh->GetDeformer(iSkinIndex, FbxDeformer::eSkin);
+					int nClusterCount = pSkin->GetClusterCount();
+					for(int iClusterIndex=0; iClusterIndex<nClusterCount; ++iClusterIndex)
+					{
+						FbxCluster *pCluster = pSkin->GetCluster(iClusterIndex);
+
+						if(!pCluster->GetLink())
+							continue;
+						
+						string BoneName = pCluster->GetLink()->GetName();
+						int iBoneIndex;
+						for(iBoneIndex=0;iBoneIndex<m_vBoneName.size();++iBoneIndex)
+						{
+							if(BoneName.compare(m_vBoneName[iBoneIndex]) == 0){
+								break;
+							}
+
+						}
+						int nVertexIndexCount = pCluster->GetControlPointIndicesCount();
+						for(int i=0;i<nVertexIndexCount; ++i)
+						{
+							int iVertexIndex = pCluster->GetControlPointIndices()[i];
+							float iWeight = pCluster->GetControlPointWeights()[i];
+							(*pClusterIndexVector)[iVertexIndex].push_back(make_pair(iClusterIndex,iWeight));
+						}
+					}
+				}
+			}
+
+		}
+	}
+
+	for (int lChildIndex = 0; lChildIndex < pNode->GetChildCount(); ++lChildIndex)
+	{
+		SetBoneAtVertices( pNode->GetChild(lChildIndex), pClusterIndexVector);
+	}
+}
+
+

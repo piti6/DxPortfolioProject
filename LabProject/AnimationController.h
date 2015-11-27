@@ -11,8 +11,9 @@ public:
 	void LoadAnimationFromFile(FbxManager *pFbxSdkManager, char * filename, string AnimationName,bool isLooping);
 	void SetBoneNameIndex(FbxScene *pFbxScene,FbxNode *pNode,string AnimationName);
 	void SetAnimationData(FbxScene *pFbxScene,FbxNode *pNode,string AnimationName);
-	void SetBoneMatrixVectorAtTime(FbxNode * pNode, string AnimationName, FbxPose* pPose, FbxTime& pTime);
-	D3DXMATRIX GetClusterMatrix(FbxAMatrix & pGlobalPosition ,FbxMesh * pMesh, FbxCluster * pCluster, FbxTime& pTime, FbxPose* pPose);
+	void SetBoneMatrixVectorAtTime(FbxNode * pNode, string AnimationName, FbxTime& pTime);
+
+	D3DXMATRIX GetClusterMatrix(FbxAMatrix & pGlobalPosition ,FbxMesh * pMesh, FbxCluster * pCluster, FbxTime& pTime);
 
 /////////////// Controller Part ///////////////
 
@@ -28,8 +29,7 @@ public:
 
 	string						m_CurrentPlayingAnimationName;
 	
-	vector<string>				m_vBoneName;
+	vector<string>					m_vBoneName;
 	CAnimationList				m_vAnimationList;
 
-	
 };

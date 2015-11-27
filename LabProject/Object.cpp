@@ -341,7 +341,7 @@ void CDynamicObject::UpdateAnimation(ID3D11DeviceContext *pd3dImmediateDeviceCon
 			
 			for(int i=0;i<m_AnimationController.m_vAnimationList.m_Animation[m_AnimationController.m_CurrentPlayingAnimationName].m_vAnimation.m_vBoneContainer[fCurrentTimeClosest].m_vBoneList.size(); ++i)
 			{
-				pd3dxmBone->BONE[i] = m_AnimationController.m_vAnimationList.m_Animation[m_AnimationController.m_CurrentPlayingAnimationName].m_vAnimation.m_vBoneContainer[fCurrentTimeClosest].m_vBoneList[i];
+				D3DXMatrixTranspose(&pd3dxmBone->BONE[i],&m_AnimationController.m_vAnimationList.m_Animation[m_AnimationController.m_CurrentPlayingAnimationName].m_vAnimation.m_vBoneContainer[fCurrentTimeClosest].m_vBoneList[i]);
 			}
 			pd3dImmediateDeviceContext->Unmap(m_pd3dBoneMatrix, 0);
 			pd3dImmediateDeviceContext->VSSetConstantBuffers(VS_SLOT_BONE_MATRIX, 1, &m_pd3dBoneMatrix);

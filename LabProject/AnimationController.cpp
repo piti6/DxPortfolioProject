@@ -2,6 +2,18 @@
 #include "AnimationController.h"
 #include "FbxToDxTranslation.h"
 
+
+void PrintFbxMatrix(FbxAMatrix a){
+	for(int i=0;i<4;++i)
+	{
+		for(int j=0;j<4;++j)
+		{
+			cout <<"Data [" << i << "][" << j << "] : " << a.mData[i][j] << endl;
+		}
+		cout << endl;
+	}
+}
+
 CAnimationController::CAnimationController()
 {
 	m_fCurrentAnimTime = 0;
@@ -13,9 +25,6 @@ void CAnimationController::LoadAnimationFromFile(FbxManager *pFbxSdkManager, cha
 		cout << "Same Animation Name Already Exist!" << endl;
 		return;
 	}
-
-	//m_vAnimationList.m_Animation[AnimationName] = vector<CAnimationContainer>();
-
 
 	FbxImporter* pImporter = FbxImporter::Create(pFbxSdkManager,""); // 임포트 생성
 	FbxScene* pFbxScene = FbxScene::Create(pFbxSdkManager,""); // fbx 씬 생성
@@ -31,25 +40,10 @@ void CAnimationController::LoadAnimationFromFile(FbxManager *pFbxSdkManager, cha
 	}
 	pImporter->Destroy();
 
-	
-	FbxAxisSystem SceneAxisSystem = pFbxScene->GetGlobalSettings().GetAxisSystem();
-	
-	FbxAxisSystem OurAxisSystem(FbxAxisSystem::DirectX);
-	
-	if( SceneAxisSystem != OurAxisSystem )
-    {
-        OurAxisSystem.ConvertScene(pFbxScene);
-    }
-	
-	
 	if(pFbxScene->GetSrcObjectCount<FbxAnimStack>()<=0){
 		cout << "There's No Animation At " << filename << endl;
 		return;
 	}
-	
-	// Convert mesh, NURBS and patch into triangle mesh
-	FbxGeometryConverter lGeomConverter(pFbxSdkManager);
-	lGeomConverter.Triangulate(pFbxScene, true);
 	
 	// 씬의 루트 노드 얻어옴
 	FbxNode* pFbxRootNode = pFbxScene->GetRootNode();
@@ -63,6 +57,8 @@ void CAnimationController::SetBoneNameIndex(FbxScene *pFbxScene,FbxNode *pNode,s
 	if (pNode->GetNodeAttribute())
 	{
 		if( pNode->GetNodeAttribute()->GetAttributeType() == FbxNodeAttribute::eSkeleton){
+			FbxAMatrix FbxmtxTemp;
+			FbxmtxTemp.SetIdentity();
 			m_vBoneName.push_back(pNode->GetName());
 		}
 	}
@@ -76,13 +72,15 @@ void CAnimationController::SetAnimationData(FbxScene *pFbxScene,FbxNode *pNode,s
 	FbxAnimStack *pFbxAnimStack = pFbxScene->GetSrcObject<FbxAnimStack>();
 	FbxAnimLayer *pFbxAnimLayer = pFbxAnimStack->GetMember<FbxAnimLayer>();
 	m_vAnimationList.m_Animation[AnimationName].m_fLength = pFbxAnimStack->GetLocalTimeSpan().GetDuration().GetMilliSeconds();
-	int nFrameCount = (int) m_vAnimationList.m_Animation[AnimationName].m_fLength/30;
+	int nFrameCount = (int) m_vAnimationList.m_Animation[AnimationName].m_fLength/10;
 	FbxTime Time;
 
 	for(int i=0; i<nFrameCount; ++i)
 	{
-		Time.SetMilliSeconds(i*30);
-		SetBoneMatrixVectorAtTime(pNode,AnimationName, NULL, Time);
+		FbxAMatrix FbxmtxParents;
+		Time.SetMilliSeconds(i*10);
+		m_vAnimationList.m_Animation[AnimationName].m_vAnimation.m_vBoneContainer[Time.GetMilliSeconds()].m_vBoneList.resize(m_vBoneName.size());
+		SetBoneMatrixVectorAtTime(pNode,AnimationName, Time);
 	}
 }
 void CAnimationController::UpdateTime(float fElapsedTime)
@@ -118,19 +116,18 @@ void CAnimationController::Pause()
 {
 	m_bIsPlaying = false;
 }
-
-void CAnimationController::SetBoneMatrixVectorAtTime(FbxNode * pNode, string AnimationName, FbxPose* pPose, FbxTime& pTime)
+void CAnimationController::SetBoneMatrixVectorAtTime(FbxNode * pNode, string AnimationName,FbxTime& pTime)
 {
 	FbxAMatrix pParentGlobalPosition;
-	pParentGlobalPosition.SetIdentity();
-	FbxAMatrix lGlobalPosition = GetGlobalPosition(pNode, pTime, pPose, &pParentGlobalPosition);
+	FbxAMatrix lGlobalPosition = pNode->EvaluateGlobalTransform(pTime);
+	FbxAMatrix lGeometryOffset = GetGeometry(pNode);
+	FbxAMatrix lGlobalOffPosition = lGlobalPosition * lGeometryOffset;
+
 	FbxNodeAttribute* Attr = pNode->GetNodeAttribute();
 	if(Attr)
 	{
 		if (Attr->GetAttributeType() == FbxNodeAttribute::eMesh)
 		{
-			FbxAMatrix lGeometryOffset = GetGeometry(pNode);
-			FbxAMatrix lGlobalOffPosition = lGlobalPosition * lGeometryOffset;
 			FbxMesh * pMesh = pNode->GetMesh();
 
 			int nSkinCount = pMesh->GetDeformerCount(FbxDeformer::eSkin);
@@ -139,30 +136,26 @@ void CAnimationController::SetBoneMatrixVectorAtTime(FbxNode * pNode, string Ani
 				for ( int iSkinIndex=0; iSkinIndex<nSkinCount; ++iSkinIndex)
 				{
 					FbxSkin *pSkin = (FbxSkin *)pMesh->GetDeformer(iSkinIndex, FbxDeformer::eSkin);
+					FbxSkin::EType lSkinningType = pSkin->GetSkinningType();
 					int nClusterCount = pSkin->GetClusterCount();
 					for ( int iClusterIndex=0; iClusterIndex<nClusterCount; ++iClusterIndex)
 					{
 						FbxCluster* pCluster = pSkin->GetCluster(iClusterIndex);
-
 						if (!pCluster->GetLink())
 							continue;
-						
 
-						/*
-						FbxAMatrix InitMat;
-						pCluster->GetTransformLinkMatrix(InitMat);
-						InitMat = InitMat.Inverse() * pCluster->GetLink()->GetAnimationEvaluator()->GetNodeGlobalTransform(pCluster->GetLink(),pTime);
-						m_vAnimationList.m_Animation[AnimationName].m_vAnimation.m_vBoneContainer[pTime.GetMilliSeconds()].m_vBoneList.push_back(GetD3DMatrix(InitMat));
-						*/
-						
-						D3DXMATRIX d3dxmtxBone = GetClusterMatrix(lGlobalOffPosition, pMesh, pCluster, pTime, pPose);
-						//D3DXMatrixInverse(&d3dxmtxBone,NULL,&d3dxmtxBone);
-						m_vAnimationList.m_Animation[AnimationName].m_vAnimation.m_vBoneContainer[pTime.GetMilliSeconds()].m_vBoneList.push_back(d3dxmtxBone);
-						
+						string BoneName = pCluster->GetLink()->GetName();
+						int iBoneIndex;
+						for(iBoneIndex=0;iBoneIndex<m_vBoneName.size();++iBoneIndex)
+						{
+							if(BoneName.compare(m_vBoneName[iBoneIndex]) == 0){
+								break;
+							}
+						}
 
+						D3DXMATRIX d3dxmtxBone = GetClusterMatrix(lGlobalOffPosition, pMesh, pCluster, pTime);
+						m_vAnimationList.m_Animation[AnimationName].m_vAnimation.m_vBoneContainer[pTime.GetMilliSeconds()].m_vBoneList[iBoneIndex] = d3dxmtxBone;
 
-						
-						
 					}
 				}
 			}
@@ -170,64 +163,13 @@ void CAnimationController::SetBoneMatrixVectorAtTime(FbxNode * pNode, string Ani
 	}
 	for (int lChildIndex = 0; lChildIndex < pNode->GetChildCount(); ++lChildIndex)
 	{
-		SetBoneMatrixVectorAtTime(pNode->GetChild(lChildIndex), AnimationName, pPose, pTime);
+		SetBoneMatrixVectorAtTime(pNode->GetChild(lChildIndex), AnimationName, pTime);
 	}
-
-
 }
 
-D3DXMATRIX CAnimationController::GetClusterMatrix(FbxAMatrix & pGlobalPosition ,FbxMesh * pMesh, FbxCluster * pCluster, FbxTime& pTime, FbxPose* pPose)
-{
-
-	FbxAMatrix lReferenceGlobalInitPosition;
-	FbxAMatrix lClusterGlobalInitPosition;
-	FbxAMatrix lClusterGlobalCurrentPosition;
-	FbxAMatrix lReferenceGeometry;
-
-	FbxAMatrix lReferenceGlobalCurrentPosition;
-
-	FbxAMatrix lClusterRelativeInitPosition;
-	FbxAMatrix lClusterRelativeCurrentPositionInverse;
-	
-
-	pCluster->GetTransformMatrix(lReferenceGlobalInitPosition);
-		/////////////////////////////////////////////////////////////////////////////////////////
-
-		/////////////////////////////////////////////////////////////////////////////////////////
-		lReferenceGlobalCurrentPosition = pGlobalPosition;
-		//lReferenceGlobalCurrentPosition.SetIdentity();
-		// Multiply lReferenceGlobalInitPosition by Geometric Transformation
-		lReferenceGeometry = GetGeometry(pMesh->GetNode());
-		/////////////////////////////////////////////////////////////////////////////////////////
-		/////////////////////////////////////////////////////////////////////////////////////////
-
-		lReferenceGlobalInitPosition *= lReferenceGeometry;
-
-		// Get the link initial global position and the link current global position.
-		pCluster->GetTransformLinkMatrix(lClusterGlobalInitPosition);
-		/////////////////////////////////////////////////////////////////////////////////////////
-		/////////////////////////////////////////////////////////////////////////////////////////
-
-		lClusterGlobalCurrentPosition = GetGlobalPosition(pCluster->GetLink(), pTime, pPose);
-		/////////////////////////////////////////////////////////////////////////////////////////
-		/////////////////////////////////////////////////////////////////////////////////////////
 
 
-		// Compute the initial position of the link relative to the reference.
-		lClusterRelativeInitPosition = lClusterGlobalInitPosition.Inverse() * lReferenceGlobalInitPosition;
-
-		// Compute the current position of the link relative to the reference.
-		lClusterRelativeCurrentPositionInverse = lReferenceGlobalCurrentPosition.Inverse() * lClusterGlobalCurrentPosition;
-
-		// Compute the shift of the link relative to the reference.
-
-		FbxAMatrix ClusterMatrix = lClusterRelativeCurrentPositionInverse * lClusterRelativeInitPosition;
-		return GetD3DMatrix( ClusterMatrix );
-}
-
-/*
-
-D3DXMATRIX CAnimationController::GetClusterMatrix(FbxAMatrix & pGlobalPosition ,FbxMesh * pMesh, FbxCluster * pCluster, FbxTime& pTime, FbxPose* pPose)
+D3DXMATRIX CAnimationController::GetClusterMatrix(FbxAMatrix & pGlobalPosition ,FbxMesh * pMesh, FbxCluster * pCluster, FbxTime& pTime)
 {
 
 	FbxAMatrix lReferenceGlobalInitPosition;
@@ -241,34 +183,31 @@ D3DXMATRIX CAnimationController::GetClusterMatrix(FbxAMatrix & pGlobalPosition ,
 
 	FbxAMatrix lReferenceGeometry;
 
-	D3DXPLANE p(1.0f, 1.0f, 0.0f, 0.0f );
-	
-	FbxAMatrix relfection;
-	relfection.SetIdentity();
-	D3DXMatrixReflect_Fixed(&relfection, &p);
+	D3DXPLANE p(1.0f, 0.0f, 0.0f, 0.0f );
+
+	FbxAMatrix reflection;
+	D3DXMatrixReflect_Fixed(&reflection, &p);
 
 	pCluster->GetTransformMatrix(lReferenceGlobalInitPosition);
-	lReferenceGlobalInitPosition = relfection   * lReferenceGlobalInitPosition;
+	
+	lReferenceGlobalInitPosition = reflection * lReferenceGlobalInitPosition;
 
 	/////////////////////////////////////////////////////////////////////////////////////////
 	lReferenceGlobalCurrentPosition = pGlobalPosition;
 	// Multiply lReferenceGlobalInitPosition by Geometric Transformation
 	lReferenceGeometry = GetGeometry(pMesh->GetNode());
-	/////////////////////////////////////////////////////////////////////////////////////////
-	lReferenceGeometry = relfection   * lReferenceGeometry;
+	lReferenceGeometry = reflection * lReferenceGeometry;
 	/////////////////////////////////////////////////////////////////////////////////////////
 
 	lReferenceGlobalInitPosition *= lReferenceGeometry;
 
 	// Get the link initial global position and the link current global position.
 	pCluster->GetTransformLinkMatrix(lClusterGlobalInitPosition);
-	/////////////////////////////////////////////////////////////////////////////////////////
-	lClusterGlobalInitPosition = relfection   * lClusterGlobalInitPosition;
+	lClusterGlobalInitPosition = reflection * lClusterGlobalInitPosition;
 	/////////////////////////////////////////////////////////////////////////////////////////
 
-	lClusterGlobalCurrentPosition = GetGlobalPosition(pCluster->GetLink(), pTime, NULL);
-	/////////////////////////////////////////////////////////////////////////////////////////
-	lClusterGlobalCurrentPosition = relfection   * lClusterGlobalCurrentPosition;
+	lClusterGlobalCurrentPosition = pCluster->GetLink()->EvaluateGlobalTransform(pTime);
+	lClusterGlobalCurrentPosition = reflection * lClusterGlobalCurrentPosition;
 	/////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -281,6 +220,6 @@ D3DXMATRIX CAnimationController::GetClusterMatrix(FbxAMatrix & pGlobalPosition ,
 	// Compute the shift of the link relative to the reference.
 
 	FbxAMatrix ClusterMatrix = lClusterRelativeCurrentPositionInverse * lClusterRelativeInitPosition;
+	
 	return GetD3DMatrix( ClusterMatrix );
 }
-*/

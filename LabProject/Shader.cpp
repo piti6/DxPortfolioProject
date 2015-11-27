@@ -434,17 +434,16 @@ void CInstancingShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhy
 		m_ObjectsVector.push_back(make_pair(0,pPlaneObject));
 	}
 	//
-	m_InstanceDataVector.push_back(InstanceData(new CFbxMeshIlluminatedTextured(pd3dDevice,pFbxSdkManager,"Data/Model/ExportScene01.fbx",1),CreateInstanceBuffer(pd3dDevice,MAX_INSTANCE,sizeof(D3DXMATRIX),NULL),1));
+	m_InstanceDataVector.push_back(InstanceData(new CFbxMeshIlluminatedTextured(pd3dDevice,pFbxSdkManager,"Data/Model/mon_goblinWizard@Attack01.fbx",1),CreateInstanceBuffer(pd3dDevice,MAX_INSTANCE,sizeof(D3DXMATRIX),NULL),1));
 	CDynamicObject *pBarrelObject = NULL;
 	for(int i=0; i<m_InstanceDataVector[1].m_nObjects; ++i){
 		pBarrelObject = new CDynamicObject(true);
 		pBarrelObject->CreateShaderVariables(pd3dDevice);
-		pBarrelObject->m_AnimationController.LoadAnimationFromFile(pFbxSdkManager,"Data/Model/ExportScene01.fbx","Attack",true);
+		pBarrelObject->m_AnimationController.LoadAnimationFromFile(pFbxSdkManager,"Data/Model/mon_goblinWizard@Attack01.fbx","Attack",true);
 		pBarrelObject->m_AnimationController.Play("Attack");
 		pBarrelObject->SetMesh(m_InstanceDataVector[1].GetMesh());
 		pBarrelObject->SetMaterial(pMaterial);
 		pBarrelObject->SetTexture(m_TexturesVector[2]);
-		//pBarrelObject->SetOffset(D3DXVECTOR3(0,-180,0));
 		pBarrelObject->BuildObjects(pPxPhysics,pPxScene);
 		pBarrelObject->SetPosition(D3DXVECTOR3(0, 500, 0));
 		m_ObjectsVector.push_back(make_pair(1,pBarrelObject));
@@ -515,8 +514,6 @@ ID3D11Buffer *CInstancingShader::CreateInstanceBuffer(ID3D11Device *pd3dDevice, 
 }
 
 void CInstancingShader::UpdateShaderVariables(ID3D11DeviceContext *pd3dImmediateDeviceContext, CCamera *pCamera){
-	//카메라의 절두체에 포함되는 객체들만을 렌더링한다. 
-
 }
 void CInstancingShader::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, CCamera *pCamera){
 	OnPostRender(pd3dImmediateDeviceContext);
@@ -571,10 +568,6 @@ CSkyBoxShader::~CSkyBoxShader()
 void CSkyBoxShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhysics, PxScene *pPxScene, FbxManager *pFbxSdkManager)
 {
 	CreateShaderVariables(pd3dDevice);
-	/*
-	m_nObjects = 6;
-	m_ppObjects = new CGameObject*[m_nObjects]; 
-	*/
 	ID3D11SamplerState *pd3dSamplerState = NULL;
 	D3D11_SAMPLER_DESC d3dSamplerDesc;
 	ZeroMemory(&d3dSamplerDesc, sizeof(D3D11_SAMPLER_DESC));

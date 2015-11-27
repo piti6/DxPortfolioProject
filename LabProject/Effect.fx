@@ -368,7 +368,7 @@ VS_INSTANCED_TEXTURED_LIGHTING_ANIMATION_OUTPUT VSInstancedTexturedLightingAnima
 	if ( input.boneindex.x < NULL_IDX)
 	{
 		float4x4 mtx = (float4x4)0;
-		Src = float3( 0.0f, 0.0f, 0.0f );
+		//Src = float3( 0.0f, 0.0f, 0.0f );
 		float weight[4];
 		weight[0] = input.boneweight.x;
 		weight[1] = input.boneweight.y;

@@ -677,11 +677,9 @@ float CHeightMapGridMesh::OnGetHeight(int x, int z, void *pContext)
 CFbxMeshIlluminatedTextured::~CFbxMeshIlluminatedTextured(){
 }
 
-//HRESULT CFbxMeshIlluminatedTextured::LoadFBXFromFile(ID3D11Device *pd3dDevice, FbxManager *pFbxSdkManager, char * filename, bool isAnim){
 CFbxMeshIlluminatedTextured::CFbxMeshIlluminatedTextured(ID3D11Device *pd3dDevice, FbxManager *pFbxSdkManager, char * filename, float fScaleMultiplier) : CMesh(pd3dDevice)
 {
 	m_d3dPrimitiveTopology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-	//m_d3dPrimitiveTopology = D3D11_PRIMITIVE_TOPOLOGY_LINELIST;
 	m_nStride = new UINT[1];
 	m_nStride[0] = sizeof(CBoneWeightVertex);
 	m_nOffset = new UINT[1];
@@ -702,31 +700,14 @@ CFbxMeshIlluminatedTextured::CFbxMeshIlluminatedTextured(ID3D11Device *pd3dDevic
 	}
 	pImporter->Destroy();
 
-	
-	//m_bHasAnimation = false;
-
 	if(pFbxScene->GetSrcObjectCount<FbxAnimStack>()>0)
 		m_bHasAnimation = true;
 	else 
 		m_bHasAnimation = false;
 	
-	FbxAxisSystem SceneAxisSystem = pFbxScene->GetGlobalSettings().GetAxisSystem();
-	FbxAxisSystem OurAxisSystem(FbxAxisSystem::DirectX);
-	
-	if( SceneAxisSystem != OurAxisSystem )
-    {
-        OurAxisSystem.ConvertScene(pFbxScene);
-    }
-	
 	// Convert mesh, NURBS and patch into triangle mesh
 	FbxGeometryConverter lGeomConverter(pFbxSdkManager);
 	lGeomConverter.Triangulate(pFbxScene, true);
-
-	/*
-	// Convert Axis System to what is used in this example, if needed
-	FbxSystemUnit ScaleMultiplier = FbxSystemUnit(1,fScaleMultiplier);
-	ScaleMultiplier.ConvertScene(pFbxScene);
-	*/
 
 	// 씬의 루트 노드 얻어옴
 	FbxNode* pFbxRootNode = pFbxScene->GetRootNode();
@@ -765,11 +746,11 @@ CFbxMeshIlluminatedTextured::CFbxMeshIlluminatedTextured(ID3D11Device *pd3dDevic
 	d3dBufferData.pSysMem = pVertices;
 	pd3dDevice->CreateBuffer(&d3dBufferDesc, &d3dBufferData, &m_ppd3dVertexBuffers[0]);
 
-	m_pVertices = pVertices;
+	//m_pVertices = pVertices;
 
 	SetRasterizerState(pd3dDevice);
 
-	//delete []pVertices;
+	delete []pVertices;
 	pFbxScene->Destroy(true);
 }
 
@@ -804,25 +785,19 @@ void CFbxMeshIlluminatedTextured::SetVertices(FbxNode* pNode, vector<CBoneWeight
 			D3DXVECTOR3 tempMin;
 			D3DXVECTOR3	tempMax;
 			tempMin = tempMax = D3DXVECTOR3(0,0,0); // 메쉬의 최대최소점 저장
-			D3DXMATRIX d3dxmtxGlobal;
 			
-				d3dxmtxGlobal = GetD3DMatrix(pNode->EvaluateGlobalTransform());
 			
-			//D3DXMatrixIdentity(&d3dxmtxGlobal);
-		
 			// 폴리곤 숫자만큼 버텍스를 읽어옴
 			for (int j = 0; j < pMesh->GetPolygonCount(); j++) // j가 폴리곤 인덱스
 			{
 				int iNumVertices = pMesh->GetPolygonSize(j); 
-
+			
 				for (int k = 0; k < iNumVertices; k++) // k가 포인트 인덱스
 				{
 					int iControlPointIndex = pMesh->GetPolygonVertex(j, k);
 					CBoneWeightVertex Vertex = CBoneWeightVertex();
 
-
-					D3DXVECTOR3 d3dxvPos = D3DXVECTOR3((float)pVertices[iControlPointIndex].mData[0],(float)pVertices[iControlPointIndex].mData[1],(float)pVertices[iControlPointIndex].mData[2]);
-					//D3DXVec3TransformCoord(&d3dxvPos,&d3dxvPos,&d3dxmtxGlobal);
+					D3DXVECTOR3 d3dxvPos = D3DXVECTOR3((float)-pVertices[iControlPointIndex].mData[0],(float)pVertices[iControlPointIndex].mData[1],(float)pVertices[iControlPointIndex].mData[2]);
 
 					// 노말벡터 설정
 					FbxVector4 Normal;
@@ -833,7 +808,7 @@ void CFbxMeshIlluminatedTextured::SetVertices(FbxNode* pNode, vector<CBoneWeight
 					pMesh->GetPolygonVertexUV(j, k, lUVSetNameList[0], textureUV, isMapped);
 
 					Vertex.SetPosition(d3dxvPos);
-					Vertex.SetNormal(D3DXVECTOR3((float)Normal.mData[0],(float)Normal.mData[1],(float)Normal.mData[2]));
+					Vertex.SetNormal(D3DXVECTOR3((float)-Normal.mData[0],(float)Normal.mData[1],(float)Normal.mData[2]));
 					Vertex.SetTexCoord(D3DXVECTOR2(textureUV[0], -textureUV[1]));
 
 					if(m_bHasAnimation)
@@ -853,7 +828,6 @@ void CFbxMeshIlluminatedTextured::SetVertices(FbxNode* pNode, vector<CBoneWeight
 						tempMax.y = Vertex.GetPosition().y;
 					if( Vertex.GetPosition().z > tempMax.z )
 						tempMax.z = Vertex.GetPosition().z;
-
 					if( Vertex.GetPosition().x < tempMin.x )
 						tempMin.x = Vertex.GetPosition().x;
 					if( Vertex.GetPosition().y < tempMin.y )
@@ -910,7 +884,7 @@ void CFbxMeshIlluminatedTextured::SetBoneAtVertices(FbxNode* pNode, unordered_ma
 						{
 							int iVertexIndex = pCluster->GetControlPointIndices()[i];
 							float iWeight = pCluster->GetControlPointWeights()[i];
-							(*pClusterIndexVector)[iVertexIndex].push_back(make_pair(iClusterIndex,iWeight));
+							(*pClusterIndexVector)[iVertexIndex].push_back(make_pair(iBoneIndex,iWeight));
 						}
 					}
 				}

@@ -199,7 +199,7 @@ void CStaticObject::BuildObjects(PxPhysics *pPxPhysics, PxScene *pPxScene)
 	PxBoxGeometry _PxBoxGeometry(_d3dxvExtents.x,_d3dxvExtents.y,_d3dxvExtents.z);
 	m_pPxActor = PxCreateStatic(*pPxPhysics,_PxTransform,_PxBoxGeometry,*m_pPxMaterial);
 	pPxScene->addActor(*m_pPxActor);
-
+	
 	PxTransform pT = m_pPxActor->getGlobalPose();
 	PxMat44 m = PxMat44(pT);
 	m_d3dxmtxWorld = D3DXMATRIX(m.front());	
@@ -233,6 +233,8 @@ void CDynamicObject::BuildObjects(PxPhysics *pPxPhysics, PxScene *pPxScene)
 {
 
 	m_pPxMaterial = pPxPhysics->createMaterial(0.9,0.9,0.0001f);
+	//PxQuat _PxQuaternion(90,PxVec3(0,1,0));
+	//PxTransform _PxTransform;
 	PxTransform _PxTransform(GetPosition().x + m_d3dxvOffset.x,GetPosition().y + m_d3dxvOffset.y,GetPosition().z + m_d3dxvOffset.z);
 
 	D3DXVECTOR3 _d3dxvBoundMinimum = m_MeshesVector[0]->GetBoundingCube().GetMinimum();
@@ -242,11 +244,6 @@ void CDynamicObject::BuildObjects(PxPhysics *pPxPhysics, PxScene *pPxScene)
 	PxBoxGeometry _PxBoxGeometry(_d3dxvExtents.x,_d3dxvExtents.y,_d3dxvExtents.z);
 	m_pPxActor = PxCreateDynamic(*pPxPhysics,_PxTransform,_PxBoxGeometry,*m_pPxMaterial,2000.0f);
 	pPxScene->addActor(*m_pPxActor);
-	/*
-	PxTransform pT = m_pPxActor->getGlobalPose();
-	PxMat44 m = PxMat44(pT);
-	m.setPosition(PxVec3(m.column3.x,m.column3.y,m.column3.z));
-	m_d3dxmtxWorld = D3DXMATRIX(m.front());	*/
 }
 
 void CDynamicObject::Animate(float fTimeElapsed,PxScene *pPxScene)

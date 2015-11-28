@@ -409,7 +409,7 @@ void CInstancingShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhy
 	m_nMatrixBufferStride = sizeof(D3DXMATRIX);
 	m_nMatrixBufferOffset = 0;
 	//인스턴스 쉐이더에서 렌더링할 메쉬이다.
-	/*
+	
 	m_InstanceDataVector.push_back(InstanceData(new CCubeMeshIlluminatedTextured(pd3dDevice, 25.0f, 25.0f, 25.0f),CreateInstanceBuffer(pd3dDevice,MAX_INSTANCE,sizeof(D3DXMATRIX),NULL),500));
 	CDynamicObject *pCubeObject = NULL;
 	for(int i=0; i<m_InstanceDataVector[0].m_nObjects; ++i){
@@ -421,32 +421,34 @@ void CInstancingShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhy
 		pCubeObject->SetPosition(D3DXVECTOR3(0, i*20, 0));
 		m_ObjectsVector.push_back(make_pair(0,pCubeObject));
 	}
-	*/
+	
 	m_InstanceDataVector.push_back(InstanceData(new CCubeMeshIlluminatedTextured(pd3dDevice, 2000.0f, 10.0f, 2000.0f),CreateInstanceBuffer(pd3dDevice,MAX_INSTANCE,sizeof(D3DXMATRIX),NULL),1));
 	CStaticObject *pPlaneObject = NULL;
-	for(int i=0; i<m_InstanceDataVector[0].m_nObjects; ++i){
+	for(int i=0; i<m_InstanceDataVector[1].m_nObjects; ++i){
 		pPlaneObject = new CStaticObject();
-		pPlaneObject->SetMesh(m_InstanceDataVector[0].GetMesh());
+		pPlaneObject->SetMesh(m_InstanceDataVector[1].GetMesh());
 		pPlaneObject->SetMaterial(pMaterial);
 		pPlaneObject->SetTexture(m_TexturesVector[1]);
 		pPlaneObject->BuildObjects(pPxPhysics,pPxScene);
 		pPlaneObject->SetPosition(D3DXVECTOR3(0, -100, 0));
-		m_ObjectsVector.push_back(make_pair(0,pPlaneObject));
+		m_ObjectsVector.push_back(make_pair(1,pPlaneObject));
 	}
 	//
-	m_InstanceDataVector.push_back(InstanceData(new CFbxMeshIlluminatedTextured(pd3dDevice,pFbxSdkManager,"Data/Model/mon_goblinWizard@Attack01.fbx",1),CreateInstanceBuffer(pd3dDevice,MAX_INSTANCE,sizeof(D3DXMATRIX),NULL),1));
+	m_InstanceDataVector.push_back(InstanceData(new CFbxMeshIlluminatedTextured(pd3dDevice,pFbxSdkManager,"Data/Model/mon_goblinWizard@Attack01.fbx",1),CreateInstanceBuffer(pd3dDevice,MAX_INSTANCE,sizeof(D3DXMATRIX),NULL),2));
 	CDynamicObject *pBarrelObject = NULL;
-	for(int i=0; i<m_InstanceDataVector[1].m_nObjects; ++i){
+	for(int i=0; i<m_InstanceDataVector[2].m_nObjects; ++i){
 		pBarrelObject = new CDynamicObject(true);
 		pBarrelObject->CreateShaderVariables(pd3dDevice);
 		pBarrelObject->m_AnimationController.LoadAnimationFromFile(pFbxSdkManager,"Data/Model/mon_goblinWizard@Attack01.fbx","Attack",true);
 		pBarrelObject->m_AnimationController.Play("Attack");
-		pBarrelObject->SetMesh(m_InstanceDataVector[1].GetMesh());
+		pBarrelObject->SetMesh(m_InstanceDataVector[2].GetMesh());
 		pBarrelObject->SetMaterial(pMaterial);
 		pBarrelObject->SetTexture(m_TexturesVector[2]);
+		//pBarrelObject->SetOffset(D3DXVECTOR3(0, -50, 0));
 		pBarrelObject->BuildObjects(pPxPhysics,pPxScene);
 		pBarrelObject->SetPosition(D3DXVECTOR3(0, 500, 0));
-		m_ObjectsVector.push_back(make_pair(1,pBarrelObject));
+		
+		m_ObjectsVector.push_back(make_pair(2,pBarrelObject));
 	}
 	//인스턴스 데이터(렌더링할 객체들의 위치 벡터 배열)를 메쉬의 정점 버퍼에 추가한다.
 	for(int i=0; i<m_InstanceDataVector.size();++i){

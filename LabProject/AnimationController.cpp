@@ -152,8 +152,12 @@ void CAnimationController::SetBoneMatrixVectorAtTime(FbxNode * pNode, string Ani
 								break;
 							}
 						}
-
+						
 						D3DXMATRIX d3dxmtxBone = GetClusterMatrix(lGlobalOffPosition, pMesh, pCluster, pTime);
+						/*
+						D3DXMATRIX mtxRotate;
+						D3DXMatrixRotationYawPitchRoll(&mtxRotate, (float)D3DXToRadian(0), (float)D3DXToRadian(-90), (float)D3DXToRadian(0));
+						d3dxmtxBone = d3dxmtxBone * mtxRotate;*/
 						m_vAnimationList.m_Animation[AnimationName].m_vAnimation.m_vBoneContainer[pTime.GetMilliSeconds()].m_vBoneList[iBoneIndex] = d3dxmtxBone;
 
 					}

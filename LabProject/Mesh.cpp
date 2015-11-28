@@ -704,7 +704,8 @@ CFbxMeshIlluminatedTextured::CFbxMeshIlluminatedTextured(ID3D11Device *pd3dDevic
 		m_bHasAnimation = true;
 	else 
 		m_bHasAnimation = false;
-	
+	//m_bHasAnimation = false;
+
 	// Convert mesh, NURBS and patch into triangle mesh
 	FbxGeometryConverter lGeomConverter(pFbxSdkManager);
 	lGeomConverter.Triangulate(pFbxScene, true);
@@ -781,24 +782,28 @@ void CFbxMeshIlluminatedTextured::SetVertices(FbxNode* pNode, vector<CBoneWeight
 			FbxStringList lUVSetNameList;
 			pMesh->GetUVSetNames(lUVSetNameList);
 
-			
+
 			D3DXVECTOR3 tempMin;
 			D3DXVECTOR3	tempMax;
 			tempMin = tempMax = D3DXVECTOR3(0,0,0); // 메쉬의 최대최소점 저장
-			
-			
+
+
+			D3DXMATRIX ID;
+			D3DXMatrixRotationYawPitchRoll(&ID, (float)D3DXToRadian(0), (float)D3DXToRadian(-90), (float)D3DXToRadian(0));
 			// 폴리곤 숫자만큼 버텍스를 읽어옴
 			for (int j = 0; j < pMesh->GetPolygonCount(); j++) // j가 폴리곤 인덱스
 			{
 				int iNumVertices = pMesh->GetPolygonSize(j); 
-			
+
 				for (int k = 0; k < iNumVertices; k++) // k가 포인트 인덱스
 				{
 					int iControlPointIndex = pMesh->GetPolygonVertex(j, k);
 					CBoneWeightVertex Vertex = CBoneWeightVertex();
 
 					D3DXVECTOR3 d3dxvPos = D3DXVECTOR3((float)-pVertices[iControlPointIndex].mData[0],(float)pVertices[iControlPointIndex].mData[1],(float)pVertices[iControlPointIndex].mData[2]);
-
+					if(!m_bHasAnimation){
+						D3DXVec3TransformCoord(&d3dxvPos,&d3dxvPos,&ID);
+					}
 					// 노말벡터 설정
 					FbxVector4 Normal;
 					pMesh->GetPolygonVertexNormal(j, k, Normal );
@@ -816,10 +821,11 @@ void CFbxMeshIlluminatedTextured::SetVertices(FbxNode* pNode, vector<CBoneWeight
 						if(pClusterIndexVector->find(iControlPointIndex)!=pClusterIndexVector->end())
 						{
 							for(int i=0;i<(*pClusterIndexVector)[iControlPointIndex].size();++i){
-									Vertex.m_iBoneIndex[i] = (*pClusterIndexVector)[iControlPointIndex][i].first;
-									Vertex.m_iBoneWeight[i] = (*pClusterIndexVector)[iControlPointIndex][i].second;
+								Vertex.m_iBoneIndex[i] = (*pClusterIndexVector)[iControlPointIndex][i].first;
+								Vertex.m_iBoneWeight[i] = (*pClusterIndexVector)[iControlPointIndex][i].second;
 							}
 						}
+
 					}
 
 					if( Vertex.GetPosition().x > tempMax.x )
@@ -834,10 +840,12 @@ void CFbxMeshIlluminatedTextured::SetVertices(FbxNode* pNode, vector<CBoneWeight
 						tempMin.y = Vertex.GetPosition().y;
 					if( Vertex.GetPosition().z < tempMin.z )
 						tempMin.z = Vertex.GetPosition().z;
-
 					pVertexVector->push_back( Vertex );
 				}
 			}
+			/*
+			D3DXVec3TransformCoord(&tempMin, &tempMin, &ID);
+			D3DXVec3TransformCoord(&tempMax, &tempMax, &ID);*/
 			m_bcBoundingCube.SetMinimum(tempMin);
 			m_bcBoundingCube.SetMaximum(tempMax);
 		}
@@ -869,7 +877,7 @@ void CFbxMeshIlluminatedTextured::SetBoneAtVertices(FbxNode* pNode, unordered_ma
 
 						if(!pCluster->GetLink())
 							continue;
-						
+
 						string BoneName = pCluster->GetLink()->GetName();
 						int iBoneIndex;
 						for(iBoneIndex=0;iBoneIndex<m_vBoneName.size();++iBoneIndex)

@@ -16,7 +16,7 @@ public:
 	CAnimationDataContainer(){}
 	~CAnimationDataContainer(){}
 
-	map<float,CBoneContainer> m_vBoneContainer;
+	vector<CBoneContainer> m_vBoneContainer;
 };
 
 class CAnimation

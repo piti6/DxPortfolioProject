@@ -64,7 +64,7 @@ bool CGameFramework::CreateDirect3DDisplay()
 
 	UINT dwCreateDeviceFlags = 0;
 #ifdef _DEBUG
-	//dwCreateDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
+	dwCreateDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
 #endif
 
 	D3D_DRIVER_TYPE d3dDriverTypes[] =

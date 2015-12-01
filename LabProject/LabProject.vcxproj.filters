@@ -115,6 +115,9 @@
     <ClInclude Include="AnimationController.h">
       <Filter>헤더 파일\FBX\Animation</Filter>
     </ClInclude>
+    <ClInclude Include="AnimationInstancing.h">
+      <Filter>헤더 파일\FBX\Animation</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Mesh.cpp">
@@ -163,6 +166,9 @@
       <Filter>소스 파일\FBX\Animation</Filter>
     </ClCompile>
     <ClCompile Include="AnimationController.cpp">
+      <Filter>소스 파일\FBX\Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="AnimationInstancing.cpp">
       <Filter>소스 파일\FBX\Animation</Filter>
     </ClCompile>
   </ItemGroup>

@@ -19,6 +19,63 @@ CAnimationController::CAnimationController()
 	m_fCurrentAnimTime = 0;
 }
 
+
+void CAnimationController::UpdateTime(float fElapsedTime)
+{
+	m_fCurrentAnimTime += fElapsedTime;
+	if(m_fCurrentAnimLength < m_fCurrentAnimTime)
+		m_fCurrentAnimTime = 0;
+}
+
+int CAnimationController::GetIndexAtCurrentTime()
+{
+	/*
+	if(m_vAnimationList.m_Animation[m_CurrentPlayingAnimationName].m_fLength < m_fCurrentAnimTime)
+	{
+		if(m_vAnimationList.m_Animation[m_CurrentPlayingAnimationName].m_bIsLooping)
+			m_fCurrentAnimTime = 0;
+		else
+			return m_vAnimationList.m_Animation[m_CurrentPlayingAnimationName].m_vAnimation.m_vBoneContainer.size()-1;
+	}
+	 // get a [0.f ... 1.f) value by allowing the percent to wrap around 1
+    float percent = m_fCurrentAnimTime / m_vAnimationList.m_Animation[m_CurrentPlayingAnimationName].m_fLength;
+    int percentINT = (int)percent;
+    //percent = percent - (float)percentINT;
+	
+	return (int)((float)m_vAnimationList.m_Animation[m_CurrentPlayingAnimationName].m_vAnimation.m_vBoneContainer.size() * percent);
+	*/
+	return 0;
+}
+
+void CAnimationController::Play(string _AnimationName,float _fCurrentAnimLength)
+{
+	if(m_vAnimationList.m_Animation.find(_AnimationName) == m_vAnimationList.m_Animation.end())
+	{
+		cout << "Animation Name "<<_AnimationName<<" Not Found!" << endl;
+		return;
+	}
+
+	m_CurrentPlayingAnimationName = _AnimationName;
+	m_fCurrentAnimLength = _fCurrentAnimLength;
+	m_bIsPlaying = true;
+}
+
+void CAnimationController::Stop()
+{
+	m_bIsPlaying = false;
+	m_fCurrentAnimTime = 0;
+}
+
+void CAnimationController::Pause()
+{
+	m_bIsPlaying = false;
+}
+
+
+
+
+
+
 void CAnimationController::LoadAnimationFromFile(FbxManager *pFbxSdkManager, char* filename, string AnimationName,bool isLooping)
 {
 	if(m_vAnimationList.m_Animation.find(AnimationName) != m_vAnimationList.m_Animation.end()){
@@ -75,48 +132,17 @@ void CAnimationController::SetAnimationData(FbxScene *pFbxScene,FbxNode *pNode,s
 	int nFrameCount = (int) m_vAnimationList.m_Animation[AnimationName].m_fLength/10;
 	FbxTime Time;
 
+	m_vAnimationList.m_Animation[AnimationName].m_vAnimation.m_vBoneContainer.resize(nFrameCount);
 	for(int i=0; i<nFrameCount; ++i)
 	{
-		FbxAMatrix FbxmtxParents;
 		Time.SetMilliSeconds(i*10);
-		m_vAnimationList.m_Animation[AnimationName].m_vAnimation.m_vBoneContainer[Time.GetMilliSeconds()].m_vBoneList.resize(m_vBoneName.size());
-		SetBoneMatrixVectorAtTime(pNode,AnimationName, Time);
+		m_vAnimationList.m_Animation[AnimationName].m_vAnimation.m_vBoneContainer[i].m_vBoneList.resize(m_vBoneName.size());
+		SetBoneMatrixVectorAtTime(pNode, AnimationName, Time, i);
 	}
-}
-void CAnimationController::UpdateTime(float fElapsedTime)
-{
-	if(m_vAnimationList.m_Animation[m_CurrentPlayingAnimationName].m_bIsLooping)
-	{
-		if(m_vAnimationList.m_Animation[m_CurrentPlayingAnimationName].m_fLength/1000 < m_fCurrentAnimTime)
-			m_fCurrentAnimTime = 0;
-	}
-	m_fCurrentAnimTime += fElapsedTime;
-
+	m_vAnimationList.m_Animation[AnimationName].m_fLength/=1000;
 }
 
-void CAnimationController::Play(string _AnimationName)
-{
-	if(m_vAnimationList.m_Animation.find(_AnimationName) == m_vAnimationList.m_Animation.end())
-	{
-		cout << "Animation Name "<<_AnimationName<<" Not Found!" << endl;
-		return;
-	}
-
-	m_CurrentPlayingAnimationName = _AnimationName;
-	m_bIsPlaying = true;
-}
-
-void CAnimationController::Stop()
-{
-	m_bIsPlaying = false;
-	m_fCurrentAnimTime = 0;
-}
-
-void CAnimationController::Pause()
-{
-	m_bIsPlaying = false;
-}
-void CAnimationController::SetBoneMatrixVectorAtTime(FbxNode * pNode, string AnimationName,FbxTime& pTime)
+void CAnimationController::SetBoneMatrixVectorAtTime(FbxNode * pNode, string AnimationName,FbxTime& pTime, int index)
 {
 	FbxAMatrix pParentGlobalPosition;
 	FbxAMatrix lGlobalPosition = pNode->EvaluateGlobalTransform(pTime);
@@ -158,7 +184,7 @@ void CAnimationController::SetBoneMatrixVectorAtTime(FbxNode * pNode, string Ani
 						D3DXMATRIX mtxRotate;
 						D3DXMatrixRotationYawPitchRoll(&mtxRotate, (float)D3DXToRadian(0), (float)D3DXToRadian(-90), (float)D3DXToRadian(0));
 						d3dxmtxBone = d3dxmtxBone * mtxRotate;*/
-						m_vAnimationList.m_Animation[AnimationName].m_vAnimation.m_vBoneContainer[pTime.GetMilliSeconds()].m_vBoneList[iBoneIndex] = d3dxmtxBone;
+						m_vAnimationList.m_Animation[AnimationName].m_vAnimation.m_vBoneContainer[index].m_vBoneList[iBoneIndex] = d3dxmtxBone;
 
 					}
 				}
@@ -167,11 +193,9 @@ void CAnimationController::SetBoneMatrixVectorAtTime(FbxNode * pNode, string Ani
 	}
 	for (int lChildIndex = 0; lChildIndex < pNode->GetChildCount(); ++lChildIndex)
 	{
-		SetBoneMatrixVectorAtTime(pNode->GetChild(lChildIndex), AnimationName, pTime);
+		SetBoneMatrixVectorAtTime(pNode->GetChild(lChildIndex), AnimationName, pTime, index);
 	}
 }
-
-
 
 D3DXMATRIX CAnimationController::GetClusterMatrix(FbxAMatrix & pGlobalPosition ,FbxMesh * pMesh, FbxCluster * pCluster, FbxTime& pTime)
 {

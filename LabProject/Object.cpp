@@ -320,29 +320,21 @@ void CDynamicObject::UpdateAnimation(ID3D11DeviceContext *pd3dImmediateDeviceCon
 {
 	if(m_bHasAnimation)
 	{
+		/*
 		if(m_AnimationController.m_bIsPlaying)
 		{
-			float fCurrentTimeClosest = 0;
-			for(auto i = m_AnimationController.m_vAnimationList.m_Animation[m_AnimationController.m_CurrentPlayingAnimationName].m_vAnimation.m_vBoneContainer.begin();
-				i!=m_AnimationController.m_vAnimationList.m_Animation[m_AnimationController.m_CurrentPlayingAnimationName].m_vAnimation.m_vBoneContainer.end();++i)
-			{
-				fCurrentTimeClosest = i->first;
-				if(m_AnimationController.m_fCurrentAnimTime < fCurrentTimeClosest/1000)
-				{
-					break;
-				}
-			}
+			int iCurrentIndex = m_AnimationController.GetIndexAtCurrentTime();
 			D3D11_MAPPED_SUBRESOURCE d3dMappedResource;
 			pd3dImmediateDeviceContext->Map(m_pd3dBoneMatrix, 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
 			BONE_MATRIX *pd3dxmBone = (BONE_MATRIX*)d3dMappedResource.pData;
 			
-			for(int i=0;i<m_AnimationController.m_vAnimationList.m_Animation[m_AnimationController.m_CurrentPlayingAnimationName].m_vAnimation.m_vBoneContainer[fCurrentTimeClosest].m_vBoneList.size(); ++i)
+			for(int i=0;i<m_AnimationController.m_vAnimationList.m_Animation[m_AnimationController.m_CurrentPlayingAnimationName].m_vAnimation.m_vBoneContainer[iCurrentIndex].m_vBoneList.size(); ++i)
 			{
-				D3DXMatrixTranspose(&pd3dxmBone->BONE[i],&m_AnimationController.m_vAnimationList.m_Animation[m_AnimationController.m_CurrentPlayingAnimationName].m_vAnimation.m_vBoneContainer[fCurrentTimeClosest].m_vBoneList[i]);
+				D3DXMatrixTranspose(&pd3dxmBone->BONE[i],&m_AnimationController.m_vAnimationList.m_Animation[m_AnimationController.m_CurrentPlayingAnimationName].m_vAnimation.m_vBoneContainer[iCurrentIndex].m_vBoneList[i]);
 			}
 			pd3dImmediateDeviceContext->Unmap(m_pd3dBoneMatrix, 0);
 			pd3dImmediateDeviceContext->VSSetConstantBuffers(VS_SLOT_BONE_MATRIX, 1, &m_pd3dBoneMatrix);
-		}
+		}*/
 	}
 }
 

@@ -107,6 +107,7 @@ struct VS_INSTANCED_TEXTURED_LIGHTING_ANIMATION_INPUT
 	float4 boneweight : BLENDWEIGHT0;
 
     float4x4 mtxTransform : INSTANCEPOS;
+	uint4 animationdata : ANIMATIONOFFSET;
 };
 
 struct VS_INSTANCED_TEXTURED_LIGHTING_ANIMATION_OUTPUT
@@ -137,6 +138,13 @@ cbuffer cbBone : register(b2)
 	float4x4 BoneMtx[MAX_BONE] : packoffset(c0);
 }
 
+cbuffer cbAnimationTextureWidth : register(b3)
+{
+	uint4 gInstanceMatricesWidth : packoffset(c0);
+}
+
+float4x4    gIdentity = {1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1};
+
 //조명을 위한 상수버퍼를 선언한다. 
 cbuffer cbLight : register(b0)
 {
@@ -157,7 +165,9 @@ cbuffer cbMaterial : register(b1)
 // Texture & Sampler
 //--------------------------------------------------------------------------------------
 
-Texture2D gtxtTexture : register(t0);
+Texture2D gtxtTexture : register(ps,t0);
+Texture2D<float4> gtxtAnimation : register(vs,t1);
+
 SamplerState gSamplerState : register(s0);
 
 //--------------------------------------------------------------------------------------
@@ -321,6 +331,56 @@ float4 Lighting(float3 vPosition, float3 vNormal)
 	return(cColor); 
 }
 
+float4x4 decodeMatrix(float3x4 encodedMatrix)
+{
+    return float4x4(    float4(encodedMatrix[0].xyz,0),
+                        float4(encodedMatrix[1].xyz,0),
+                        float4(encodedMatrix[2].xyz,0),
+                        float4(encodedMatrix[0].w,encodedMatrix[1].w,encodedMatrix[2].w,1));
+}
+
+// Read a matrix(3 texture reads) from a texture containing animation data
+float4x4 loadBoneMatrix(uint animationData,uint bone)
+{
+    // Calculate a UV for the bone for this vertex
+    float4x4 rval = gIdentity;
+    
+    // animationData.x and .y are linear offsets.  Combine into a single linear offset.
+    uint baseIndex = animationData;
+    baseIndex += (4*bone);    // 4*bone is since each bone is 4 texels to form a float4x4 
+        
+    // Now turn linear offset into 2D coords
+    uint baseU = baseIndex%gInstanceMatricesWidth.x;
+    uint baseV = baseIndex/gInstanceMatricesWidth.x;
+   
+    // Note that we assume the width of the texture(and just add texels) is an even multiple of the # of texels per bone,
+    //     otherwise we'd have to recalculate the V component per lookup
+	
+    float4 mat1 = gtxtAnimation.Load( uint3(baseU,baseV,0));
+    float4 mat2 = gtxtAnimation.Load( uint3(baseU+1,baseV,0));
+    float4 mat3 = gtxtAnimation.Load( uint3(baseU+2,baseV,0));
+	//float4 mat4 = gtxtAnimation.Load( uint3(baseU+3,baseV,0));
+	/*
+	uint2 a = {baseU,baseV};
+	uint2 b = {baseU+1,baseV};
+	uint2 c = {baseU+2,baseV};
+	uint2 d = {baseU+3,baseV};
+	float4 mat1 = gtxtAnimation[a];
+    float4 mat2 = gtxtAnimation[b];
+    float4 mat3 = gtxtAnimation[c];
+	float4 mat4 = gtxtAnimation[d];
+	
+	 return float4x4(    float4(mat1),
+                        float4(mat2),
+                        float4(mat3),
+                        float4(mat4));
+    */  
+    // only load 3 of the 4 values, and deocde the matrix from them.
+    rval = decodeMatrix(float3x4(mat1,mat2,mat3));
+    
+    return rval;
+}
+
 //--------------------------------------------------------------------------------------
 // Vertex Shader
 //--------------------------------------------------------------------------------------
@@ -364,35 +424,35 @@ VS_INSTANCED_TEXTURED_LIGHTING_ANIMATION_OUTPUT VSInstancedTexturedLightingAnima
     
 
 	float3 Src = input.position;
-	
-	if ( input.boneindex.x < NULL_IDX)
-	{
-		float4x4 mtx = (float4x4)0;
-		//Src = float3( 0.0f, 0.0f, 0.0f );
-		float weight[4];
-		weight[0] = input.boneweight.x;
-		weight[1] = input.boneweight.y;
-		weight[2] = input.boneweight.z;
-		weight[3] = input.boneweight.w;
-		float TotalWeight = 0.0f;
-		uint bone[4];
-		bone[0] = input.boneindex.x;
-		bone[1] = input.boneindex.y;
-		bone[2] = input.boneindex.z;
-		bone[3] = input.boneindex.w;
-	
-		for(int i=0; i<4; ++i)
+		
+		if (input.boneindex.x < NULL_IDX)
 		{
-			if(weight[i]>0.0f)
+			float4x4 mtx = (float4x4)0;
+				//Src = float3( 0.0f, 0.0f, 0.0f );
+				float weight[4];
+			weight[0] = input.boneweight.x;
+			weight[1] = input.boneweight.y;
+			weight[2] = input.boneweight.z;
+			weight[3] = input.boneweight.w;
+			float TotalWeight = 0.0f;
+			uint bone[4];
+			bone[0] = input.boneindex.x;
+			bone[1] = input.boneindex.y;
+			bone[2] = input.boneindex.z;
+			bone[3] = input.boneindex.w;
+
+			for (int i = 0; i<4; ++i)
 			{
-				mtx += weight[i] * BoneMtx[bone[i]];
-				TotalWeight += weight[i];
+				if (weight[i]>0.0f)
+				{
+					mtx += loadBoneMatrix(input.animationdata.x, bone[i]) * weight[i];
+					//TotalWeight += weight[i];
+				}
 			}
+			Src = mul(float4(input.position,1.0f),mtx);
+			//Src /= TotalWeight;
 		}
-		Src = mul(float4(input.position,1.0f),mtx);
-		Src /= TotalWeight;
-	}
-	
+	//output.position = mul(float4(Src, 1.0f), mtx);
 	output.normalW = mul(input.normal, (float3x3)input.mtxTransform);
 	output.positionW = mul(float4(input.position, 1.0f), input.mtxTransform).xyz;
 	matrix mtxWorldViewProjection = mul(input.mtxTransform, gmtxView);

@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="10.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -21,7 +21,7 @@
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>v100</PlatformToolset>
+    <PlatformToolset>v120</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -43,8 +43,8 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>C:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Include;D:\Program Files\Autodesk\FBX\FBX SDK\2015.1\include;D:\Physx SDK\PhysX-3.3.2_WINDOWS_SDK_Core\Include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Lib\x86;D:\Program Files\Autodesk\FBX\FBX SDK\2015.1\lib\vs2010\x86\debug;D:\Physx SDK\PhysX-3.3.2_WINDOWS_SDK_Core\Lib\vc10win32;$(LibraryPath)</LibraryPath>
-    <ExecutablePath>D:\Physx SDK\PhysX-3.3.2_WINDOWS_SDK_Core\Bin\vc10win32;$(ExecutablePath)</ExecutablePath>
+    <LibraryPath>C:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Lib\x86;D:\Program Files\Autodesk\FBX\FBX SDK\2015.1\lib\vs2013\x86\debug;D:\Physx SDK\PhysX-3.3.2_WINDOWS_SDK_Core\Lib\vc11win32;$(LibraryPath)</LibraryPath>
+    <ExecutablePath>D:\Physx SDK\PhysX-3.3.2_WINDOWS_SDK_Core\Bin\vc11win32;$(ExecutablePath)</ExecutablePath>
     <SourcePath>D:\Physx SDK\PhysX-3.3.2_WINDOWS_SDK_Core\Source;$(SourcePath)</SourcePath>
     <ReferencePath>$(ReferencePath)</ReferencePath>
   </PropertyGroup>
@@ -64,7 +64,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>d3d11.lib;d3dcompiler.lib;d3dx11d.lib;d3dx9d.lib;dxerr.lib;dxguid.lib;winmm.lib;comctl32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;libfbxsdk-md.lib;PhysX3ExtensionsDEBUG.lib;physx3DEBUG_x86.lib;physx3commonDEBUG_x86.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>D:\Program Files\Autodesk\FBX\FBX SDK\2015.1\lib\vs2010\x86\debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>D:\Program Files\Autodesk\FBX\FBX SDK\2015.1\lib\vs2013\x86\debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>LIBCMTD;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
@@ -96,6 +96,7 @@
     <ClInclude Include="AABB.h" />
     <ClInclude Include="Animation.h" />
     <ClInclude Include="AnimationController.h" />
+    <ClInclude Include="AnimationInstancing.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="FbxToDxTranslation.h" />
     <ClInclude Include="GameFramework.h" />
@@ -118,6 +119,7 @@
     <ClCompile Include="AABB.cpp" />
     <ClCompile Include="Animation.cpp" />
     <ClCompile Include="AnimationController.cpp" />
+    <ClCompile Include="AnimationInstancing.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="FbxToDxTranslation.cpp" />
     <ClCompile Include="GameFramework.cpp" />

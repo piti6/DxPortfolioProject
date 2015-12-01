@@ -5,6 +5,7 @@
 #pragma once
 
 #include "Object.h"
+#include "AnimationInstancing.h"
 
 struct VS_CB_WORLD_MATRIX
 {
@@ -85,28 +86,41 @@ public:
 //
 class InstanceData{
 public:
-	InstanceData(CMesh* _Mesh, ID3D11Buffer* _Buffer, int _nObjects)
+	InstanceData(CMesh* _Mesh, int _nObjects, bool _bHasAnimation, ID3D11Buffer* _Buffer,ID3D11Buffer* _AnimationBuffer)
 	{ 
 		m_pMesh = _Mesh; 
 		m_pd3dInstances = _Buffer; 
+		m_pd3dAnimationInstances = _AnimationBuffer;
 		m_nObjects = _nObjects;
+		m_bHasAnimation = _bHasAnimation;
+		if(m_bHasAnimation){
+			m_pAnimationInstancing = new CAnimationInstancing();
+
+		}
+		else
+			m_pAnimationInstancing = NULL;
 	}
-	~InstanceData(){}
+	~InstanceData()	{}
 
 	void SetMesh(CMesh* _Mesh){if(m_pMesh) m_pMesh->Release(); m_pMesh = _Mesh;}
 	CMesh* GetMesh(){return m_pMesh;}
 
 	void SetInstanceBuffer(ID3D11Buffer* _InstanceBuffer){if(m_pd3dInstances) m_pd3dInstances->Release(); m_pd3dInstances = _InstanceBuffer;}
 	ID3D11Buffer* GetInstanceBuffer(){return m_pd3dInstances;}
+	ID3D11Buffer* GetAnimationInstanceBuffer(){return m_pd3dAnimationInstances;}
 
-	void Release(){if(m_pMesh) m_pMesh->Release(); if(m_pd3dInstances) m_pd3dInstances->Release();}
+	void Release(){if(m_pMesh) m_pMesh->Release(); if(m_pd3dInstances) m_pd3dInstances->Release(); if(m_pd3dAnimationInstances) m_pd3dAnimationInstances->Release(); if(m_pd3dAnimationInstances) m_pd3dAnimationInstances->Release(); if(m_pAnimationInstancing) delete m_pAnimationInstancing;}
 
-	int				m_nObjects;
-	int				m_nVisibleObjects;
-
+	int						m_nObjects;
+	int						m_nVisibleObjects;
+	bool					m_bHasAnimation;
+	CAnimationInstancing	*m_pAnimationInstancing;
 private:
-	CMesh			*m_pMesh;
-	ID3D11Buffer	*m_pd3dInstances;
+	
+	CMesh					*m_pMesh;
+	ID3D11Buffer			*m_pd3dInstances;
+	ID3D11Buffer			*m_pd3dAnimationInstances;
+	
 };
 
 class CInstancingShader : public CTexturedIlluminatedShader
@@ -116,7 +130,7 @@ public:
 	~CInstancingShader();
 
 	virtual void CreateShader(ID3D11Device *pd3dDevice);
-	//virtual void CreateShaderVariables(ID3D11Device *pd3dDevice);
+	virtual void CreateShaderVariables(ID3D11Device *pd3dDevice);
 	virtual void UpdateShaderVariables(ID3D11DeviceContext *pd3dImmediateDeviceContext, CCamera *pCamera);
 
 	virtual void BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhysics, PxScene *pPxScene, FbxManager *pFbxSdkManager);
@@ -128,12 +142,8 @@ public:
 
 public:
 	//객체의 인스턴스 버퍼이다.
-	
-
-	UINT						m_nMatrixBufferStride;
-	UINT						m_nMatrixBufferOffset;
-	
-	vector<InstanceData>		m_InstanceDataVector;
+	vector<InstanceData*>		m_InstanceDataVector;
+	ID3D11Buffer				*m_pd3dcbAnimationTextureWidth;
 
 	
 };

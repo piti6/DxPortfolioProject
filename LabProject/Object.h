@@ -23,6 +23,10 @@ struct BONE_MATRIX {
 	D3DXMATRIX BONE[MAX_BONE];
 };
 
+struct ANIM_WIDTH{
+	UINT WIDTH[4];
+};
+
 class CGameObject
 {
 public:

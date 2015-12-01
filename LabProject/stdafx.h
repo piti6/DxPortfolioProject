@@ -53,16 +53,20 @@ using namespace physx;
 using namespace std;
 
 // TODO: 프로그램에 필요한 추가 헤더는 여기에서 참조합니다.
-#define PS_SLOT_LIGHT		0x00
-#define PS_SLOT_MATERIAL	0x01
+#define PS_SLOT_LIGHT					0x00
+#define PS_SLOT_MATERIAL				0x01
 
-#define PS_SLOT_TEXTURE		0x00
-#define PS_SLOT_SAMPLER_STATE		0x00
+#define PS_SLOT_TEXTURE					0x00
+#define PS_SLOT_ANIMATION				0x01
+
+#define PS_SLOT_SAMPLER_STATE			0x00
 
 
 #define VS_SLOT_VIEWPROJECTION_MATRIX	0x00
 #define VS_SLOT_WORLD_MATRIX			0x01
-#define VS_SLOT_BONE_MATRIX			0x02
+#define VS_SLOT_BONE_MATRIX				0x02
+#define VS_SLOT_ANIMATION_WIDTH			0x03
+#define VS_SLOT_ANIMATION_TEXTURE		0x01
 
 #define MAX_BONE 64
 #define MAX_WEIGHT 4

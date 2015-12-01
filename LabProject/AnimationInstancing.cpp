@@ -72,13 +72,13 @@ void CAnimationInstancing::SetAnimationData(FbxScene *pFbxScene,FbxNode *pNode,s
 	FbxAnimStack *pFbxAnimStack = pFbxScene->GetSrcObject<FbxAnimStack>();
 	FbxAnimLayer *pFbxAnimLayer = pFbxAnimStack->GetMember<FbxAnimLayer>();
 	m_vAnimationList.m_Animation[AnimationName].m_fLength = pFbxAnimStack->GetLocalTimeSpan().GetDuration().GetMilliSeconds();
-	int nFrameCount = (int) m_vAnimationList.m_Animation[AnimationName].m_fLength/60;
+	int nFrameCount = (int) m_vAnimationList.m_Animation[AnimationName].m_fLength/30;
 	FbxTime Time;
 
 	m_vAnimationList.m_Animation[AnimationName].m_vAnimation.m_vBoneContainer.resize(nFrameCount);
 	for(int i=0; i<nFrameCount; ++i)
 	{
-		Time.SetMilliSeconds(i*60);
+		Time.SetMilliSeconds(i*30);
 		m_vAnimationList.m_Animation[AnimationName].m_vAnimation.m_vBoneContainer[i].m_vBoneList.resize(pBoneName->size());
 		/*
 		D3DXMATRIX d3dxmtxIdentity;
@@ -128,7 +128,7 @@ void CAnimationInstancing::SetBoneMatrixVectorAtTime(FbxNode *pNode, string Anim
 						}
 
 						D3DXMATRIX d3dxmtxBone = GetClusterMatrix(lGlobalOffPosition, pMesh, pCluster, pTime);
-						D3DXMatrixTranspose(&d3dxmtxBone,&d3dxmtxBone);
+						//D3DXMatrixTranspose(&d3dxmtxBone,&d3dxmtxBone);
 						m_vAnimationList.m_Animation[AnimationName].m_vAnimation.m_vBoneContainer[index].m_vBoneList[iBoneIndex] = d3dxmtxBone;
 
 					}

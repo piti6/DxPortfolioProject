@@ -359,7 +359,7 @@ float4x4 loadBoneMatrix(uint animationData,uint bone)
     float4 mat1 = gtxtAnimation.Load( uint3(baseU,baseV,0));
     float4 mat2 = gtxtAnimation.Load( uint3(baseU+1,baseV,0));
     float4 mat3 = gtxtAnimation.Load( uint3(baseU+2,baseV,0));
-	//float4 mat4 = gtxtAnimation.Load( uint3(baseU+3,baseV,0));
+	float4 mat4 = gtxtAnimation.Load( uint3(baseU+3,baseV,0));
 	/*
 	uint2 a = {baseU,baseV};
 	uint2 b = {baseU+1,baseV};
@@ -369,12 +369,12 @@ float4x4 loadBoneMatrix(uint animationData,uint bone)
     float4 mat2 = gtxtAnimation[b];
     float4 mat3 = gtxtAnimation[c];
 	float4 mat4 = gtxtAnimation[d];
-	
+	*/
 	 return float4x4(    float4(mat1),
                         float4(mat2),
                         float4(mat3),
                         float4(mat4));
-    */  
+    
     // only load 3 of the 4 values, and deocde the matrix from them.
     rval = decodeMatrix(float3x4(mat1,mat2,mat3));
     

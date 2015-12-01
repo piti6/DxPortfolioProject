@@ -12,6 +12,12 @@ struct VS_CB_WORLD_MATRIX
 	D3DXMATRIX m_d3dxmtxWorld;         
 };
 
+struct InstanceBuffer
+{
+	D3DXMATRIX InstancePos;
+	UINT AnimationPos[4];
+};
+
 class CShader
 {
 public:

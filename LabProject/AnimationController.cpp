@@ -49,12 +49,13 @@ int CAnimationController::GetIndexAtCurrentTime()
 
 void CAnimationController::Play(string _AnimationName,float _fCurrentAnimLength)
 {
+	/*
 	if(m_vAnimationList.m_Animation.find(_AnimationName) == m_vAnimationList.m_Animation.end())
 	{
 		cout << "Animation Name "<<_AnimationName<<" Not Found!" << endl;
 		return;
 	}
-
+	*/
 	m_CurrentPlayingAnimationName = _AnimationName;
 	m_fCurrentAnimLength = _fCurrentAnimLength;
 	m_bIsPlaying = true;

@@ -423,13 +423,15 @@ void CInstancingShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhy
 
 	
 
-	UINT nMatrixBufferStride = sizeof(D3DXMATRIX);
+	UINT nMatrixBufferStride = sizeof(InstanceBuffer);
 	UINT nMatrixBufferOffset = 0;
+	/*
 	UINT nAnimationBufferStride = sizeof(UINT)*4;
 	UINT nAnimationBufferOffset = 0;
+	*/
 	//인스턴스 쉐이더에서 렌더링할 메쉬이다.
 	
-	m_InstanceDataVector.push_back(new InstanceData(new CCubeMeshIlluminatedTextured(pd3dDevice, 25.0f, 25.0f, 25.0f),1,false,CreateInstanceBuffer(pd3dDevice,MAX_INSTANCE,sizeof(D3DXMATRIX),NULL),CreateInstanceBuffer(pd3dDevice,MAX_INSTANCE,sizeof(UINT)*4,NULL)));
+	m_InstanceDataVector.push_back(new InstanceData(new CCubeMeshIlluminatedTextured(pd3dDevice, 25.0f, 25.0f, 25.0f), 1, false, CreateInstanceBuffer(pd3dDevice, MAX_INSTANCE, sizeof(InstanceBuffer), NULL), CreateInstanceBuffer(pd3dDevice, MAX_INSTANCE, sizeof(UINT) * 4, NULL)));
 	CDynamicObject *pCubeObject = NULL;
 	for(int i=0; i<m_InstanceDataVector[0]->m_nObjects; ++i){
 		pCubeObject = new CDynamicObject();
@@ -441,7 +443,7 @@ void CInstancingShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhy
 		m_ObjectsVector.push_back(make_pair(0,pCubeObject));
 	}
 	
-	m_InstanceDataVector.push_back(new InstanceData(new CCubeMeshIlluminatedTextured(pd3dDevice, 2000.0f, 10.0f, 2000.0f),1,false,CreateInstanceBuffer(pd3dDevice,MAX_INSTANCE,sizeof(D3DXMATRIX),NULL),CreateInstanceBuffer(pd3dDevice,MAX_INSTANCE,sizeof(UINT)*4,NULL)));
+	m_InstanceDataVector.push_back(new InstanceData(new CCubeMeshIlluminatedTextured(pd3dDevice, 2000.0f, 10.0f, 2000.0f), 1, false, CreateInstanceBuffer(pd3dDevice, MAX_INSTANCE, sizeof(InstanceBuffer), NULL), CreateInstanceBuffer(pd3dDevice, MAX_INSTANCE, sizeof(UINT) * 4, NULL)));
 	CStaticObject *pPlaneObject = NULL;
 	for(int i=0; i<m_InstanceDataVector[1]->m_nObjects; ++i){
 		pPlaneObject = new CStaticObject();
@@ -453,24 +455,28 @@ void CInstancingShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhy
 		m_ObjectsVector.push_back(make_pair(1,pPlaneObject));
 	}
 	//
-	m_InstanceDataVector.push_back(new InstanceData(new CFbxMeshIlluminatedTextured(pd3dDevice,pFbxSdkManager,"Data/Model/mon_goblinWizard@Attack01.fbx",1),1,true,CreateInstanceBuffer(pd3dDevice,MAX_INSTANCE,sizeof(D3DXMATRIX),NULL),CreateInstanceBuffer(pd3dDevice,MAX_INSTANCE,sizeof(UINT)*4,NULL)));
+	m_InstanceDataVector.push_back(new InstanceData(new CFbxMeshIlluminatedTextured(pd3dDevice,pFbxSdkManager,"Data/Model/mon_goblinWizard@Attack01.fbx",1),300,true,CreateInstanceBuffer(pd3dDevice,MAX_INSTANCE,sizeof(InstanceBuffer),NULL),CreateInstanceBuffer(pd3dDevice,MAX_INSTANCE,sizeof(UINT)*4,NULL)));
 	
 	ID3D11Texture2D *pd3dAnimationTexture = NULL;
 	m_InstanceDataVector[2]->m_pAnimationInstancing->LoadAnimationFromFile(pFbxSdkManager,"Data/Model/mon_goblinWizard@Attack01.fbx","Attack",true);
-	//m_InstanceDataVector[2]->m_pAnimationInstancing->LoadAnimationFromFile(pFbxSdkManager,"Data/Model/mon_goblinWizard@Run.fbx","Run",true);
+	m_InstanceDataVector[2]->m_pAnimationInstancing->LoadAnimationFromFile(pFbxSdkManager,"Data/Model/mon_goblinWizard@Run.fbx","Run",true);
 	m_InstanceDataVector[2]->m_pAnimationInstancing->CreateAnimationTexture(pd3dDevice);
 	CDynamicObject *pBarrelObject = NULL;
 	for(int i=0; i<m_InstanceDataVector[2]->m_nObjects; ++i){
 		pBarrelObject = new CDynamicObject(true);
 		pBarrelObject->CreateShaderVariables(pd3dDevice);
-		pBarrelObject->m_AnimationController.LoadAnimationFromFile(pFbxSdkManager,"Data/Model/mon_goblinWizard@Attack01.fbx","Attack",true);
-		pBarrelObject->m_AnimationController.Play("Attack",m_InstanceDataVector[2]->m_pAnimationInstancing->m_vAnimationList.m_Animation["Attack"].m_fLength);
+		//pBarrelObject->m_AnimationController.LoadAnimationFromFile(pFbxSdkManager,"Data/Model/mon_goblinWizard@Attack01.fbx","Attack",true);
+		if (i%2)
+			pBarrelObject->m_AnimationController.Play("Attack",m_InstanceDataVector[2]->m_pAnimationInstancing->m_vAnimationList.m_Animation["Attack"].m_fLength);
+		else
+			pBarrelObject->m_AnimationController.Play("Run", m_InstanceDataVector[2]->m_pAnimationInstancing->m_vAnimationList.m_Animation["Run"].m_fLength);
+		pBarrelObject->m_AnimationController.m_fCurrentAnimTime = rand() % 3;
 		pBarrelObject->SetMesh(m_InstanceDataVector[2]->GetMesh());
 		pBarrelObject->SetMaterial(pMaterial);
 		pBarrelObject->SetTexture(m_TexturesVector[2]);
 		//pBarrelObject->SetOffset(D3DXVECTOR3(0, -50, 0));
 		pBarrelObject->BuildObjects(pPxPhysics,pPxScene);
-		pBarrelObject->SetPosition(D3DXVECTOR3(0, 100, 0));
+		pBarrelObject->SetPosition(D3DXVECTOR3(i*30, i * 30, i*30));
 		
 		m_ObjectsVector.push_back(make_pair(2,pBarrelObject));
 	}
@@ -479,7 +485,7 @@ void CInstancingShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhy
 		ID3D11Buffer *InstanceBuffer = m_InstanceDataVector[i]->GetInstanceBuffer();
 		ID3D11Buffer *AnimationInstanceBuffer = m_InstanceDataVector[i]->GetAnimationInstanceBuffer();
 		m_InstanceDataVector[i]->GetMesh()->AppendVertexBuffer(1,&InstanceBuffer,&nMatrixBufferStride,&nMatrixBufferOffset);
-		m_InstanceDataVector[i]->GetMesh()->AppendVertexBuffer(1,&AnimationInstanceBuffer,&nAnimationBufferStride,&nAnimationBufferOffset);
+		//m_InstanceDataVector[i]->GetMesh()->AppendVertexBuffer(1,&AnimationInstanceBuffer,&nAnimationBufferStride,&nAnimationBufferOffset);
 	}
 }
 
@@ -568,7 +574,7 @@ void CInstancingShader::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, 
 		m_InstanceDataVector[i]->m_nVisibleObjects = 0;
 		D3D11_MAPPED_SUBRESOURCE d3dMappedResource;
 		pd3dImmediateDeviceContext->Map(m_InstanceDataVector[i]->GetInstanceBuffer(), 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
-		D3DXMATRIX *pd3dxmInstances = (D3DXMATRIX *)d3dMappedResource.pData;
+		InstanceBuffer *pd3dxmInstances = (InstanceBuffer *)d3dMappedResource.pData;
 
 		for (int j=0; j<m_ObjectsVector.size(); ++j)
 		{
@@ -587,18 +593,21 @@ void CInstancingShader::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, 
 						}
 						if (m_ObjectsVector[j].second->GetMaterial()) 
 							CTexturedIlluminatedShader::UpdateShaderVariables(pd3dImmediateDeviceContext, &m_ObjectsVector[j].second->GetMaterial()->m_Material);
-						D3DXMatrixTranspose(&pd3dxmInstances[m_InstanceDataVector[i]->m_nVisibleObjects++], &m_ObjectsVector[j].second->GetWorldMatrix());
-						if(m_InstanceDataVector[i]->m_bHasAnimation){
+						if (m_InstanceDataVector[i]->m_bHasAnimation){
 							CDynamicObject *pObject = (CDynamicObject *)m_ObjectsVector[j].second;
+							/*
 							D3D11_MAPPED_SUBRESOURCE d3dMappedResourceAnim;
 							pd3dImmediateDeviceContext->Map(m_InstanceDataVector[i]->GetAnimationInstanceBuffer(), 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResourceAnim);
 							ANIM_WIDTH *pd3dxmInstances = (ANIM_WIDTH *)d3dMappedResourceAnim.pData;
-							m_InstanceDataVector[i]->m_pAnimationInstancing->GetCurrentOffset(pObject->m_AnimationController.m_CurrentPlayingAnimationName,pObject->m_AnimationController.m_fCurrentAnimTime);
-							
-							pd3dxmInstances->WIDTH[0] = m_InstanceDataVector[i]->m_pAnimationInstancing->m_CurrentOffset;
+							*/
+							m_InstanceDataVector[i]->m_pAnimationInstancing->GetCurrentOffset(pObject->m_AnimationController.m_CurrentPlayingAnimationName, pObject->m_AnimationController.m_fCurrentAnimTime);
+
+							pd3dxmInstances[m_InstanceDataVector[i]->m_nVisibleObjects].AnimationPos[0] = m_InstanceDataVector[i]->m_pAnimationInstancing->m_CurrentOffset;
 							//cout << pd3dxmInstances->WIDTH[0] <<endl;
-							pd3dImmediateDeviceContext->Unmap(m_InstanceDataVector[i]->GetAnimationInstanceBuffer(), 0);
+							//pd3dImmediateDeviceContext->Unmap(m_InstanceDataVector[i]->GetAnimationInstanceBuffer(), 0);
 						}
+						D3DXMatrixTranspose(&pd3dxmInstances[m_InstanceDataVector[i]->m_nVisibleObjects++].InstancePos, &m_ObjectsVector[j].second->GetWorldMatrix());
+						
 						//m_ObjectsVector[j].second->UpdateAnimation(pd3dImmediateDeviceContext);
 					}
 				}

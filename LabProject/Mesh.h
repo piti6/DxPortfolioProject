@@ -13,8 +13,8 @@
 class CMesh
 {
 public:
-    CMesh(ID3D11Device *pd3dDevice);
-    virtual ~CMesh();
+	CMesh(ID3D11Device *pd3dDevice);
+	virtual ~CMesh();
 
 	void AddRef();
 	void Release();
@@ -22,9 +22,10 @@ public:
 	virtual void SetRasterizerState(ID3D11Device *pd3dDevice);
 	virtual void Render(ID3D11DeviceContext *pd3dImmediateDeviceContext);
 	virtual void RenderInstanced(ID3D11DeviceContext *pd3dDeviceContext, int nInstances, int nStartInstance);
-	virtual void AppendVertexBuffer(int nBuffers,ID3D11Buffer **pd3dBuffer, UINT *nStride, UINT *nOffset);
+	virtual void AppendVertexBuffer(int nBuffers, ID3D11Buffer **pd3dBuffer, UINT *nStride, UINT *nOffset);
 
-	GET_SET_FUNC_IMPL(AABB,BoundingCube,m_bcBoundingCube);
+	ID3D11Buffer* CreateVertexBuffer(ID3D11Device *pd3dDevice, int nObjects, UINT nBufferStride, void *pBufferData);
+	GET_SET_FUNC_IMPL(AABB, BoundingCube, m_bcBoundingCube);
 
 protected:
 
@@ -35,18 +36,18 @@ protected:
 
 	UINT							m_nVertices;
 	UINT							m_nIndices;
-	
+
 	UINT							*m_nStride;
 	UINT							*m_nOffset;
 
-	ID3D11Buffer					**m_ppd3dVertexBuffers;	
+	ID3D11Buffer					**m_ppd3dVertexBuffers;
 	UINT							m_nVertexBuffers;
 
 	ID3D11Buffer					*m_pd3dIndexBuffer;
 
 	AABB							m_bcBoundingCube;
 
-	
+
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -54,8 +55,8 @@ protected:
 class CMeshTextured : public CMesh
 {
 public:
-    CMeshTextured(ID3D11Device *pd3dDevice);
-    virtual ~CMeshTextured();
+	CMeshTextured(ID3D11Device *pd3dDevice);
+	virtual ~CMeshTextured();
 
 protected:
 	ID3D11Buffer					*m_pd3dTexCoordBuffer;
@@ -66,12 +67,12 @@ protected:
 class CMeshIlluminated : public CMesh
 {
 public:
-    CMeshIlluminated(ID3D11Device *pd3dDevice);
-    virtual ~CMeshIlluminated();
-//정점이 포함된 삼각형의 법선벡터를 계산하는 함수이다.
+	CMeshIlluminated(ID3D11Device *pd3dDevice);
+	virtual ~CMeshIlluminated();
+	//정점이 포함된 삼각형의 법선벡터를 계산하는 함수이다.
 	D3DXVECTOR3 CalculateTriAngleNormal(BYTE *pVertices, UINT nIndex0, UINT nIndex1, UINT nIndex2);
 	void SetTriAngleListVertexNormal(BYTE *pVertices);
-//정점의 법선벡터의 평균을 계산하는 함수이다.
+	//정점의 법선벡터의 평균을 계산하는 함수이다.
 	void SetAverageVertexNormal(BYTE *pVertices, UINT *pIndices, int nPrimitives, int nOffset, bool bStrip);
 	void CalculateVertexNormal(BYTE *pVertices, UINT *pIndices);
 };
@@ -81,7 +82,7 @@ public:
 class CCubeMeshIlluminated : public CMeshIlluminated
 {
 public:
-	CCubeMeshIlluminated(ID3D11Device *pd3dDevice, float fWidth=2.0f, float fHeight=2.0f, float fDepth=2.0f);
+	CCubeMeshIlluminated(ID3D11Device *pd3dDevice, float fWidth = 2.0f, float fHeight = 2.0f, float fDepth = 2.0f);
 	virtual ~CCubeMeshIlluminated();
 };
 
@@ -90,8 +91,8 @@ public:
 class CCubeMeshIlluminatedTextured : public CMeshIlluminated
 {
 public:
-    CCubeMeshIlluminatedTextured(ID3D11Device *pd3dDevice, float fWidth=2.0f, float fHeight=2.0f, float fDepth=2.0f);
-    virtual ~CCubeMeshIlluminatedTextured();
+	CCubeMeshIlluminatedTextured(ID3D11Device *pd3dDevice, float fWidth = 2.0f, float fHeight = 2.0f, float fDepth = 2.0f, float fRepeatUV = 1.0f);
+	virtual ~CCubeMeshIlluminatedTextured();
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -99,7 +100,7 @@ public:
 class CSkyBoxMesh : public CMeshTextured
 {
 public:
-	CSkyBoxMesh(ID3D11Device *pd3dDevice, float fWidth=20.0f, float fHeight=20.0f, float fDepth=20.0f);
+	CSkyBoxMesh(ID3D11Device *pd3dDevice, float fWidth = 20.0f, float fHeight = 20.0f, float fDepth = 20.0f);
 	virtual ~CSkyBoxMesh();
 };
 
@@ -154,24 +155,14 @@ private:
 class CFbxMeshIlluminatedTextured : public CMesh
 {
 public:
-    CFbxMeshIlluminatedTextured(ID3D11Device *pd3dDevice, FbxManager *pFbxSdkManager, char * filename, float fScaleMultiplier=1.0f);
-    virtual ~CFbxMeshIlluminatedTextured();
+	CFbxMeshIlluminatedTextured(ID3D11Device *pd3dDevice, FbxManager *pFbxSdkManager, char * filename, float fScaleMultiplier = 1.0f, bool _bHasAnimation=false);
+	virtual ~CFbxMeshIlluminatedTextured();
 
-	void SetBoneNameIndex(FbxNode* pNode);
-	void SetBoneAtVertices(FbxNode* pNode, unordered_map<int,vector<pair<UINT,float>>> *pClusterIndexVector);
-	void SetVertices(FbxNode* pNode, vector<CBoneWeightVertex> *pVertexVector,unordered_map<int,vector<pair<UINT,float>>> *pClusterIndexVector);
+	void SetBoneNameIndex(FbxNode *pNode, vector<string> *pBoneName);
+	void SetBoneAtVertices(FbxNode *pNode, unordered_map<int, vector<pair<UINT, float>>> *pClusterIndexVector, vector<string> *pBoneName);
+	void SetVertices(FbxNode *pNode, vector<CBoneWeightVertex> *pVertexVector, unordered_map<int, vector<pair<UINT, float>>> *pClusterIndexVector);
 
-	vector<string>				m_vBoneName;
-	CBoneWeightVertex			*m_pVertices;
-	//vector<CAnimationList>		m_vAnimationList;
 	bool						m_bHasAnimation;
 private:
 
-	
-
-	//FbxScene					*m_pFbxScene;
-
-	
-
-	
 };

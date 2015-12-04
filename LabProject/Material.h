@@ -10,13 +10,16 @@ struct MATERIAL
 class CMaterial
 {
 public:
-	CMaterial();
+	CMaterial(D3DXCOLOR _d3dxcAmbient, D3DXCOLOR _d3dxcDiffuse, D3DXCOLOR _d3dxcSpecular, D3DXCOLOR _d3dxcEmissive);
 	virtual ~CMaterial();
 
 	
 	void AddRef();
 	void Release();
 
+	GET_SET_FUNC_IMPL(MATERIAL, Material, m_Material);
+
+private:
 	int		 m_nReferences;
 	MATERIAL m_Material;
 };

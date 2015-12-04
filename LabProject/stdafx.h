@@ -31,6 +31,7 @@
 #include <string>
 #include <algorithm>
 #include <map>
+#include <fstream>
 //DirectX Include
 
 #include <d3d11.h>
@@ -48,6 +49,7 @@
 //Physx SDK
 
 #include <PxPhysicsAPI.h>
+//#include <pvd\PxVisualDebugger.h>
 
 using namespace physx;
 using namespace std;
@@ -57,11 +59,12 @@ using namespace std;
 #define PS_SLOT_MATERIAL				0x01
 
 #define PS_SLOT_TEXTURE					0x00
-#define PS_SLOT_ANIMATION				0x01
+
 
 #define PS_SLOT_SAMPLER_STATE			0x00
 
 
+#define VS_SLOT_ANIMATION				0x00
 #define VS_SLOT_VIEWPROJECTION_MATRIX	0x00
 #define VS_SLOT_WORLD_MATRIX			0x01
 #define VS_SLOT_BONE_MATRIX				0x02

@@ -71,7 +71,7 @@ private:
 	PxDefaultAllocator				m_PxDefaultAllocatorCallback;
 	PxScene							*m_pPxScene;
 	PxFoundation					*m_pPxFoundation;
-
+	PxVisualDebuggerConnection		*m_pPVDConnection;
 /*						FBX SDK Member Variables					*/
 
 	FbxManager						*m_pFbxSdkManager;

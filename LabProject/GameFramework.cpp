@@ -281,10 +281,10 @@ void CGameFramework::BuildObjects()
 
 	CCamera *pCamera = pGamePlayer->GetCamera();
 	pCamera->SetViewport(m_pd3dImmediateDeviceContext, 0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT, 0.0f, 1.0f);
-	pCamera->GenerateProjectionMatrix(1.01f, 5000.0f, ASPECT_RATIO, 90.0f);
+	pCamera->GenerateProjectionMatrix(1.01f, 500.0f, ASPECT_RATIO, 90.0f);
 	pCamera->GenerateViewMatrix();
 
-	pGamePlayer->SetPosition(D3DXVECTOR3(0.0f, 0.0f, -50.0f));
+	pGamePlayer->SetPosition(D3DXVECTOR3(200.0f, 1.0f, 200.0f));
 
 	m_ppPlayers[0] = pGamePlayer;
 
@@ -344,17 +344,17 @@ void CGameFramework::ProcessInput()
 					m_ppPlayers[0]->Rotate(cyDelta, cxDelta, 0.0f);
 			}
 			if(dwForward==DIR_FORWARD)
-				m_ppPlayers[0]->Move(dwForward, 300.0f * m_GameTimer.GetTimeElapsed(),false);
+				m_ppPlayers[0]->Move(dwForward, 50.0f * m_GameTimer.GetTimeElapsed(),false);
 			if(dwBackward==DIR_BACKWARD)
-				m_ppPlayers[0]->Move(dwBackward, 300.0f * m_GameTimer.GetTimeElapsed(),false);
+				m_ppPlayers[0]->Move(dwBackward, 50.0f * m_GameTimer.GetTimeElapsed(),false);
 			if(dwLeft==DIR_LEFT)
-				m_ppPlayers[0]->Move(dwLeft, 300.0f * m_GameTimer.GetTimeElapsed(),false);
+				m_ppPlayers[0]->Move(dwLeft, 50.0f * m_GameTimer.GetTimeElapsed(),false);
 			if(dwRight==DIR_RIGHT)
-				m_ppPlayers[0]->Move(dwRight, 300.0f * m_GameTimer.GetTimeElapsed(),false);
+				m_ppPlayers[0]->Move(dwRight, 50.0f * m_GameTimer.GetTimeElapsed(),false);
 			if(dwUp==DIR_UP)
-				m_ppPlayers[0]->Move(dwUp, 300.0f * m_GameTimer.GetTimeElapsed(),false);
+				m_ppPlayers[0]->Move(dwUp, 50.0f * m_GameTimer.GetTimeElapsed(),false);
 			if(dwDown==DIR_DOWN)
-				m_ppPlayers[0]->Move(dwDown, 300.0f * m_GameTimer.GetTimeElapsed(),false);
+				m_ppPlayers[0]->Move(dwDown, 50.0f * m_GameTimer.GetTimeElapsed(),false);
 		}
 		m_ppPlayers[0]->Update(m_GameTimer.GetTimeElapsed());
 	}
@@ -402,7 +402,11 @@ void CGameFramework::FrameAdvance()
 void CGameFramework::InitializePhysxEngine()
 {
 	m_pPxFoundation = PxCreateFoundation(PX_PHYSICS_VERSION,m_PxDefaultAllocatorCallback,m_PxDefaultErrorCallback);
-	m_pPxPhysicsSDK = PxCreatePhysics(PX_PHYSICS_VERSION,*m_pPxFoundation,PxTolerancesScale());
+	PxTolerancesScale PxScale = PxTolerancesScale();
+	PxScale.length /= 10000;
+	PxScale.mass /= 10000;
+	PxScale.speed /= 10000;
+	m_pPxPhysicsSDK = PxCreatePhysics(PX_PHYSICS_VERSION,*m_pPxFoundation,PxScale);
 	if(m_pPxPhysicsSDK == NULL){
 		cout << "PhysicsSDK Initialize Failed" << endl;
 	}
@@ -411,10 +415,9 @@ void CGameFramework::InitializePhysxEngine()
 	}
 
 	PxInitExtensions(*m_pPxPhysicsSDK);
-
 	PxSceneDesc sceneDesc(m_pPxPhysicsSDK->getTolerancesScale());
-	sceneDesc.gravity = PxVec3(0.0f,-98,0.0f);
-
+	sceneDesc.gravity = PxVec3(0.0f,-98.0f,0.0f);
+	//sceneDesc.
 	if(!sceneDesc.cpuDispatcher)
 	{
 		PxDefaultCpuDispatcher* pCpuDispatcher = PxDefaultCpuDispatcherCreate(1);
@@ -423,14 +426,29 @@ void CGameFramework::InitializePhysxEngine()
 	if(!sceneDesc.filterShader)
 		sceneDesc.filterShader = PxDefaultSimulationFilterShader;
 	m_pPxScene = m_pPxPhysicsSDK->createScene(sceneDesc);
+
+	
+	// check if PvdConnection manager is available on this platform
+	if (NULL == m_pPxPhysicsSDK->getPvdConnectionManager())
+	{
+		cout << "PVD Connect Failed" << endl;
+		return;
+	}
+	// setup connection parameters
+	
+	// consoles and remote PCs need a higher timeout.
+	PxVisualDebuggerConnectionFlags connectionFlags = PxVisualDebuggerExt::getAllConnectionFlags();
+	m_pPxPhysicsSDK->getVisualDebugger()->setVisualDebuggerFlag(PxVisualDebuggerFlag::eTRANSMIT_SCENEQUERIES, true);
+	m_pPVDConnection = PxVisualDebuggerExt::createConnection(m_pPxPhysicsSDK->getPvdConnectionManager(),"127.0.0.1",5425,1000,connectionFlags);
 }
 
 void CGameFramework::ShutDownPhysxEngine()
 {
+	if (m_pPVDConnection) m_pPVDConnection->release();
 	if(m_pPxScene) m_pPxScene->release();
 	if(m_pPxPhysicsSDK) m_pPxPhysicsSDK->release();
 	if(m_pPxFoundation) m_pPxFoundation->release();
-
+	
 }
 
 void CGameFramework::InitializeFbxManager()

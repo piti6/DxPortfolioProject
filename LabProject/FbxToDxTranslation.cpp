@@ -49,7 +49,8 @@ FbxAMatrix GetGeometry(FbxNode* pNode)
 {
     const FbxVector4 lT = pNode->GetGeometricTranslation(FbxNode::eSourcePivot);
     const FbxVector4 lR = pNode->GetGeometricRotation(FbxNode::eSourcePivot);
-    const FbxVector4 lS = pNode->GetGeometricScaling(FbxNode::eSourcePivot);
+	//const FbxVector4 lS = FbxVector4(1, 1, 1);
+	const FbxVector4 lS = pNode->GetGeometricScaling(FbxNode::eSourcePivot);
 
     return FbxAMatrix(lT, lR, lS);
 }

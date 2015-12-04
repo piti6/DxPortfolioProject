@@ -19,10 +19,6 @@
 #define DIR_DOWN				0x20
 
 
-struct BONE_MATRIX {
-	D3DXMATRIX BONE[MAX_BONE];
-};
-
 struct ANIM_WIDTH{
 	UINT WIDTH[4];
 };
@@ -37,7 +33,7 @@ public:
 
 	virtual void SetActive(bool isActive);
 	virtual void SetPosition(D3DXVECTOR3 d3dxvPosition);
-	
+
 	void SetMaterial(CMaterial *pMaterial);
 	void SetTexture(CTexture *pTexture);
 	void SetMesh(CMesh *pMesh);
@@ -50,12 +46,13 @@ public:
 
 	D3DXMATRIX			GetWorldMatrix();
 	virtual D3DXVECTOR3 GetPosition();
-	
-	virtual void MoveStrafe(float fDistance=1.0f);
-	virtual void MoveUp(float fDistance=1.0f);
-	virtual void MoveForward(float fDistance=1.0f);
 
-	virtual void Rotate(float fPitch=10.0f, float fYaw=10.0f, float fRoll=10.0f);
+	virtual void MoveStrafe(float fDistance = 1.0f);
+	virtual void MoveUp(float fDistance = 1.0f);
+	virtual void MoveForward(float fDistance = 1.0f);
+
+	virtual void Rotate(float fPitch = 10.0f, float fYaw = 10.0f, float fRoll = 10.0f);
+	virtual void Rotate(D3DXVECTOR3 rotation);
 	virtual void Rotate(D3DXVECTOR3 *pd3dxvAxis, float fAngle);
 
 	// Get Vector
@@ -63,7 +60,7 @@ public:
 	virtual D3DXVECTOR3 GetUp();
 	virtual D3DXVECTOR3 GetRight();
 
-	virtual void Animate(float fTimeElapsed,PxScene *pPxScene);
+	virtual void Animate(float fTimeElapsed, PxScene *pPxScene);
 	virtual void BuildObjects(PxPhysics *pPxPhysics, PxScene *pPxScene);
 
 	virtual void UpdateAnimation(ID3D11DeviceContext *pd3dImmediateDeviceContext);
@@ -77,7 +74,7 @@ protected:
 	CMaterial						*m_pMaterial;
 	CTexture						*m_pTexture;
 
-	D3DXMATRIX						m_d3dxmtxWorld; 
+	D3DXMATRIX						m_d3dxmtxWorld;
 
 	D3DXVECTOR3						m_d3dxvOffset;
 };
@@ -94,34 +91,29 @@ public:
 	virtual void SetActive(bool isActive);
 
 	virtual void BuildObjects(PxPhysics *pPxPhysics, PxScene *pPxScene);
-	virtual void Animate(float fTimeElapsed,PxScene *pPxScene);
+	virtual void Animate(float fTimeElapsed, PxScene *pPxScene);
 
 	virtual void SetPosition(D3DXVECTOR3 d3dxvPosition);
 
-	virtual void MoveStrafe(float fDistance=1.0f);
-	virtual void MoveUp(float fDistance=1.0f);
-	virtual void MoveForward(float fDistance=1.0f);
+	virtual void MoveStrafe(float fDistance = 1.0f);
+	virtual void MoveUp(float fDistance = 1.0f);
+	virtual void MoveForward(float fDistance = 1.0f);
 
-	virtual void Rotate(float fPitch=10.0f, float fYaw=10.0f, float fRoll=10.0f);
+	virtual void Rotate(float fPitch = 10.0f, float fYaw = 10.0f, float fRoll = 10.0f);
 
 	void AddForce(float fx, float fy, float fz);
 
-	void CreateShaderVariables(ID3D11Device *pd3dDevice);
-	void UpdateAnimation(ID3D11DeviceContext *pd3dImmediateDeviceContext);
-	
-	CAnimationController		m_AnimationController;
+	CAnimationController* GetAnimationController(){ return &m_AnimationController; }
+
 
 private:
-	
+	CAnimationController		m_AnimationController;
+
 	PxRigidDynamic				*m_pPxActor;
-	PxMaterial					*m_pPxMaterial;	
+	PxMaterial					*m_pPxMaterial;
 
-/////////////// Animation Part ///////////////
+	/////////////// Animation Part ///////////////
 
-	//BONE_MATRIX					m_d3dxmtxBone;
-	ID3D11Buffer				*m_pd3dBoneMatrix;
-
-	
 	bool						m_bHasAnimation;
 };
 
@@ -134,13 +126,12 @@ public:
 	CStaticObject();
 	virtual ~CStaticObject();
 
-	virtual void BuildObjects(PxPhysics *pPxPhysics, PxScene *pPxScene);
-
+	virtual void BuildObjects(PxPhysics *pPxPhysics, PxScene *pPxScene, PxMaterial *pPxMaterial);
 	virtual void SetPosition(D3DXVECTOR3 d3dxvPosition);
 
 private:
 	PxRigidStatic				*m_pPxActor;
-	PxMaterial					*m_pPxMaterial;	
+	PxMaterial					*m_pPxMaterial;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

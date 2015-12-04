@@ -236,11 +236,7 @@ CGamePlayer::CGamePlayer(ID3D11Device *pd3dDevice)
 
 	CMaterial **ppMaterials;
 	ppMaterials=new CMaterial*[1];
-	ppMaterials[0] = new CMaterial();
-	ppMaterials[0]->m_Material.m_d3dxcDiffuse = D3DXCOLOR(1.0f,1.0f,1.0f,1.0f);
-	ppMaterials[0]->m_Material.m_d3dxcAmbient = D3DXCOLOR(1.0f,1.0f,1.0f,1.0f);
-	ppMaterials[0]->m_Material.m_d3dxcSpecular = D3DXCOLOR(1.0f,1.0f,1.0f,10.0f);
-	ppMaterials[0]->m_Material.m_d3dxcEmissive = D3DXCOLOR(0.0f,0.0f,0.0f,1.0f);
+	ppMaterials[0] = new CMaterial(D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f), D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f), D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f), D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
 	CMesh *pPlayerMesh = new CCubeMeshIlluminatedTextured(pd3dDevice,5,5,5);
 	SetMesh(pPlayerMesh);
 	m_pShader = new CTexturedIlluminatedShader();
@@ -272,7 +268,7 @@ void CGamePlayer::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext)
 		D3DXMATRIX mtxRotate;
 		D3DXMatrixRotationYawPitchRoll(&mtxRotate, 0.0f, (float)D3DXToRadian(90.0f), 0.0f);
 		m_d3dxmtxWorld = mtxRotate * m_d3dxmtxWorld;
-		m_pShader->UpdateShaderVariables(pd3dImmediateDeviceContext, &m_pMaterial->m_Material);
+		m_pShader->UpdateShaderVariables(pd3dImmediateDeviceContext, &m_pMaterial->GetMaterial());
 		m_pShader->UpdateShaderVariables(pd3dImmediateDeviceContext, m_pTexture);
 		CPlayer::Render(pd3dImmediateDeviceContext);
 	}
@@ -292,7 +288,7 @@ void CGamePlayer::ChangeCamera(ID3D11Device *pd3dDevice, DWORD nNewCameraMode, f
             m_pCamera = OnChangeCamera(pd3dDevice, FIRST_PERSON_CAMERA, nCurrentCameraMode);
             m_pCamera->SetTimeLag(0.0f);
             m_pCamera->SetOffset(D3DXVECTOR3(0.0f, 0.0f,0.0f));
-			m_pCamera->GenerateProjectionMatrix(1.01f, 2000.0f, ASPECT_RATIO, 60.0f);
+			m_pCamera->GenerateProjectionMatrix(1.01f, 20.0f, ASPECT_RATIO, 60.0f);
             break;
         case THIRD_PERSON_CAMERA:
             SetFriction(100.0f); 
@@ -302,7 +298,7 @@ void CGamePlayer::ChangeCamera(ID3D11Device *pd3dDevice, DWORD nNewCameraMode, f
             m_pCamera = OnChangeCamera(pd3dDevice, THIRD_PERSON_CAMERA, nCurrentCameraMode);
             m_pCamera->SetTimeLag(0.0f);
             m_pCamera->SetOffset(D3DXVECTOR3(0.0f,0.0f,-30.0f));
-			m_pCamera->GenerateProjectionMatrix(1.01f, 2000.0f, ASPECT_RATIO, 60.0f);
+			m_pCamera->GenerateProjectionMatrix(1.01f, 20.0f, ASPECT_RATIO, 60.0f);
             break;
 		default:
 			break;

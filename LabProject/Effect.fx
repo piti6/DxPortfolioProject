@@ -166,7 +166,7 @@ cbuffer cbMaterial : register(b1)
 //--------------------------------------------------------------------------------------
 
 Texture2D gtxtTexture : register(ps,t0);
-Texture2D<float4> gtxtAnimation : register(vs,t1);
+Texture2D<float4> gtxtAnimation : register(vs,t0);
 
 SamplerState gSamplerState : register(s0);
 
@@ -331,14 +331,6 @@ float4 Lighting(float3 vPosition, float3 vNormal)
 	return(cColor); 
 }
 
-float4x4 decodeMatrix(float3x4 encodedMatrix)
-{
-    return float4x4(    float4(encodedMatrix[0].xyz,0),
-                        float4(encodedMatrix[1].xyz,0),
-                        float4(encodedMatrix[2].xyz,0),
-                        float4(encodedMatrix[0].w,encodedMatrix[1].w,encodedMatrix[2].w,1));
-}
-
 // Read a matrix(3 texture reads) from a texture containing animation data
 float4x4 loadBoneMatrix(uint animationData,uint bone)
 {
@@ -360,25 +352,11 @@ float4x4 loadBoneMatrix(uint animationData,uint bone)
     float4 mat2 = gtxtAnimation.Load( uint3(baseU+1,baseV,0));
     float4 mat3 = gtxtAnimation.Load( uint3(baseU+2,baseV,0));
 	float4 mat4 = gtxtAnimation.Load( uint3(baseU+3,baseV,0));
-	/*
-	uint2 a = {baseU,baseV};
-	uint2 b = {baseU+1,baseV};
-	uint2 c = {baseU+2,baseV};
-	uint2 d = {baseU+3,baseV};
-	float4 mat1 = gtxtAnimation[a];
-    float4 mat2 = gtxtAnimation[b];
-    float4 mat3 = gtxtAnimation[c];
-	float4 mat4 = gtxtAnimation[d];
-	*/
-	 return float4x4(    float4(mat1),
+	
+	 return float4x4(   float4(mat1),
                         float4(mat2),
                         float4(mat3),
                         float4(mat4));
-    
-    // only load 3 of the 4 values, and deocde the matrix from them.
-    rval = decodeMatrix(float3x4(mat1,mat2,mat3));
-    
-    return rval;
 }
 
 //--------------------------------------------------------------------------------------

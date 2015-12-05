@@ -73,7 +73,7 @@ public:
 	CCamera *OnChangeCamera(ID3D11Device *pd3dDevice, DWORD nNewCameraMode, DWORD nCurrentCameraMode);
 
 	virtual void ChangeCamera(ID3D11Device *pd3dDevice, DWORD nNewCameraMode, float fTimeElapsed);
-	virtual void Render(ID3D11DeviceContext *pd3dImmediateDeviceContext);
+	virtual void Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, int nThreadID);
 
 	virtual void OnPlayerUpdated(float fTimeElapsed);
 	virtual void OnCameraUpdated(float fTimeElapsed);
@@ -86,6 +86,6 @@ public:
 	~CGamePlayer();
 
 	virtual void ChangeCamera(ID3D11Device *pd3dDevice, DWORD nNewCameraMode, float fTimeElapsed);
-	virtual void Render(ID3D11DeviceContext *pd3dImmediateDeviceContext);
+	virtual void Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, int nThreadID);
 };
 

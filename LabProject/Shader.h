@@ -33,7 +33,7 @@ public:
 	virtual void UpdateShaderVariables(ID3D11DeviceContext *pd3dImmediateDeviceContext, D3DXMATRIX *pd3dxmtxWorld);
 	virtual void UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext, CTexture *pTexture);
 	virtual void OnPostRender(ID3D11DeviceContext *pd3dDeviceContext);
-	virtual void Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, CCamera *pCamera);
+	virtual void Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, int nThreadID, CCamera *pCamera);
 
 	virtual void AnimateObjects(float fTimeElapsed,PxScene *pPxScene);
 	virtual void BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhysics, PxScene *pPxScene, FbxManager *pFbxSdkManager);
@@ -69,7 +69,7 @@ public:
 	virtual void UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext, CTexture *pTexture);
 
 	virtual void BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhysics, PxScene *pPxScene, FbxManager *pFbxSdkManager);
-	virtual void Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, CCamera *pCamera=NULL);
+	virtual void Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, int nThreadID, CCamera *pCamera = NULL);
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -143,7 +143,7 @@ public:
 	virtual void CreateShaderVariables(ID3D11Device *pd3dDevice);
 
 	virtual void BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhysics, PxScene *pPxScene, FbxManager *pFbxSdkManager);
-	virtual void Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, CCamera *pCamera=NULL);
+	virtual void Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, int nThreadID, CCamera *pCamera = NULL);
 	
 	ID3D11Buffer* CreateInstanceBuffer(ID3D11Device *pd3dDevice, int nObjects, UINT nBufferStride, void *pBufferData);
 
@@ -182,7 +182,7 @@ public:
 	virtual ~CSkyBoxShader();
 
 	virtual void BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhysics, PxScene *pPxScene, FbxManager *pFbxSdkManager);
-	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, CCamera *pCamera);
+	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, int nThreadID, CCamera *pCamera);
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

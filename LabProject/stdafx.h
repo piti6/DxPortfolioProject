@@ -32,6 +32,7 @@
 #include <algorithm>
 #include <map>
 #include <fstream>
+#include <process.h>
 //DirectX Include
 
 #include <d3d11.h>
@@ -73,6 +74,8 @@ using namespace std;
 
 #define MAX_BONE 64
 #define MAX_WEIGHT 4
+#define MAX_THREAD 2
+
 #define NULL_IDX 100000
 
 #define GET_SET_FUNC_IMPL(TYPE, FUNC_NAME, PROP) \

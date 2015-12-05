@@ -4,6 +4,20 @@
 #include "Player.h"
 #include "Scene.h"
 
+struct RENDERINGTHREADINFO{
+	int m_nRenderingThreadID;
+	HANDLE m_hRenderingThread;
+	HANDLE m_hRenderingBeginEvent;
+	HANDLE m_hRenderingEndEvent;
+
+	ID3D11DeviceContext *m_pd3dDeferredContext;
+	ID3D11CommandList *m_pd3dCommandList;
+	ID3D11DepthStencilView *m_pd3dDepthStencilView;
+
+	CScene *m_pScene;
+	CPlayer *m_pPlayer;
+};
+
 class CGameFramework
 {
 public:
@@ -30,6 +44,8 @@ public:
     void ProcessInput();
     void AnimateObjects();
     void FrameAdvance();
+
+	void InitializeWorkerThreads();
 
 /*						Physx SDK Member Function					*/
 
@@ -63,6 +79,11 @@ private:
 	ID3D11Texture2D					*m_pd3dDepthStencilBuffer;
 	ID3D11DepthStencilView			*m_pd3dDepthStencilView;
 	ID3D11DeviceContext				*m_pd3dImmediateDeviceContext;
+
+/*						Threading					*/
+	int								m_nRenderThreads;
+	RENDERINGTHREADINFO				*m_pRenderingThreadInfo;
+	HANDLE							*m_hRenderingEndEvents;
 
 /*						Physx SDK Member Variables					*/
 

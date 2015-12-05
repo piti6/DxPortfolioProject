@@ -95,7 +95,7 @@ void CShader::OnPostRender(ID3D11DeviceContext *pd3dDeviceContext)
 	pd3dDeviceContext->VSSetShader(m_pd3dVertexShader, NULL, 0);
 	pd3dDeviceContext->PSSetShader(m_pd3dPixelShader, NULL, 0);
 }
-void CShader::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, CCamera *pCamera)
+void CShader::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, int nThreadID, CCamera *pCamera)
 {
 }
 
@@ -175,7 +175,7 @@ void CTexturedIlluminatedShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysic
 
 }
 
-void CTexturedIlluminatedShader::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, CCamera *pCamera)
+void CTexturedIlluminatedShader::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, int nThreadID, CCamera *pCamera)
 {
 	OnPostRender(pd3dImmediateDeviceContext);
 	//카메라의 절두체에 포함되는 객체들만을 렌더링한다. 
@@ -183,6 +183,7 @@ void CTexturedIlluminatedShader::Render(ID3D11DeviceContext *pd3dImmediateDevice
 	AABB bcBoundingCube;
 	for (int i = 0; i < m_ObjectsVector.size(); ++i)
 	{
+		if (i % MAX_THREAD == nThreadID) continue;
 		if (m_ObjectsVector[i].second->isActive())
 		{
 			//객체의 메쉬의 바운딩 박스(모델 좌표계)를 객체의 월드 변환 행렬로 변환하고 새로운 바운딩 박스를 계산한다.
@@ -375,7 +376,6 @@ void CInstancingShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhy
 
 	CMaterial *pMaterial = new CMaterial(D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f), D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f), D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f), D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
 	m_MaterialsVector.push_back(pMaterial);
-
 	ID3D11SamplerState *pd3dSamplerState = NULL;
 	D3D11_SAMPLER_DESC d3dSamplerDesc;
 	ZeroMemory(&d3dSamplerDesc, sizeof(D3D11_SAMPLER_DESC));
@@ -653,12 +653,13 @@ ID3D11Buffer *CInstancingShader::CreateInstanceBuffer(ID3D11Device *pd3dDevice, 
 	return(pd3dInstanceBuffer);
 }
 
-void CInstancingShader::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, CCamera *pCamera){
+void CInstancingShader::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, int nThreadID, CCamera *pCamera){
 	OnPostRender(pd3dImmediateDeviceContext);
 
 	AABB bcBoundingCube;
 	bool bIsVisible = false;
 	for (int i = 0; i < m_InstanceDataVector.size(); ++i){
+		if (i % MAX_THREAD != nThreadID) continue;
 		if (m_InstanceDataVector[i]->GetHasAnimation()){
 			m_InstanceDataVector[i]->GetAnimationInstancing()->UpdateShaderVariables(pd3dImmediateDeviceContext);
 			D3D11_MAPPED_SUBRESOURCE d3dMappedResource;
@@ -673,6 +674,7 @@ void CInstancingShader::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, 
 		pd3dImmediateDeviceContext->Map(m_InstanceDataVector[i]->GetInstanceBuffer(), 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
 		InstanceBuffer *pd3dxmInstances = (InstanceBuffer *)d3dMappedResource.pData;
 		CTexture *pLastTexture = NULL;
+		CMaterial *pLastMaterial = NULL;
 		for (int j = 0; j < m_ObjectsVector.size(); ++j)
 		{
 			if (m_ObjectsVector[j].first == i){
@@ -691,10 +693,13 @@ void CInstancingShader::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, 
 								pLastTexture = m_ObjectsVector[j].second->GetTexture();
 							}
 						}
-						/*
+						
 						if (m_ObjectsVector[j].second->GetMaterial())
+						{
+							if (m_ObjectsVector[j].second->GetMaterial() != pLastMaterial)
 							CTexturedIlluminatedShader::UpdateShaderVariables(pd3dImmediateDeviceContext, &m_ObjectsVector[j].second->GetMaterial()->GetMaterial());
-							*/
+							pLastMaterial = m_ObjectsVector[j].second->GetMaterial();
+						}
 						if (m_InstanceDataVector[i]->GetHasAnimation()){
 							CDynamicObject *pObject = (CDynamicObject *)m_ObjectsVector[j].second;
 							CAnimationController *pAnimationController = pObject->GetAnimationController();
@@ -708,7 +713,8 @@ void CInstancingShader::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, 
 			}
 		}
 		pd3dImmediateDeviceContext->Unmap(m_InstanceDataVector[i]->GetInstanceBuffer(), 0);
-		m_InstanceDataVector[i]->GetMesh()->RenderInstanced(pd3dImmediateDeviceContext, nVisibleObjects, 0);
+		if (nVisibleObjects>0)
+			m_InstanceDataVector[i]->GetMesh()->RenderInstanced(pd3dImmediateDeviceContext, nVisibleObjects, 0);
 	}
 }
 
@@ -786,7 +792,7 @@ void CSkyBoxShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhysics
 
 }
 
-void CSkyBoxShader::Render(ID3D11DeviceContext *pd3dDeviceContext, CCamera *pCamera)
+void CSkyBoxShader::Render(ID3D11DeviceContext *pd3dDeviceContext, int nThreadID, CCamera *pCamera)
 {
 	OnPostRender(pd3dDeviceContext);
 
@@ -800,6 +806,7 @@ void CSkyBoxShader::Render(ID3D11DeviceContext *pd3dDeviceContext, CCamera *pCam
 	m_ObjectsVector[5].second->SetPosition(D3DXVECTOR3(d3dxvCameraPos.x + 200, d3dxvCameraPos.y, d3dxvCameraPos.z));
 
 	for (int i = 0; i < m_ObjectsVector.size(); ++i){
+		if (i % MAX_THREAD != nThreadID) continue;
 		if (m_ObjectsVector[i].second->GetTexture())
 			CTexturedShader::UpdateShaderVariables(pd3dDeviceContext, m_ObjectsVector[i].second->GetTexture());
 		CTexturedShader::UpdateShaderVariables(pd3dDeviceContext, &m_ObjectsVector[i].second->GetWorldMatrix());

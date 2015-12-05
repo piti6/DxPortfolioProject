@@ -80,12 +80,6 @@ void CAnimationInstancing::SetAnimationData(FbxScene *pFbxScene, FbxNode *pNode,
 	{
 		Time.SetMilliSeconds(i * 30);
 		m_vAnimationList.m_Animation[AnimationName].m_vAnimation.m_vBoneContainer[i].m_vBoneList.resize(pBoneName->size());
-		/*
-		D3DXMATRIX d3dxmtxIdentity;
-		D3DXMatrixIdentity(&d3dxmtxIdentity);
-		for(int i=0; i<m_vAnimationList.m_Animation[AnimationName].m_vAnimation.m_vBoneContainer[Time.GetMilliSeconds()].m_vBoneList.size(); ++i){
-		m_vAnimationList.m_Animation[AnimationName].m_vAnimation.m_vBoneContainer[Time.GetMilliSeconds()].m_vBoneList[i] = d3dxmtxIdentity;
-		}*/
 		SetBoneMatrixVectorAtTime(pNode, AnimationName, Time, pBoneName, i);
 	}
 	m_vAnimationList.m_Animation[AnimationName].m_fLength /= 1000;

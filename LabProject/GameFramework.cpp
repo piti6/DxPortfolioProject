@@ -36,6 +36,7 @@ bool CGameFramework::OnCreate(HINSTANCE hInstance, HWND hMainWnd)
 	if (!CreateDirect3DDisplay()) return(false); 
 
 	BuildObjects(); 
+	InitializeWorkerThreads();
 
 	return(true);
 }
@@ -92,8 +93,13 @@ bool CGameFramework::CreateDirect3DDisplay()
 		if (SUCCEEDED(hResult = D3D11CreateDeviceAndSwapChain(NULL, nd3dDriverType, NULL, dwCreateDeviceFlags, pd3dFeatureLevels, nFeatureLevels, D3D11_SDK_VERSION, &dxgiSwapChainDesc, &m_pDXGISwapChain, &m_pd3dDevice, &nd3dFeatureLevel, &m_pd3dImmediateDeviceContext))) break;
 	}
 
-	if (!CreateRenderTargetDepthStencilView()) return(false);
 
+
+	if (!CreateRenderTargetDepthStencilView()) return(false);
+	D3D11_FEATURE_DATA_THREADING d3dThreading;
+	m_pd3dDevice->CheckFeatureSupport(D3D11_FEATURE_THREADING, &d3dThreading, sizeof(d3dThreading));
+	if (!(d3dThreading.DriverCommandLists && d3dThreading.DriverConcurrentCreates))
+		return false;
 	return(true);
 }
 
@@ -141,6 +147,13 @@ void CGameFramework::OnDestroy()
 	ShutDownFbxManager();
 	ShutDownPhysxEngine();
 	
+	for (int i = 0; i < m_nRenderThreads; ++i)
+	{
+		m_pRenderingThreadInfo[i].m_pd3dDeferredContext->Release();
+		CloseHandle(m_pRenderingThreadInfo[i].m_hRenderingBeginEvent);
+		CloseHandle(m_pRenderingThreadInfo[i].m_hRenderingEndEvent);
+	}
+
 	if (m_pd3dImmediateDeviceContext) m_pd3dImmediateDeviceContext->ClearState();
 	if (m_pd3dRenderTargetView) m_pd3dRenderTargetView->Release();
 	if (m_pd3dDepthStencilBuffer) m_pd3dDepthStencilBuffer->Release();	
@@ -148,6 +161,7 @@ void CGameFramework::OnDestroy()
 	if (m_pDXGISwapChain) m_pDXGISwapChain->Release();
 	if (m_pd3dImmediateDeviceContext) m_pd3dImmediateDeviceContext->Release();
 	if (m_pd3dDevice) m_pd3dDevice->Release();
+
 }
 
 void CGameFramework::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam)
@@ -380,18 +394,26 @@ void CGameFramework::FrameAdvance()
 
 	float fClearColor[4] = { 0.0f, 0.125f, 0.3f, 1.0f }; 
 	if (m_pd3dRenderTargetView) m_pd3dImmediateDeviceContext->ClearRenderTargetView(m_pd3dRenderTargetView, fClearColor);
-	if (m_pd3dDepthStencilView) m_pd3dImmediateDeviceContext->ClearDepthStencilView(m_pd3dDepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
-	for (int i = 0; i < m_nPlayers; ++i)
+	//if (m_pd3dDepthStencilView) m_pd3dImmediateDeviceContext->ClearDepthStencilView(m_pd3dDepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
+	for (int i = 0; i < m_nRenderThreads; ++i)
 	{
-		if (m_ppPlayers[i]) {
-			m_ppPlayers[i]->UpdateShaderVariables(m_pd3dImmediateDeviceContext);
-			m_ppPlayers[i]->Render(m_pd3dImmediateDeviceContext);
-		}		
+		SetEvent(m_pRenderingThreadInfo[i].m_hRenderingBeginEvent);
 	}
-	if (m_pScene)
-		m_pScene->Render(m_pd3dImmediateDeviceContext, m_ppPlayers[0]->GetCamera());
-
-
+	WaitForMultipleObjects(m_nRenderThreads, m_hRenderingEndEvents, true, INFINITE);
+	if (m_ppPlayers)
+		for (int i = 0; i < m_nPlayers; ++i){
+			m_ppPlayers[i]->UpdateShaderVariables(m_pd3dImmediateDeviceContext);
+		}
+	for (int i = 0; i < m_nRenderThreads; ++i)
+	{
+		m_pd3dImmediateDeviceContext->ExecuteCommandList(m_pRenderingThreadInfo[i].m_pd3dCommandList, true);
+		m_pRenderingThreadInfo[i].m_pd3dCommandList->Release();
+	}
+	if (m_ppPlayers)
+		for (int i = 0; i < m_nPlayers; ++i){
+			m_ppPlayers[i]->Render(m_pd3dImmediateDeviceContext, -1);
+		}
+	
 
 	m_pDXGISwapChain->Present(0, 0);
 
@@ -469,3 +491,44 @@ void CGameFramework::ShutDownFbxManager()
 		m_pFbxSdkManager->Destroy();
 	}
 }
+
+UINT WINAPI DeferredContextThreadProc(LPVOID lpParameter)
+{
+	RENDERINGTHREADINFO *pRenderingThreadInfo = (RENDERINGTHREADINFO*)lpParameter;
+	ID3D11DeviceContext *pd3dDeferredContext = pRenderingThreadInfo->m_pd3dDeferredContext;
+
+	while (1){
+		WaitForSingleObject(pRenderingThreadInfo->m_hRenderingBeginEvent, INFINITE);
+		if (pRenderingThreadInfo->m_nRenderingThreadID == 0)
+			pd3dDeferredContext->ClearDepthStencilView(pRenderingThreadInfo->m_pd3dDepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
+		pRenderingThreadInfo->m_pPlayer->UpdateShaderVariables(pd3dDeferredContext);
+		pRenderingThreadInfo->m_pScene->Render(pd3dDeferredContext, pRenderingThreadInfo->m_nRenderingThreadID, pRenderingThreadInfo->m_pPlayer->GetCamera());
+		pd3dDeferredContext->FinishCommandList(true, &pRenderingThreadInfo->m_pd3dCommandList);
+		SetEvent(pRenderingThreadInfo->m_hRenderingEndEvent);
+	}
+}
+
+void CGameFramework::InitializeWorkerThreads()
+{
+	m_nRenderThreads = MAX_THREAD;
+	m_pRenderingThreadInfo = new RENDERINGTHREADINFO[m_nRenderThreads];
+	m_hRenderingEndEvents = new HANDLE[m_nRenderThreads];
+	for (int i = 0; i < m_nRenderThreads; ++i)
+	{
+		m_pRenderingThreadInfo[i].m_nRenderingThreadID = i;
+		m_pRenderingThreadInfo[i].m_pPlayer = m_ppPlayers[0];
+		m_pRenderingThreadInfo[i].m_pScene = m_pScene;
+		m_pRenderingThreadInfo[i].m_pd3dCommandList = NULL;
+		m_pRenderingThreadInfo[i].m_hRenderingBeginEvent = CreateEvent(NULL, false, false, NULL);
+		m_pRenderingThreadInfo[i].m_hRenderingEndEvent = CreateEvent(NULL, false, false, NULL);
+		m_pRenderingThreadInfo[i].m_pd3dDepthStencilView = m_pd3dDepthStencilView;
+		m_hRenderingEndEvents[i] = m_pRenderingThreadInfo[i].m_hRenderingEndEvent;
+		m_pd3dDevice->CreateDeferredContext(0, &m_pRenderingThreadInfo[i].m_pd3dDeferredContext);
+		m_pRenderingThreadInfo[i].m_pPlayer->GetCamera()->SetViewport(m_pRenderingThreadInfo[i].m_pd3dDeferredContext, 0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT);
+		m_pRenderingThreadInfo[i].m_pd3dDeferredContext->OMSetRenderTargets(1, &m_pd3dRenderTargetView, m_pd3dDepthStencilView);
+
+		m_pRenderingThreadInfo[i].m_hRenderingThread = (HANDLE) ::_beginthreadex(NULL, 0, DeferredContextThreadProc, &m_pRenderingThreadInfo[i], CREATE_SUSPENDED, NULL);
+		ResumeThread(m_pRenderingThreadInfo[i].m_hRenderingThread);
+	}
+}
+

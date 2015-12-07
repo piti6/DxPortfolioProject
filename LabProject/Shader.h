@@ -33,7 +33,7 @@ public:
 	virtual void UpdateShaderVariables(ID3D11DeviceContext *pd3dImmediateDeviceContext, D3DXMATRIX *pd3dxmtxWorld);
 	virtual void UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext, CTexture *pTexture);
 	virtual void OnPostRender(ID3D11DeviceContext *pd3dDeviceContext);
-	virtual void Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, int nThreadID, CCamera *pCamera);
+	virtual void Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, int nThreadID, CRITICAL_SECTION *pCriticalSection, CCamera *pCamera);
 
 	virtual void AnimateObjects(float fTimeElapsed,PxScene *pPxScene);
 	virtual void BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhysics, PxScene *pPxScene, FbxManager *pFbxSdkManager);
@@ -69,7 +69,7 @@ public:
 	virtual void UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext, CTexture *pTexture);
 
 	virtual void BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhysics, PxScene *pPxScene, FbxManager *pFbxSdkManager);
-	virtual void Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, int nThreadID, CCamera *pCamera = NULL);
+	virtual void Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, int nThreadID, CRITICAL_SECTION *pCriticalSection, CCamera *pCamera = NULL);
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -115,10 +115,11 @@ public:
 
 	void Release(){if(m_pMesh) m_pMesh->Release(); if(m_pd3dInstances) m_pd3dInstances->Release(); if(m_pAnimationInstancing) delete m_pAnimationInstancing;}
 
-	GET_SET_FUNC_IMPL(bool, HasAnimation, m_bHasAnimation);
-	GET_SET_FUNC_IMPL(string, Name, m_MeshName);
-	GET_SET_FUNC_IMPL(CAnimationInstancing*, AnimationInstancing, m_pAnimationInstancing);
+	bool GetHasAnimation(){ return m_bHasAnimation; }
 	
+	string GetName(){ return m_MeshName; }
+
+	CAnimationInstancing *GetAnimationInstancing(){ return m_pAnimationInstancing; }
 	
 	
 
@@ -143,9 +144,9 @@ public:
 	virtual void CreateShaderVariables(ID3D11Device *pd3dDevice);
 
 	virtual void BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhysics, PxScene *pPxScene, FbxManager *pFbxSdkManager);
-	virtual void Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, int nThreadID, CCamera *pCamera = NULL);
+	virtual void Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, int nThreadID, CRITICAL_SECTION *pCriticalSection, CCamera *pCamera = NULL);
 	
-	ID3D11Buffer* CreateInstanceBuffer(ID3D11Device *pd3dDevice, int nObjects, UINT nBufferStride, void *pBufferData);
+	ID3D11Buffer* CreateInstanceBuffer(ID3D11Device *pd3dDevice, int nObjects, UINT nBufferStride);
 
 	void AddObject(PxPhysics *pPxPhysics, PxScene *pPxScene, int _IndexOfInstanceDataVector, int _IndexOfMaterial, int _IndexOfTexture, D3DXVECTOR3 _d3dxvPosition, int _isStatic, D3DXVECTOR3 _Force);
 
@@ -182,7 +183,7 @@ public:
 	virtual ~CSkyBoxShader();
 
 	virtual void BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhysics, PxScene *pPxScene, FbxManager *pFbxSdkManager);
-	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, int nThreadID, CCamera *pCamera);
+	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, int nThreadID, CRITICAL_SECTION *pCriticalSection, CCamera *pCamera);
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

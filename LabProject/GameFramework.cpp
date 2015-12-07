@@ -288,7 +288,7 @@ void CGameFramework::BuildObjects()
 {
 	m_nPlayers = 1;
 	m_ppPlayers = new CPlayer*[m_nPlayers];
-
+	InitializeCriticalSection(&m_crit_section);
 	CGamePlayer *pGamePlayer = new CGamePlayer(m_pd3dDevice);
 	pGamePlayer->ChangeCamera(m_pd3dDevice, FIRST_PERSON_CAMERA, m_GameTimer.GetTimeElapsed());
 
@@ -297,12 +297,12 @@ void CGameFramework::BuildObjects()
 	pCamera->GenerateProjectionMatrix(1.01f, 500.0f, ASPECT_RATIO, 90.0f);
 	pCamera->GenerateViewMatrix();
 
-	pGamePlayer->SetPosition(D3DXVECTOR3(200.0f, 1.0f, 200.0f));
+	pGamePlayer->SetPosition(D3DXVECTOR3(0.0f, 1.0f, 0.0f));
 
 	m_ppPlayers[0] = pGamePlayer;
 
 	m_pScene = new CScene(m_pPxPhysicsSDK, m_pPxScene, m_ppPlayers);
-
+	
 	if (m_pScene){
 		m_pScene->BuildObjects(m_pd3dDevice, m_pPxPhysicsSDK, m_pPxScene, m_pFbxSdkManager);
 	}
@@ -318,6 +318,7 @@ void CGameFramework::ReleaseObjects()
 		for (int j = 0; j < m_nPlayers; j++) delete m_ppPlayers[j];
 		delete [] m_ppPlayers;
 	}
+	DeleteCriticalSection(&m_crit_section);
 }
 
 void CGameFramework::ProcessInput()
@@ -410,7 +411,7 @@ void CGameFramework::FrameAdvance()
 	}
 	if (m_ppPlayers)
 		for (int i = 0; i < m_nPlayers; ++i){
-			m_ppPlayers[i]->Render(m_pd3dImmediateDeviceContext, -1);
+			m_ppPlayers[i]->Render(m_pd3dImmediateDeviceContext, -1, &m_crit_section);
 		}
 	
 
@@ -502,7 +503,7 @@ UINT WINAPI DeferredContextThreadProc(LPVOID lpParameter)
 		if (pRenderingThreadInfo->m_nRenderingThreadID == 0)
 			pd3dDeferredContext->ClearDepthStencilView(pRenderingThreadInfo->m_pd3dDepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
 		pRenderingThreadInfo->m_pPlayer->UpdateShaderVariables(pd3dDeferredContext);
-		pRenderingThreadInfo->m_pScene->Render(pd3dDeferredContext, pRenderingThreadInfo->m_nRenderingThreadID, pRenderingThreadInfo->m_pPlayer->GetCamera());
+		pRenderingThreadInfo->m_pScene->Render(pd3dDeferredContext, pRenderingThreadInfo->m_nRenderingThreadID, pRenderingThreadInfo->crit_section, pRenderingThreadInfo->m_pPlayer->GetCamera());
 		pd3dDeferredContext->FinishCommandList(true, &pRenderingThreadInfo->m_pd3dCommandList);
 		SetEvent(pRenderingThreadInfo->m_hRenderingEndEvent);
 	}
@@ -522,6 +523,7 @@ void CGameFramework::InitializeWorkerThreads()
 		m_pRenderingThreadInfo[i].m_hRenderingBeginEvent = CreateEvent(NULL, false, false, NULL);
 		m_pRenderingThreadInfo[i].m_hRenderingEndEvent = CreateEvent(NULL, false, false, NULL);
 		m_pRenderingThreadInfo[i].m_pd3dDepthStencilView = m_pd3dDepthStencilView;
+		m_pRenderingThreadInfo[i].crit_section = &m_crit_section;
 		m_hRenderingEndEvents[i] = m_pRenderingThreadInfo[i].m_hRenderingEndEvent;
 		m_pd3dDevice->CreateDeferredContext(0, &m_pRenderingThreadInfo[i].m_pd3dDeferredContext);
 		m_pRenderingThreadInfo[i].m_pPlayer->GetCamera()->SetViewport(m_pRenderingThreadInfo[i].m_pd3dDeferredContext, 0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT);

@@ -9,6 +9,7 @@ struct RENDERINGTHREADINFO{
 	HANDLE m_hRenderingThread;
 	HANDLE m_hRenderingBeginEvent;
 	HANDLE m_hRenderingEndEvent;
+	CRITICAL_SECTION *crit_section;
 
 	ID3D11DeviceContext *m_pd3dDeferredContext;
 	ID3D11CommandList *m_pd3dCommandList;
@@ -84,6 +85,7 @@ private:
 	int								m_nRenderThreads;
 	RENDERINGTHREADINFO				*m_pRenderingThreadInfo;
 	HANDLE							*m_hRenderingEndEvents;
+	CRITICAL_SECTION				m_crit_section;
 
 /*						Physx SDK Member Variables					*/
 

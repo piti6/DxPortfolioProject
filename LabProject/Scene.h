@@ -41,7 +41,7 @@ public:
 	bool ProcessInput();
     void AnimateObjects(float fTimeElapsed,PxScene *pPxScene);
 
-	void Render(ID3D11DeviceContext	*pD3DImmediateDeviceContext, int nThreadID, CCamera *pCamera);
+	void Render(ID3D11DeviceContext	*pD3DImmediateDeviceContext, int nThreadID, CRITICAL_SECTION *pCriticalSection, CCamera *pCamera);
 	
 
 	void BuildLights(ID3D11Device *pd3dDevice);

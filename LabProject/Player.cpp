@@ -186,12 +186,12 @@ void CPlayer::ChangeCamera(ID3D11Device *pd3dDevice, DWORD nNewCameraMode, float
 {
 }
 
-void CPlayer::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, int nThreadID)
+void CPlayer::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, int nThreadID, CRITICAL_SECTION *pCriticalSection)
 {
 	if (m_pShader)
 	{
 		m_pShader->UpdateShaderVariables(pd3dImmediateDeviceContext, &m_d3dxmtxWorld);
-		m_pShader->Render(pd3dImmediateDeviceContext, nThreadID, m_pCamera);
+		m_pShader->Render(pd3dImmediateDeviceContext, nThreadID, pCriticalSection, m_pCamera);
 	}
 	CGameObject::Render(pd3dImmediateDeviceContext);
 }
@@ -259,7 +259,7 @@ CGamePlayer::~CGamePlayer()
     if (m_pShader) delete m_pShader;
 }
 
-void CGamePlayer::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, int nThreadID)
+void CGamePlayer::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, int nThreadID, CRITICAL_SECTION *pCriticalSection)
 {
 	DWORD nCurrentCameraMode = (m_pCamera) ? m_pCamera->GetMode() : 0x00;
     if ((nCurrentCameraMode == THIRD_PERSON_CAMERA) && m_MeshesVector[0])
@@ -269,7 +269,7 @@ void CGamePlayer::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, int nT
 		m_d3dxmtxWorld = mtxRotate * m_d3dxmtxWorld;
 		m_pShader->UpdateShaderVariables(pd3dImmediateDeviceContext, &m_pMaterial->GetMaterial());
 		m_pShader->UpdateShaderVariables(pd3dImmediateDeviceContext, m_pTexture);
-		CPlayer::Render(pd3dImmediateDeviceContext, nThreadID);
+		CPlayer::Render(pd3dImmediateDeviceContext, nThreadID, pCriticalSection);
 	}
 }
 

@@ -102,7 +102,7 @@ void CScene::AnimateObjects(float fTimeElapsed,PxScene *pPxScene)
 		m_ppShaders[i]->AnimateObjects(fTimeElapsed,pPxScene);
 	}
 }
-void CScene::Render(ID3D11DeviceContext	*pd3dImmediateDeviceContext, int nThreadID, CCamera *pCamera)
+void CScene::Render(ID3D11DeviceContext	*pd3dImmediateDeviceContext, int nThreadID, CRITICAL_SECTION *pCriticalSection, CCamera *pCamera)
 {
 	if (m_pLights && m_pd3dcbLights) 
 	{
@@ -111,7 +111,7 @@ void CScene::Render(ID3D11DeviceContext	*pd3dImmediateDeviceContext, int nThread
 
 	for (int i = 0; i < m_nShaders; i++)
 	{
-		m_ppShaders[i]->Render(pd3dImmediateDeviceContext, nThreadID, pCamera);
+		m_ppShaders[i]->Render(pd3dImmediateDeviceContext, nThreadID, pCriticalSection, pCamera);
 	}
 }
 void CScene::BuildLights(ID3D11Device *pd3dDevice)

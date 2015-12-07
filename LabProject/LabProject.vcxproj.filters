@@ -123,9 +123,6 @@
     <ClCompile Include="Mesh.cpp">
       <Filter>소스 파일\DX11</Filter>
     </ClCompile>
-    <ClCompile Include="Shader.cpp">
-      <Filter>소스 파일\DX11</Filter>
-    </ClCompile>
     <ClCompile Include="Camera.cpp">
       <Filter>소스 파일\Game Logic</Filter>
     </ClCompile>
@@ -170,6 +167,9 @@
     </ClCompile>
     <ClCompile Include="AnimationInstancing.cpp">
       <Filter>소스 파일\FBX\Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="Shader.cpp">
+      <Filter>소스 파일\DX11</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

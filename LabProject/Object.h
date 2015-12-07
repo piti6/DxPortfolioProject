@@ -61,7 +61,7 @@ public:
 	virtual D3DXVECTOR3 GetRight();
 
 	virtual void Animate(float fTimeElapsed, PxScene *pPxScene);
-	virtual void BuildObjects(PxPhysics *pPxPhysics, PxScene *pPxScene);
+	virtual void BuildObjects(PxPhysics *pPxPhysics, PxScene *pPxScene, PxMaterial *pPxMaterial);
 
 	virtual void UpdateAnimation(ID3D11DeviceContext *pd3dImmediateDeviceContext);
 	virtual void Render(ID3D11DeviceContext *pd3dImmediateDeviceContext);
@@ -90,7 +90,7 @@ public:
 
 	virtual void SetActive(bool isActive);
 
-	virtual void BuildObjects(PxPhysics *pPxPhysics, PxScene *pPxScene);
+	virtual void BuildObjects(PxPhysics *pPxPhysics, PxScene *pPxScene, PxMaterial *pPxMaterial);
 	virtual void Animate(float fTimeElapsed, PxScene *pPxScene);
 
 	virtual void SetPosition(D3DXVECTOR3 d3dxvPosition);

@@ -50,7 +50,6 @@
 //Physx SDK
 
 #include <PxPhysicsAPI.h>
-//#include <pvd\PxVisualDebugger.h>
 
 using namespace physx;
 using namespace std;

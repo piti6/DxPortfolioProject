@@ -22,15 +22,20 @@ void CTexture::AddRef()
 	m_nReferences++; 
 }
 
-void CTexture::Release() 
-{ 
-	if (m_nReferences > 0) m_nReferences--; 
-	for (int i = 0; i < m_nTextures; i++)
-	{
-		if (m_ppd3dsrvTextures[i]) m_ppd3dsrvTextures[i]->Release();
-		if (m_ppd3dSamplerStates[i]) m_ppd3dSamplerStates[i]->Release();
+void CTexture::Release()
+{
+	if (m_nReferences > 0) {
+		m_nReferences--;
+		return;
 	}
-	if (m_nReferences == 0) delete this;
+	if (m_nReferences == 0){
+		for (int i = 0; i < m_nTextures; i++)
+		{
+			if (m_ppd3dsrvTextures[i]) m_ppd3dsrvTextures[i]->Release();
+			if (m_ppd3dSamplerStates[i]) m_ppd3dSamplerStates[i]->Release();
+		}
+		delete this;
+	}
 }
 
 void CTexture::SetTexture(int nIndex, ID3D11ShaderResourceView *pd3dsrvTexture, ID3D11SamplerState *pd3dSamplerState)

@@ -70,7 +70,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 	RECT rc = { 0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT };
 	DWORD dwStyle = WS_OVERLAPPED | WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU | WS_BORDER;
 	AdjustWindowRect(&rc, dwStyle, FALSE);
-	HWND hMainWnd = CreateWindow(szWindowClass, szTitle, dwStyle, CW_USEDEFAULT, CW_USEDEFAULT, rc.right - rc.left, rc.bottom - rc.top, NULL, NULL, hInstance, NULL);
+	HWND hMainWnd = CreateWindow(szWindowClass, szTitle, dwStyle, 0, 0, rc.right - rc.left, rc.bottom - rc.top, NULL, NULL, hInstance, NULL);
 	if (!hMainWnd) return(FALSE);
 
 	if (!gGameFramework.OnCreate(hInstance, hMainWnd)) return(FALSE);

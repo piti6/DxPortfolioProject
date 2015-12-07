@@ -155,8 +155,10 @@ private:
 class CFbxMeshIlluminatedTextured : public CMesh
 {
 public:
-	CFbxMeshIlluminatedTextured(ID3D11Device *pd3dDevice, FbxManager *pFbxSdkManager, char * filename, float fScaleMultiplier = 1.0f, bool _bHasAnimation=false);
+	CFbxMeshIlluminatedTextured(ID3D11Device *pd3dDevice, FbxManager *pFbxSdkManager, string filename, float fScaleMultiplier = 1.0f, bool _bHasAnimation = false);
 	virtual ~CFbxMeshIlluminatedTextured();
+
+	virtual void SetRasterizerState(ID3D11Device *pd3dDevice);
 
 	void SetBoneNameIndex(FbxNode *pNode, vector<string> *pBoneName);
 	void SetBoneAtVertices(FbxNode *pNode, unordered_map<int, vector<pair<UINT, float>>> *pClusterIndexVector, vector<string> *pBoneName);

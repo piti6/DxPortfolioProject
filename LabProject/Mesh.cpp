@@ -57,7 +57,7 @@ void CMesh::SetRasterizerState(ID3D11Device *pd3dDevice)
 	d3dRasterizerDesc.CullMode = D3D11_CULL_NONE;
 	d3dRasterizerDesc.FillMode = D3D11_FILL_SOLID;
 	//d3dRasterizerDesc.FillMode = D3D11_FILL_WIREFRAME;
-	//d3dRasterizerDesc.DepthClipEnable = true;
+	d3dRasterizerDesc.DepthClipEnable = true;
 	pd3dDevice->CreateRasterizerState(&d3dRasterizerDesc, &m_pd3dRasterizerState);
 }
 
@@ -181,6 +181,7 @@ void CMeshIlluminated::SetTriAngleListVertexNormal(BYTE *pVertices)
 	for (int i = 0; i < nPrimitives; i++)
 	{
 		d3dxvNormal = CalculateTriAngleNormal(pVertices, (i * 3 + 0), (i * 3 + 1), (i * 3 + 2));
+		d3dxvNormal.y *= -1;
 		pVertex = (CNormalVertex *)(pVertices + ((i * 3 + 0) * m_nStride[0]));
 		pVertex->SetNormal(d3dxvNormal);
 		pVertex = (CNormalVertex *)(pVertices + ((i * 3 + 1) * m_nStride[0]));
@@ -649,7 +650,7 @@ float CHeightMapGridMesh::OnGetHeight(int x, int z, void *pContext)
 /////////////////////////////////////////////////////////////////////////////////////////////////
 //
 
-CFbxMeshIlluminatedTextured::CFbxMeshIlluminatedTextured(ID3D11Device *pd3dDevice, FbxManager *pFbxSdkManager, char *filename, float fScaleMultiplier,bool _bHasAnimation) : CMesh(pd3dDevice)
+CFbxMeshIlluminatedTextured::CFbxMeshIlluminatedTextured(ID3D11Device *pd3dDevice, FbxManager *pFbxSdkManager, string filename, float fScaleMultiplier,bool _bHasAnimation) : CMesh(pd3dDevice)
 {
 	m_nStride = new UINT[1];
 	m_nStride[0] = sizeof(CBoneWeightVertex);
@@ -660,7 +661,7 @@ CFbxMeshIlluminatedTextured::CFbxMeshIlluminatedTextured(ID3D11Device *pd3dDevic
 	FbxImporter* pImporter = FbxImporter::Create(pFbxSdkManager, ""); // 임포트 생성
 	FbxScene *pFbxScene = FbxScene::Create(pFbxSdkManager, ""); // fbx 씬 생성
 
-	if (!pImporter->Initialize(filename, -1, pFbxSdkManager->GetIOSettings()))
+	if (!pImporter->Initialize(filename.c_str(), -1, pFbxSdkManager->GetIOSettings()))
 	{
 		cout << "Fbx SDK Initialize Failed" << endl;
 		return;
@@ -718,7 +719,16 @@ CFbxMeshIlluminatedTextured::CFbxMeshIlluminatedTextured(ID3D11Device *pd3dDevic
 }
 CFbxMeshIlluminatedTextured::~CFbxMeshIlluminatedTextured(){
 }
-
+void CFbxMeshIlluminatedTextured::SetRasterizerState(ID3D11Device *pd3dDevice)
+{
+	D3D11_RASTERIZER_DESC d3dRasterizerDesc;
+	ZeroMemory(&d3dRasterizerDesc, sizeof(D3D11_RASTERIZER_DESC));
+	d3dRasterizerDesc.CullMode = D3D11_CULL_FRONT;
+	d3dRasterizerDesc.FillMode = D3D11_FILL_SOLID;
+	//d3dRasterizerDesc.FillMode = D3D11_FILL_WIREFRAME;
+	d3dRasterizerDesc.DepthClipEnable = true;
+	pd3dDevice->CreateRasterizerState(&d3dRasterizerDesc, &m_pd3dRasterizerState);
+}
 void CFbxMeshIlluminatedTextured::SetBoneNameIndex(FbxNode *pNode, vector<string> *pBoneName){
 	if (pNode->GetNodeAttribute())
 	{
@@ -749,11 +759,7 @@ void CFbxMeshIlluminatedTextured::SetVertices(FbxNode *pNode, vector<CBoneWeight
 			D3DXVECTOR3 tempMin;
 			D3DXVECTOR3	tempMax;
 			tempMin = tempMax = D3DXVECTOR3(0, 0, 0); // 메쉬의 최대최소점 저장
-			const bool lHasShape = pMesh->GetShapeCount() > 0;
-			const bool lHasSkin = pMesh->GetDeformerCount(FbxDeformer::eSkin) > 0;
-			const bool lHasDeformation = lHasShape || lHasSkin;
-			if (lHasDeformation)
-				cout << pNode->GetName();
+			
 			// 폴리곤 숫자만큼 버텍스를 읽어옴
 			for (int j = 0; j < pMesh->GetPolygonCount(); j++) // j가 폴리곤 인덱스
 			{
@@ -785,9 +791,10 @@ void CFbxMeshIlluminatedTextured::SetVertices(FbxNode *pNode, vector<CBoneWeight
 					Vertex.SetPosition(d3dxvPos);
 
 					D3DXVECTOR3 d3dxvNormal = D3DXVECTOR3((float)Normal.mData[0], (float)Normal.mData[1], (float)Normal.mData[2]);
-					
-					D3DXMATRIX d3dxmtxPivot = GetD3DMatrix(pNode->EvaluateGlobalTransform());
-					D3DXVec3TransformCoord(&d3dxvNormal, &d3dxvNormal, &d3dxmtxPivot);
+					if (!m_bHasAnimation){
+						D3DXMATRIX d3dxmtxPivot = GetD3DMatrix(pNode->EvaluateGlobalTransform());
+						D3DXVec3TransformCoord(&d3dxvNormal, &d3dxvNormal, &d3dxmtxPivot);
+					}
 					Vertex.SetNormal(d3dxvNormal);
 					Vertex.SetTexCoord(D3DXVECTOR2(textureUV[0], -textureUV[1]));
 
@@ -821,7 +828,8 @@ void CFbxMeshIlluminatedTextured::SetVertices(FbxNode *pNode, vector<CBoneWeight
 
 			if (m_bHasAnimation)
 			{
-				tempMin *= 0.1f;
+				tempMin *= 0.015f;
+				tempMax *= 0.015f;
 			}
 			
 			m_bcBoundingCube.SetMinimum(tempMin);

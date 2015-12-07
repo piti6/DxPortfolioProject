@@ -229,7 +229,6 @@ void CGameFramework::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPA
 					m_pDXGISwapChain->ResizeTarget(&dxgiTargetParameters);
 				}
 
-				//m_pPxScene->sl
 				m_pDXGISwapChain->SetFullscreenState(!bFullScreenState, NULL);
 				break;
 			}
@@ -337,7 +336,7 @@ void CGameFramework::ProcessInput()
 			if (pKeyBuffer['S'] & 0xF0) dwBackward |= DIR_BACKWARD;
 			if (pKeyBuffer['A'] & 0xF0) dwLeft |= DIR_LEFT;
 			if (pKeyBuffer['D'] & 0xF0) dwRight |= DIR_RIGHT;
-			if (pKeyBuffer['Q'] & 0xF0) {dwUp |= DIR_UP;}
+			if (pKeyBuffer['Q'] & 0xF0) dwUp |= DIR_UP;
 			if (pKeyBuffer['Z'] & 0xF0) dwDown |= DIR_DOWN;
 		}	    
 		float cxDelta = 0.0f, cyDelta = 0.0f;
@@ -425,9 +424,9 @@ void CGameFramework::InitializePhysxEngine()
 {
 	m_pPxFoundation = PxCreateFoundation(PX_PHYSICS_VERSION,m_PxDefaultAllocatorCallback,m_PxDefaultErrorCallback);
 	PxTolerancesScale PxScale = PxTolerancesScale();
-	PxScale.length /= 10000;
-	PxScale.mass /= 10000;
-	PxScale.speed /= 10000;
+	PxScale.length /= 1000;
+	PxScale.mass /= 1000;
+	PxScale.speed /= 1000;
 	m_pPxPhysicsSDK = PxCreatePhysics(PX_PHYSICS_VERSION,*m_pPxFoundation,PxScale);
 	if(m_pPxPhysicsSDK == NULL){
 		cout << "PhysicsSDK Initialize Failed" << endl;
@@ -447,6 +446,7 @@ void CGameFramework::InitializePhysxEngine()
 	}	
 	if(!sceneDesc.filterShader)
 		sceneDesc.filterShader = PxDefaultSimulationFilterShader;
+
 	m_pPxScene = m_pPxPhysicsSDK->createScene(sceneDesc);
 
 	

@@ -125,7 +125,6 @@ void CAnimationInstancing::SetBoneMatrixVectorAtTime(FbxNode *pNode, string Anim
 						D3DXMATRIX scale;
 						D3DXMatrixScaling(&scale, 0.015f, 0.015f, 0.015f);
 						d3dxmtxBone = d3dxmtxBone * scale;
-						//D3DXMatrixTranspose(&d3dxmtxBone,&d3dxmtxBone);
 						m_vAnimationList.m_Animation[AnimationName].m_vAnimation.m_vBoneContainer[index].m_vBoneList[iBoneIndex] = d3dxmtxBone;
 
 					}

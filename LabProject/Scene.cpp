@@ -27,8 +27,6 @@ bool CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam,
 	switch (nMessageID)
 	{
 	case WM_LBUTTONDOWN:
-
-		m_pInstancingShader->AddObject(m_pPxPhysicsSDK, m_pPxScene, 0, 0, 2, m_ppPlayers[0]->GetPosition(), false, m_ppPlayers[0]->GetCamera()->GetLookVector() * 10);
 		break;
 	case WM_RBUTTONDOWN:
 		break;
@@ -49,6 +47,13 @@ bool CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 	switch (nMessageID)
 	{
 	case WM_KEYDOWN:
+		switch (wParam)
+		{
+		case 'F':
+			m_pInstancingShader->AddObject(m_pPxPhysicsSDK, m_pPxScene, 1, 0, 1, m_ppPlayers[0]->GetPosition(), false, m_ppPlayers[0]->GetCamera()->GetLookVector() * 100);
+			break;
+		}
+		
 		break;
 	default:
 		break;

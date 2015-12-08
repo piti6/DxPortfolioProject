@@ -19,17 +19,13 @@ CPlayer::CPlayer()
     m_d3dxvLook = D3DXVECTOR3(0.0f, 0.0f, 1.0f);   
 
 	m_d3dxvVelocity = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
-    m_d3dxvGravity = D3DXVECTOR3(0.0f, -100, 0.0f);
     m_fMaxVelocityXZ = 0.0f;
     m_fMaxVelocityY = 0.0f;
-    m_fFriction = 0.0f;
 
     m_fPitch = 0.0f;             
     m_fRoll = 0.0f;              
     m_fYaw = 0.0f;               
 
-	m_pPlayerUpdatedContext = NULL;
-	m_pCameraUpdatedContext = NULL;
 
 	m_pShader = NULL;
 }
@@ -131,30 +127,13 @@ void CPlayer::Rotate(float x, float y, float z)
 
 void CPlayer::Update(float fTimeElapsed)
 {
-    m_d3dxvVelocity += m_d3dxvGravity * fTimeElapsed;
-    float fLength = sqrtf(m_d3dxvVelocity.x * m_d3dxvVelocity.x + m_d3dxvVelocity.z * m_d3dxvVelocity.z);
-    if (fLength > m_fMaxVelocityXZ)
-    {
-        m_d3dxvVelocity.x *= (m_fMaxVelocityXZ / fLength);
-        m_d3dxvVelocity.z *= (m_fMaxVelocityXZ / fLength);    
-    } 
-    fLength = sqrtf(m_d3dxvVelocity.y * m_d3dxvVelocity.y);
-    if (fLength > m_fMaxVelocityY) m_d3dxvVelocity.y *= (m_fMaxVelocityY / fLength);
-	Move(m_d3dxvVelocity * fTimeElapsed, false);
-	if (m_pPlayerUpdatedContext) OnPlayerUpdated(fTimeElapsed);
-
 	DWORD nCurrentCameraMode = m_pCamera->GetMode();
-    if (nCurrentCameraMode == THIRD_PERSON_CAMERA) m_pCamera->Update(fTimeElapsed);
-	if (m_pCameraUpdatedContext) OnCameraUpdated(fTimeElapsed);
-    if (nCurrentCameraMode == THIRD_PERSON_CAMERA) m_pCamera->SetLookAt(m_d3dxvPosition);
+	if (nCurrentCameraMode == THIRD_PERSON_CAMERA)
+	{
+		m_pCamera->Update(fTimeElapsed);
+		m_pCamera->SetLookAt(m_d3dxvPosition);
+	}
 	m_pCamera->RegenerateViewMatrix();
-
-    D3DXVECTOR3 d3dxvDeceleration = -m_d3dxvVelocity;
-    D3DXVec3Normalize(&d3dxvDeceleration, &d3dxvDeceleration);
-    fLength = D3DXVec3Length(&m_d3dxvVelocity);
-    float fDeceleration = (m_fFriction * fTimeElapsed);
-    if (fDeceleration > fLength) fDeceleration = fLength;
-    m_d3dxvVelocity += d3dxvDeceleration * fDeceleration;
 }
 
 CCamera *CPlayer::OnChangeCamera(ID3D11Device *pd3dDevice, DWORD nNewCameraMode, DWORD nCurrentCameraMode)
@@ -186,24 +165,15 @@ void CPlayer::ChangeCamera(ID3D11Device *pd3dDevice, DWORD nNewCameraMode, float
 {
 }
 
-void CPlayer::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, int nThreadID, CRITICAL_SECTION *pCriticalSection)
+void CPlayer::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, int nThreadID)
 {
 	if (m_pShader)
 	{
 		m_pShader->UpdateShaderVariables(pd3dImmediateDeviceContext, &m_d3dxmtxWorld);
-		m_pShader->Render(pd3dImmediateDeviceContext, nThreadID, pCriticalSection, m_pCamera);
+		m_pShader->Render(pd3dImmediateDeviceContext, nThreadID, m_pCamera);
 	}
 	CGameObject::Render(pd3dImmediateDeviceContext);
 }
-
-void CPlayer::OnPlayerUpdated(float fTimeElapsed)
-{
-}
-
-void CPlayer::OnCameraUpdated(float fTimeElapsed)
-{
-}
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // CGamePlayer
 
@@ -220,7 +190,7 @@ CGamePlayer::CGamePlayer(ID3D11Device *pd3dDevice)
 	d3dSamplerDesc.MinLOD = 0;
 	d3dSamplerDesc.MaxLOD = 0;
 	pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &pd3dSamplerState);
-
+	
 	ID3D11ShaderResourceView *pd3dTexture = NULL;    
 	CTexture **ppTextures = new CTexture*[3];
 	ppTextures[0] = new CTexture(1);
@@ -259,7 +229,7 @@ CGamePlayer::~CGamePlayer()
     if (m_pShader) delete m_pShader;
 }
 
-void CGamePlayer::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, int nThreadID, CRITICAL_SECTION *pCriticalSection)
+void CGamePlayer::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, int nThreadID)
 {
 	DWORD nCurrentCameraMode = (m_pCamera) ? m_pCamera->GetMode() : 0x00;
     if ((nCurrentCameraMode == THIRD_PERSON_CAMERA) && m_MeshesVector[0])
@@ -269,7 +239,7 @@ void CGamePlayer::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, int nT
 		m_d3dxmtxWorld = mtxRotate * m_d3dxmtxWorld;
 		m_pShader->UpdateShaderVariables(pd3dImmediateDeviceContext, &m_pMaterial->GetMaterial());
 		m_pShader->UpdateShaderVariables(pd3dImmediateDeviceContext, m_pTexture);
-		CPlayer::Render(pd3dImmediateDeviceContext, nThreadID, pCriticalSection);
+		CPlayer::Render(pd3dImmediateDeviceContext, nThreadID);
 	}
 }
 
@@ -280,8 +250,6 @@ void CGamePlayer::ChangeCamera(ID3D11Device *pd3dDevice, DWORD nNewCameraMode, f
     switch (nNewCameraMode)
     {
         case FIRST_PERSON_CAMERA:            
-            SetFriction(100.0f); 
-            SetGravity(D3DXVECTOR3(0.0f,0.0f, 0.0f));
             SetMaxVelocityXZ(100.0f);
             SetMaxVelocityY(200.0f);
             m_pCamera = OnChangeCamera(pd3dDevice, FIRST_PERSON_CAMERA, nCurrentCameraMode);
@@ -290,8 +258,6 @@ void CGamePlayer::ChangeCamera(ID3D11Device *pd3dDevice, DWORD nNewCameraMode, f
 			m_pCamera->GenerateProjectionMatrix(1.01f, 20.0f, ASPECT_RATIO, 60.0f);
             break;
         case THIRD_PERSON_CAMERA:
-            SetFriction(100.0f); 
-            SetGravity(D3DXVECTOR3(0.0f,0.0f, 0.0f));
             SetMaxVelocityXZ(100.0f);
             SetMaxVelocityY(200.0f);
             m_pCamera = OnChangeCamera(pd3dDevice, THIRD_PERSON_CAMERA, nCurrentCameraMode);

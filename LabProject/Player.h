@@ -18,13 +18,8 @@ protected:
 	float           			m_fRoll;              
 
 
-	D3DXVECTOR3     			m_d3dxvGravity;           
 	float           			m_fMaxVelocityXZ;     
 	float           			m_fMaxVelocityY;      
-	float           			m_fFriction;    
-
-	LPVOID						m_pPlayerUpdatedContext;
-	LPVOID						m_pCameraUpdatedContext;
 
 	CCamera						*m_pCamera;
 
@@ -40,8 +35,6 @@ public:
 	D3DXVECTOR3 GetUpVector() { return(m_d3dxvUp); }
 	D3DXVECTOR3 GetRightVector() { return(m_d3dxvRight); }
 
-	void SetFriction(float fFriction) { m_fFriction = fFriction; }
-	void SetGravity(const D3DXVECTOR3& d3dxvGravity) { m_d3dxvGravity = d3dxvGravity; }
 	void SetMaxVelocityXZ(float fMaxVelocity) { m_fMaxVelocityXZ = fMaxVelocity; }
 	void SetMaxVelocityY(float fMaxVelocity) { m_fMaxVelocityY = fMaxVelocity; }
 	void SetVelocity(const D3DXVECTOR3& d3dxvVelocity) { m_d3dxvVelocity = d3dxvVelocity; }
@@ -64,19 +57,14 @@ public:
 
 	void RegenerateWorldMatrix();
 
-	void SetPlayerUpdatedContext(LPVOID pContext) { m_pPlayerUpdatedContext = pContext; }
-	void SetCameraUpdatedContext(LPVOID pContext) { m_pCameraUpdatedContext = pContext; }
-
 	virtual void CreateShaderVariables(ID3D11Device *pd3dDevice);
 	virtual void UpdateShaderVariables(ID3D11DeviceContext *pd3dImmediateDeviceContext);
 
 	CCamera *OnChangeCamera(ID3D11Device *pd3dDevice, DWORD nNewCameraMode, DWORD nCurrentCameraMode);
 
 	virtual void ChangeCamera(ID3D11Device *pd3dDevice, DWORD nNewCameraMode, float fTimeElapsed);
-	virtual void Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, int nThreadID, CRITICAL_SECTION *pCriticalSection);
+	virtual void Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, int nThreadID);
 
-	virtual void OnPlayerUpdated(float fTimeElapsed);
-	virtual void OnCameraUpdated(float fTimeElapsed);
 };
 
 class CGamePlayer : public CPlayer
@@ -86,6 +74,6 @@ public:
 	~CGamePlayer();
 
 	virtual void ChangeCamera(ID3D11Device *pd3dDevice, DWORD nNewCameraMode, float fTimeElapsed);
-	virtual void Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, int nThreadID, CRITICAL_SECTION *pCriticalSection);
+	virtual void Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, int nThreadID);
 };
 

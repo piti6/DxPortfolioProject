@@ -95,7 +95,7 @@ void CShader::OnPostRender(ID3D11DeviceContext *pd3dDeviceContext)
 	pd3dDeviceContext->VSSetShader(m_pd3dVertexShader, NULL, 0);
 	pd3dDeviceContext->PSSetShader(m_pd3dPixelShader, NULL, 0);
 }
-void CShader::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, int nThreadID, CRITICAL_SECTION *pCriticalSection, CCamera *pCamera)
+void CShader::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, int nThreadID, CCamera *pCamera)
 {
 }
 
@@ -175,7 +175,7 @@ void CTexturedIlluminatedShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysic
 
 }
 
-void CTexturedIlluminatedShader::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, int nThreadID, CRITICAL_SECTION *pCriticalSection, CCamera *pCamera)
+void CTexturedIlluminatedShader::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, int nThreadID, CCamera *pCamera)
 {
 	OnPostRender(pd3dImmediateDeviceContext);
 	//카메라의 절두체에 포함되는 객체들만을 렌더링한다. 
@@ -466,14 +466,14 @@ void CInstancingShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhy
 	m_ObjectsVector.push_back(make_pair(0, pPlaneObject));
 	//
 	
-	m_InstanceDataVector.push_back(new InstanceData(new CFbxMeshIlluminatedTextured(pd3dDevice, pFbxSdkManager, "Data/Model/Character/GoblinWizard/mon_goblinWizard@Attack01.fbx", 1.0f, true), true, "Monster1", CreateInstanceBuffer(pd3dDevice, MAX_INSTANCE, sizeof(InstanceBuffer))));
+	m_InstanceDataVector.push_back(new InstanceData(new CFbxMeshIlluminatedTextured(pd3dDevice, pFbxSdkManager, "Data/Model/Character/GoblinWizard/mon_goblinWizard@Attack01.fbx", 1.0f, true), true, "Monster1", CreateInstanceBuffer(pd3dDevice, 3000, sizeof(InstanceBuffer))));
 	ID3D11Texture2D *pd3dAnimationTexture = NULL;
 	m_InstanceDataVector[1]->GetAnimationInstancing()->LoadAnimationFromFile(pFbxSdkManager, "Data/Model/Character/GoblinWizard/mon_goblinWizard@Attack01.fbx", "Attack", true);
 	m_InstanceDataVector[1]->GetAnimationInstancing()->LoadAnimationFromFile(pFbxSdkManager, "Data/Model/Character/GoblinWizard/mon_goblinWizard@Run.fbx", "Run", true);
 	m_InstanceDataVector[1]->GetAnimationInstancing()->LoadAnimationFromFile(pFbxSdkManager, "Data/Model/Character/GoblinWizard/mon_goblinWizard@Idle.fbx", "Idle", true);
 	m_InstanceDataVector[1]->GetAnimationInstancing()->CreateAnimationTexture(pd3dDevice);
 	CDynamicObject *pCharacter = NULL;
-	for (int i = 0; i < 100; ++i){
+	for (int i = 0; i < 10; ++i){
 	pCharacter = new CDynamicObject(true);
 	CAnimationController *pAnimationController = pCharacter->GetAnimationController();
 	pAnimationController->SetAnimationData("Attack", m_InstanceDataVector[1]->GetAnimationInstancing()->m_vAnimationList.m_Animation["Attack"].m_fLength);
@@ -490,14 +490,14 @@ void CInstancingShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhy
 	pCharacter->SetMaterial(pMaterial);
 	pCharacter->SetTexture(m_TexturesVector[4]);
 	pCharacter->BuildObjects(pPxPhysics, pPxScene, pPxM);
-	pCharacter->SetOffset(D3DXVECTOR3(0, -1, 0));
+	pCharacter->SetOffset(D3DXVECTOR3(0, 0, -1));
 	pCharacter->Rotate(90, 0, 0);
-	pCharacter->SetPosition(D3DXVECTOR3(0, 10, 0));
+	pCharacter->SetPosition(D3DXVECTOR3(200, i, 200));
 
 	m_ObjectsVector.push_back(make_pair(1, pCharacter));
 	}
 	
-	
+	/*
 	ifstream ifsFbxList;
 	ifsFbxList.open("Data/ImportData/ImportModelName.txt");
 
@@ -588,7 +588,7 @@ void CInstancingShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhy
 		}
 	}
 	ifsModelTransform.close();
-	
+	*/
 	//인스턴스 데이터(렌더링할 객체들의 위치 벡터 배열)를 메쉬의 정점 버퍼에 추가한다.
 	for (int i = 0; i < m_InstanceDataVector.size(); ++i){
 		ID3D11Buffer *InstanceBuffer = m_InstanceDataVector[i]->GetInstanceBuffer();
@@ -654,23 +654,19 @@ ID3D11Buffer *CInstancingShader::CreateInstanceBuffer(ID3D11Device *pd3dDevice, 
 	return(pd3dInstanceBuffer);
 }
 
-void CInstancingShader::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, int nThreadID, CRITICAL_SECTION *pCriticalSection, CCamera *pCamera){
+void CInstancingShader::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, int nThreadID, CCamera *pCamera){
 	OnPostRender(pd3dImmediateDeviceContext);
 
 	AABB bcBoundingCube;
 	bool bIsVisible = false;
 	for (int i = 0; i < m_InstanceDataVector.size(); ++i){
 		if (i % MAX_THREAD != nThreadID) continue;
-		EnterCriticalSection(pCriticalSection);
 		if (m_InstanceDataVector[i]->GetHasAnimation() == true){
 			m_InstanceDataVector[i]->GetAnimationInstancing()->UpdateShaderVariables(pd3dImmediateDeviceContext);
 			D3D11_MAPPED_SUBRESOURCE d3dMappedResource;
 			pd3dImmediateDeviceContext->Map(m_pd3dcbAnimationTextureWidth, 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
 			ANIM_WIDTH *pd3dxmTexWidth = (ANIM_WIDTH*)d3dMappedResource.pData;
-			ANIM_WIDTH width;
-			for (int m = 0; m < 4;++m)
-				width.WIDTH[m] = m_InstanceDataVector[i]->GetAnimationInstancing()->GetTextureWidth();
-			memcpy(pd3dxmTexWidth, &width, sizeof(ANIM_WIDTH));
+			pd3dxmTexWidth->WIDTH[0] = m_InstanceDataVector[i]->GetAnimationInstancing()->GetTextureWidth();
 			pd3dImmediateDeviceContext->Unmap(m_pd3dcbAnimationTextureWidth, 0);
 			pd3dImmediateDeviceContext->VSSetConstantBuffers(VS_SLOT_ANIMATION_WIDTH, 1, &m_pd3dcbAnimationTextureWidth);
 		}
@@ -720,7 +716,6 @@ void CInstancingShader::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, 
 		pd3dImmediateDeviceContext->Unmap(m_InstanceDataVector[i]->GetInstanceBuffer(), 0);
 		if (nVisibleObjects>0)
 			m_InstanceDataVector[i]->GetMesh()->RenderInstanced(pd3dImmediateDeviceContext, nVisibleObjects, 0);
-		LeaveCriticalSection(pCriticalSection);
 	}
 }
 
@@ -798,7 +793,7 @@ void CSkyBoxShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhysics
 
 }
 
-void CSkyBoxShader::Render(ID3D11DeviceContext *pd3dDeviceContext, int nThreadID, CRITICAL_SECTION *pCriticalSection, CCamera *pCamera)
+void CSkyBoxShader::Render(ID3D11DeviceContext *pd3dDeviceContext, int nThreadID, CCamera *pCamera)
 {
 	OnPostRender(pd3dDeviceContext);
 

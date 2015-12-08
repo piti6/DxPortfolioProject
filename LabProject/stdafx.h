@@ -73,7 +73,7 @@ using namespace std;
 
 #define MAX_BONE 64
 #define MAX_WEIGHT 4
-#define MAX_THREAD 2
+#define MAX_THREAD 3
 
 #define NULL_IDX 100000
 

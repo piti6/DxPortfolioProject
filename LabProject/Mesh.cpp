@@ -181,7 +181,6 @@ void CMeshIlluminated::SetTriAngleListVertexNormal(BYTE *pVertices)
 	for (int i = 0; i < nPrimitives; i++)
 	{
 		d3dxvNormal = CalculateTriAngleNormal(pVertices, (i * 3 + 0), (i * 3 + 1), (i * 3 + 2));
-		d3dxvNormal.y *= -1;
 		pVertex = (CNormalVertex *)(pVertices + ((i * 3 + 0) * m_nStride[0]));
 		pVertex->SetNormal(d3dxvNormal);
 		pVertex = (CNormalVertex *)(pVertices + ((i * 3 + 1) * m_nStride[0]));

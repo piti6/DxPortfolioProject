@@ -95,10 +95,6 @@ public:
 
 	virtual void SetPosition(D3DXVECTOR3 d3dxvPosition);
 
-	virtual void MoveStrafe(float fDistance = 1.0f);
-	virtual void MoveUp(float fDistance = 1.0f);
-	virtual void MoveForward(float fDistance = 1.0f);
-
 	virtual void Rotate(float fPitch = 10.0f, float fYaw = 10.0f, float fRoll = 10.0f);
 
 	void AddForce(float fx, float fy, float fz);
@@ -132,6 +128,38 @@ public:
 private:
 	PxRigidStatic				*m_pPxActor;
 	PxMaterial					*m_pPxMaterial;
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+
+class CCharacterObject : public CGameObject
+{
+public:
+	CCharacterObject(bool _HasAnimation = false);
+	virtual ~CCharacterObject();
+
+	virtual void SetActive(bool isActive);
+
+	virtual void BuildObjects(PxPhysics *pPxPhysics, PxScene *pPxScene, PxMaterial *pPxMaterial, PxControllerManager *pPxControllerManager);
+	virtual void Animate(float fTimeElapsed, PxScene *pPxScene);
+
+	virtual void SetPosition(D3DXVECTOR3 d3dxvPosition);
+	
+	virtual void Rotate(float fPitch = 10.0f, float fYaw = 10.0f, float fRoll = 10.0f);
+
+	void AddForce(float fx, float fy, float fz);
+
+	CAnimationController* GetAnimationController(){ return &m_AnimationController; }
+
+private:
+	CAnimationController		m_AnimationController;
+
+	PxController				*m_pPxCharacterController;
+
+	/////////////// Animation Part ///////////////
+
+	bool						m_bHasAnimation;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

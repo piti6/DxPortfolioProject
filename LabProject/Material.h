@@ -7,6 +7,7 @@ struct MATERIAL
 	D3DXCOLOR m_d3dxcSpecular; //(r,g,b,a=power)
 	D3DXCOLOR m_d3dxcEmissive;
 };
+
 class CMaterial
 {
 public:

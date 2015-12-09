@@ -1,36 +1,27 @@
-﻿Build started 2015-12-08 오전 6:27:30.
+﻿Build started 2015-12-09 오전 11:08:10.
      1>Project "D:\C++Portfolio\Github\DxPortfolio\LabProject\LabProject.vcxproj" on node 2 (Build target(s)).
      1>ClCompile:
-         D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /Zi /nologo /W3 /WX- /O2 /Oi /Oy- /GL /D WIN32 /D NDEBUG /D _WINDOWS /D _UNICODE /D UNICODE /Gm- /EHsc /MD /GS /Gy /fp:precise /Zc:wchar_t /Zc:forScope /Yu"stdafx.h" /Fp"Release\LabProject.pch" /Fo"Release\\" /Fd"Release\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt Camera.cpp GameFramework.cpp "LabProject07-3.cpp" Object.cpp Player.cpp Scene.cpp Shader.cpp
-         Camera.cpp
-         GameFramework.cpp
-         LabProject07-3.cpp
-         Object.cpp
-     1>Object.cpp(20): warning C4018: '<' : signed/unsigned mismatch
-     1>Object.cpp(66): warning C4018: '<' : signed/unsigned mismatch
-     1>Object.cpp(87): warning C4018: '<' : signed/unsigned mismatch
-     1>Object.cpp(299): warning C4244: 'argument' : conversion from 'double' to 'physx::PxReal', possible loss of data
-         Player.cpp
-         Scene.cpp
+         D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /Zi /nologo /W3 /WX- /O2 /Oi /Oy- /GL /D WIN32 /D NDEBUG /D _WINDOWS /D _UNICODE /D UNICODE /Gm- /EHsc /MD /GS /Gy /fp:precise /Zc:wchar_t /Zc:forScope /Yu"stdafx.h" /Fp"Release\LabProject.pch" /Fo"Release\\" /Fd"Release\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt Shader.cpp
          Shader.cpp
      1>Shader.cpp(26): warning C4018: '<' : signed/unsigned mismatch
      1>Shader.cpp(86): warning C4018: '<' : signed/unsigned mismatch
      1>Shader.cpp(184): warning C4018: '<' : signed/unsigned mismatch
      1>Shader.cpp(335): warning C4018: '<' : signed/unsigned mismatch
      1>Shader.cpp(423): warning C4305: 'argument' : truncation from 'double' to 'physx::PxReal'
-     1>Shader.cpp(495): warning C4244: 'argument' : conversion from 'int' to 'FLOAT', possible loss of data
-     1>Shader.cpp(539): warning C4018: '<' : signed/unsigned mismatch
-     1>Shader.cpp(569): warning C4018: '<' : signed/unsigned mismatch
-     1>Shader.cpp(593): warning C4018: '<' : signed/unsigned mismatch
-     1>Shader.cpp(601): warning C4018: '>=' : signed/unsigned mismatch
-     1>Shader.cpp(606): warning C4018: '>=' : signed/unsigned mismatch
-     1>Shader.cpp(611): warning C4018: '>=' : signed/unsigned mismatch
-     1>Shader.cpp(617): warning C4305: 'argument' : truncation from 'double' to 'physx::PxReal'
-     1>Shader.cpp(662): warning C4018: '<' : signed/unsigned mismatch
-     1>Shader.cpp(679): warning C4018: '<' : signed/unsigned mismatch
-     1>Shader.cpp(809): warning C4018: '<' : signed/unsigned mismatch
+     1>Shader.cpp(495): warning C4244: 'argument' : conversion from 'int' to 'float', possible loss of data
+     1>Shader.cpp(496): warning C4244: 'argument' : conversion from 'int' to 'FLOAT', possible loss of data
+     1>Shader.cpp(540): warning C4018: '<' : signed/unsigned mismatch
+     1>Shader.cpp(570): warning C4018: '<' : signed/unsigned mismatch
+     1>Shader.cpp(594): warning C4018: '<' : signed/unsigned mismatch
+     1>Shader.cpp(602): warning C4018: '>=' : signed/unsigned mismatch
+     1>Shader.cpp(607): warning C4018: '>=' : signed/unsigned mismatch
+     1>Shader.cpp(612): warning C4018: '>=' : signed/unsigned mismatch
+     1>Shader.cpp(618): warning C4305: 'argument' : truncation from 'double' to 'physx::PxReal'
+     1>Shader.cpp(669): warning C4018: '<' : signed/unsigned mismatch
+     1>Shader.cpp(686): warning C4018: '<' : signed/unsigned mismatch
+     1>Shader.cpp(816): warning C4018: '<' : signed/unsigned mismatch
        Link:
-         D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"D:\C++Portfolio\Github\DxPortfolio\Release\LabProject.exe" /INCREMENTAL:NO /NOLOGO /LIBPATH:"D:\Program Files\Autodesk\FBX\FBX SDK\2015.1\lib\vs2013\x86\release" d3d11.lib d3dcompiler.lib d3dx11d.lib d3dx9d.lib dxerr.lib dxguid.lib winmm.lib comctl32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib "libfbxsdk-md.lib" PhysX3Extensions.lib physx3_x86.lib physx3common_x86.lib PhysXVisualDebuggerSDK.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /PDB:"D:\C++Portfolio\Github\DxPortfolio\Release\LabProject.pdb" /SUBSYSTEM:WINDOWS /OPT:REF /OPT:ICF /LTCG /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"D:\C++Portfolio\Github\DxPortfolio\Release\LabProject.lib" /MACHINE:X86 /SAFESEH "Release\LabProject07-3.res"
+         D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"D:\C++Portfolio\Github\DxPortfolio\Release\LabProject.exe" /INCREMENTAL:NO /NOLOGO /LIBPATH:"D:\Program Files\Autodesk\FBX\FBX SDK\2015.1\lib\vs2013\x86\release" d3d11.lib d3dcompiler.lib d3dx11d.lib d3dx9d.lib dxerr.lib dxguid.lib winmm.lib comctl32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib "libfbxsdk-md.lib" PhysX3Extensions.lib physx3_x86.lib physx3common_x86.lib PhysXVisualDebuggerSDK.lib PhysX3CharacterKinematic_x86.lib PhysX3Gpu_x86.lib PxTask.lib PhysXProfileSDK.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /PDB:"D:\C++Portfolio\Github\DxPortfolio\Release\LabProject.pdb" /SUBSYSTEM:WINDOWS /OPT:REF /OPT:ICF /LTCG /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"D:\C++Portfolio\Github\DxPortfolio\Release\LabProject.lib" /MACHINE:X86 /SAFESEH "Release\LabProject07-3.res"
          Release\AABB.obj
          Release\Animation.obj
          Release\AnimationController.obj
@@ -55,4 +46,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:05.87
+Time Elapsed 00:00:06.54

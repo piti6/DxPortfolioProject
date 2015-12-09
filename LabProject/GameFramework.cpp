@@ -33,11 +33,10 @@ bool CGameFramework::OnCreate(HINSTANCE hInstance, HWND hMainWnd)
 	m_hWnd = hMainWnd;
 	InitializePhysxEngine();
 	InitializeFbxManager();
-	if (!CreateDirect3DDisplay()) return(false); 
+	if (!CreateDirect3DDisplay()) return(false);
 
-	BuildObjects(); 
+	BuildObjects();
 	InitializeWorkerThreads();
-
 	return(true);
 }
 
@@ -146,18 +145,19 @@ void CGameFramework::OnDestroy()
 	ReleaseObjects();
 	ShutDownFbxManager();
 	ShutDownPhysxEngine();
-	
+
 	for (int i = 0; i < m_nRenderThreads; ++i)
 	{
 		m_pRenderingThreadInfo[i].m_pd3dDeferredContext->Release();
 		CloseHandle(m_pRenderingThreadInfo[i].m_hRenderingBeginEvent);
 		CloseHandle(m_pRenderingThreadInfo[i].m_hRenderingEndEvent);
+		CloseHandle(m_pRenderingThreadInfo[i].m_hRenderingThread);
 	}
 
 	if (m_pd3dImmediateDeviceContext) m_pd3dImmediateDeviceContext->ClearState();
 	if (m_pd3dRenderTargetView) m_pd3dRenderTargetView->Release();
-	if (m_pd3dDepthStencilBuffer) m_pd3dDepthStencilBuffer->Release();	
-	if (m_pd3dDepthStencilView) m_pd3dDepthStencilView->Release();	
+	if (m_pd3dDepthStencilBuffer) m_pd3dDepthStencilBuffer->Release();
+	if (m_pd3dDepthStencilView) m_pd3dDepthStencilView->Release();
 	if (m_pDXGISwapChain) m_pDXGISwapChain->Release();
 	if (m_pd3dImmediateDeviceContext) m_pd3dImmediateDeviceContext->Release();
 	if (m_pd3dDevice) m_pd3dDevice->Release();
@@ -191,14 +191,14 @@ void CGameFramework::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPA
 	switch (nMessageID)
 	{
 	case WM_KEYDOWN:
-		switch(wParam)
+		switch (wParam)
 		{
 		case VK_SPACE:
 			break;
 		}
 		break;
 	case WM_KEYUP:
-		switch (wParam) 
+		switch (wParam)
 		{
 		case VK_SPACE:
 			break;
@@ -210,33 +210,33 @@ void CGameFramework::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPA
 		case VK_F1:
 		case VK_F2:
 		case VK_F3:
-			m_ppPlayers[0]->ChangeCamera(m_pd3dDevice, (wParam-VK_F1+1), m_GameTimer.GetTimeElapsed());
+			m_ppPlayers[0]->ChangeCamera(m_pd3dDevice, (wParam - VK_F1 + 1), m_GameTimer.GetTimeElapsed());
 			break;
 		case VK_F9:
+		{
+			BOOL bFullScreenState = FALSE;
+			m_pDXGISwapChain->GetFullscreenState(&bFullScreenState, NULL);
+			if (!bFullScreenState)
 			{
-				BOOL bFullScreenState = FALSE;
-				m_pDXGISwapChain->GetFullscreenState(&bFullScreenState, NULL);
-				if (!bFullScreenState)
-				{
-					DXGI_MODE_DESC dxgiTargetParameters;
-					dxgiTargetParameters.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-					dxgiTargetParameters.Width = m_nWndClientWidth;
-					dxgiTargetParameters.Height = m_nWndClientHeight;
-					dxgiTargetParameters.RefreshRate.Numerator = 0;
-					dxgiTargetParameters.RefreshRate.Denominator = 0;
-					dxgiTargetParameters.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
-					dxgiTargetParameters.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
-					m_pDXGISwapChain->ResizeTarget(&dxgiTargetParameters);
-				}
-
-				m_pDXGISwapChain->SetFullscreenState(!bFullScreenState, NULL);
-				break;
+				DXGI_MODE_DESC dxgiTargetParameters;
+				dxgiTargetParameters.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+				dxgiTargetParameters.Width = m_nWndClientWidth;
+				dxgiTargetParameters.Height = m_nWndClientHeight;
+				dxgiTargetParameters.RefreshRate.Numerator = 0;
+				dxgiTargetParameters.RefreshRate.Denominator = 0;
+				dxgiTargetParameters.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
+				dxgiTargetParameters.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
+				m_pDXGISwapChain->ResizeTarget(&dxgiTargetParameters);
 			}
+
+			m_pDXGISwapChain->SetFullscreenState(!bFullScreenState, NULL);
+			break;
+		}
 		case VK_F10:
 			break;
 		default:
 			break;
-		} 
+		}
 		break;
 	default:
 		break;
@@ -248,27 +248,27 @@ LRESULT CALLBACK CGameFramework::OnProcessingWindowMessage(HWND hWnd, UINT nMess
 	switch (nMessageID)
 	{
 	case WM_SIZE:
+	{
+		m_nWndClientWidth = LOWORD(lParam);
+		m_nWndClientHeight = HIWORD(lParam);
+
+		m_pd3dImmediateDeviceContext->OMSetRenderTargets(0, NULL, NULL);
+
+		if (m_pd3dDepthStencilBuffer) m_pd3dDepthStencilBuffer->Release();
+		if (m_pd3dRenderTargetView) m_pd3dRenderTargetView->Release();
+		if (m_pd3dDepthStencilView) m_pd3dDepthStencilView->Release();
+
+		m_pDXGISwapChain->ResizeBuffers(1, 0/*m_nWndClientWidth*/, 0/*m_nWndClientHeight*/, DXGI_FORMAT_R8G8B8A8_UNORM, 0);
+
+		CreateRenderTargetDepthStencilView();
+
+		if (m_ppPlayers)
 		{
-			m_nWndClientWidth = LOWORD(lParam);
-			m_nWndClientHeight = HIWORD(lParam);
-
-			m_pd3dImmediateDeviceContext->OMSetRenderTargets(0, NULL, NULL);
-
-			if (m_pd3dDepthStencilBuffer) m_pd3dDepthStencilBuffer->Release();
-			if (m_pd3dRenderTargetView) m_pd3dRenderTargetView->Release();
-			if (m_pd3dDepthStencilView) m_pd3dDepthStencilView->Release();
-
-			m_pDXGISwapChain->ResizeBuffers(1, 0/*m_nWndClientWidth*/, 0/*m_nWndClientHeight*/, DXGI_FORMAT_R8G8B8A8_UNORM, 0);
-
-			CreateRenderTargetDepthStencilView();
-
-			if (m_ppPlayers)
-			{
-				CCamera *pCamera = m_ppPlayers[0]->GetCamera();
-				pCamera->SetViewport(m_pd3dImmediateDeviceContext, 0, 0, m_nWndClientWidth, m_nWndClientHeight, 0.0f, 1.0f);
-			}
-			break;
+			CCamera *pCamera = m_ppPlayers[0]->GetCamera();
+			pCamera->SetViewport(m_pd3dImmediateDeviceContext, 0, 0, m_nWndClientWidth, m_nWndClientHeight, 0.0f, 1.0f);
 		}
+		break;
+	}
 	case WM_LBUTTONDOWN:
 	case WM_RBUTTONDOWN:
 	case WM_LBUTTONUP:
@@ -296,14 +296,14 @@ void CGameFramework::BuildObjects()
 	pCamera->GenerateProjectionMatrix(1.01f, 500.0f, ASPECT_RATIO, 90.0f);
 	pCamera->GenerateViewMatrix();
 
-	pGamePlayer->SetPosition(D3DXVECTOR3(200.0f, 1.0f,200.0f));
+	pGamePlayer->SetPosition(D3DXVECTOR3(200.0f, 1.0f, 200.0f));
 
 	m_ppPlayers[0] = pGamePlayer;
 
 	m_pScene = new CScene(m_pPxPhysicsSDK, m_pPxScene, m_ppPlayers);
-	
+
 	if (m_pScene){
-		m_pScene->BuildObjects(m_pd3dDevice, m_pPxPhysicsSDK, m_pPxScene, m_pFbxSdkManager);
+		m_pScene->BuildObjects(m_pd3dDevice, m_pPxPhysicsSDK, m_pPxScene, m_pPxControllerManager, m_pFbxSdkManager);
 	}
 }
 
@@ -315,14 +315,14 @@ void CGameFramework::ReleaseObjects()
 	if (m_ppPlayers)
 	{
 		for (int j = 0; j < m_nPlayers; j++) delete m_ppPlayers[j];
-		delete [] m_ppPlayers;
+		delete[] m_ppPlayers;
 	}
 }
 
 void CGameFramework::ProcessInput()
 {
-	long double Dist=0;
-	DWORD dwForward=0, dwBackward=0, dwLeft=0, dwRight=0, dwUp=0, dwDown=0;
+	long double Dist = 0;
+	DWORD dwForward = 0, dwBackward = 0, dwLeft = 0, dwRight = 0, dwUp = 0, dwDown = 0;
 	bool bProcessedByScene = false;
 	if (m_pScene) bProcessedByScene = m_pScene->ProcessInput();
 	if (!bProcessedByScene)
@@ -337,7 +337,7 @@ void CGameFramework::ProcessInput()
 			if (pKeyBuffer['D'] & 0xF0) dwRight |= DIR_RIGHT;
 			if (pKeyBuffer['Q'] & 0xF0) dwUp |= DIR_UP;
 			if (pKeyBuffer['Z'] & 0xF0) dwDown |= DIR_DOWN;
-		}	    
+		}
 		float cxDelta = 0.0f, cyDelta = 0.0f;
 		POINT ptCursorPos;
 		if (GetCapture() == m_hWnd)
@@ -347,26 +347,26 @@ void CGameFramework::ProcessInput()
 			cxDelta = (float)(ptCursorPos.x - m_ptOldCursorPos.x) / 3.0f;
 			cyDelta = (float)(ptCursorPos.y - m_ptOldCursorPos.y) / 3.0f;
 			SetCursorPos(m_ptOldCursorPos.x, m_ptOldCursorPos.y);
-		} 
-		if ((dwForward != 0) || (dwBackward != 0) || (dwLeft != 0) || (dwRight != 0) || (dwUp != 0) || (dwDown != 0) ||(cxDelta != 0.0f) || (cyDelta != 0.0f))
+		}
+		if ((dwForward != 0) || (dwBackward != 0) || (dwLeft != 0) || (dwRight != 0) || (dwUp != 0) || (dwDown != 0) || (cxDelta != 0.0f) || (cyDelta != 0.0f))
 		{
-			if (cxDelta || cyDelta) 
+			if (cxDelta || cyDelta)
 			{
 				if (pKeyBuffer[VK_RBUTTON] & 0xF0)
 					m_ppPlayers[0]->Rotate(cyDelta, cxDelta, 0.0f);
 			}
-			if(dwForward==DIR_FORWARD)
-				m_ppPlayers[0]->Move(dwForward, 50.0f * m_GameTimer.GetTimeElapsed(),false);
-			if(dwBackward==DIR_BACKWARD)
-				m_ppPlayers[0]->Move(dwBackward, 50.0f * m_GameTimer.GetTimeElapsed(),false);
-			if(dwLeft==DIR_LEFT)
-				m_ppPlayers[0]->Move(dwLeft, 50.0f * m_GameTimer.GetTimeElapsed(),false);
-			if(dwRight==DIR_RIGHT)
-				m_ppPlayers[0]->Move(dwRight, 50.0f * m_GameTimer.GetTimeElapsed(),false);
-			if(dwUp==DIR_UP)
-				m_ppPlayers[0]->Move(dwUp, 50.0f * m_GameTimer.GetTimeElapsed(),false);
-			if(dwDown==DIR_DOWN)
-				m_ppPlayers[0]->Move(dwDown, 50.0f * m_GameTimer.GetTimeElapsed(),false);
+			if (dwForward == DIR_FORWARD)
+				m_ppPlayers[0]->Move(dwForward, 50.0f * m_GameTimer.GetTimeElapsed(), false);
+			if (dwBackward == DIR_BACKWARD)
+				m_ppPlayers[0]->Move(dwBackward, 50.0f * m_GameTimer.GetTimeElapsed(), false);
+			if (dwLeft == DIR_LEFT)
+				m_ppPlayers[0]->Move(dwLeft, 50.0f * m_GameTimer.GetTimeElapsed(), false);
+			if (dwRight == DIR_RIGHT)
+				m_ppPlayers[0]->Move(dwRight, 50.0f * m_GameTimer.GetTimeElapsed(), false);
+			if (dwUp == DIR_UP)
+				m_ppPlayers[0]->Move(dwUp, 50.0f * m_GameTimer.GetTimeElapsed(), false);
+			if (dwDown == DIR_DOWN)
+				m_ppPlayers[0]->Move(dwDown, 50.0f * m_GameTimer.GetTimeElapsed(), false);
 		}
 		m_ppPlayers[0]->Update(m_GameTimer.GetTimeElapsed());
 	}
@@ -374,23 +374,24 @@ void CGameFramework::ProcessInput()
 
 void CGameFramework::AnimateObjects()
 {
-	if (m_pScene) m_pScene->AnimateObjects(m_GameTimer.GetTimeElapsed(),m_pPxScene);
+	if (m_pScene) m_pScene->AnimateObjects(m_GameTimer.GetTimeElapsed(), m_pPxScene);
 }
 
 void CGameFramework::FrameAdvance()
-{    
+{
 
 	m_GameTimer.Tick();
 
 	ProcessInput();
 
-	if(m_pPxScene){
+	if (m_pPxScene){
 		m_pPxScene->simulate(m_GameTimer.GetTimeElapsed());
 		m_pPxScene->fetchResults(true);
 	}
+
 	AnimateObjects();
 
-	float fClearColor[4] = { 0.0f, 0.125f, 0.3f, 1.0f }; 
+	float fClearColor[4] = { 0.0f, 0.125f, 0.3f, 1.0f };
 	if (m_pd3dRenderTargetView) m_pd3dImmediateDeviceContext->ClearRenderTargetView(m_pd3dRenderTargetView, fClearColor);
 	for (int i = 0; i < m_nRenderThreads; ++i)
 	{
@@ -409,25 +410,25 @@ void CGameFramework::FrameAdvance()
 	}
 	if (m_ppPlayers)
 		for (int i = 0; i < m_nPlayers; ++i){
-			
+
 		}
-	
+
 
 	m_pDXGISwapChain->Present(0, 0);
 
-	m_GameTimer.GetFrameRate(m_pszBuffer+12, 37);
+	m_GameTimer.GetFrameRate(m_pszBuffer + 12, 37);
 	::SetWindowText(m_hWnd, m_pszBuffer);
 }
 
 void CGameFramework::InitializePhysxEngine()
 {
-	m_pPxFoundation = PxCreateFoundation(PX_PHYSICS_VERSION,m_PxDefaultAllocatorCallback,m_PxDefaultErrorCallback);
+	m_pPxFoundation = PxCreateFoundation(PX_PHYSICS_VERSION, m_PxDefaultAllocatorCallback, m_PxDefaultErrorCallback);
 	PxTolerancesScale PxScale = PxTolerancesScale();
 	PxScale.length /= 100;
 	PxScale.mass /= 100;
 	PxScale.speed /= 100;
-	m_pPxPhysicsSDK = PxCreatePhysics(PX_PHYSICS_VERSION,*m_pPxFoundation,PxScale);
-	if(m_pPxPhysicsSDK == NULL){
+	m_pPxPhysicsSDK = PxCreatePhysics(PX_PHYSICS_VERSION, *m_pPxFoundation, PxScale, false);
+	if (m_pPxPhysicsSDK == NULL){
 		cout << "PhysicsSDK Initialize Failed" << endl;
 	}
 	else{
@@ -436,19 +437,21 @@ void CGameFramework::InitializePhysxEngine()
 
 	PxInitExtensions(*m_pPxPhysicsSDK);
 	PxSceneDesc sceneDesc(m_pPxPhysicsSDK->getTolerancesScale());
-	sceneDesc.gravity = PxVec3(0.0f,-9.8f,0.0f);
+	sceneDesc.gravity = PxVec3(0.0f, -9.8f, 0.0f);
 	//sceneDesc.
-	if(!sceneDesc.cpuDispatcher)
+	
+	if (!sceneDesc.cpuDispatcher)
 	{
 		PxDefaultCpuDispatcher* pCpuDispatcher = PxDefaultCpuDispatcherCreate(1);
 		sceneDesc.cpuDispatcher = pCpuDispatcher;
-	}	
-	if(!sceneDesc.filterShader)
-		sceneDesc.filterShader = PxDefaultSimulationFilterShader;
-
-	m_pPxScene = m_pPxPhysicsSDK->createScene(sceneDesc);
-
+	}
 	
+	if (!sceneDesc.filterShader)
+		sceneDesc.filterShader = PxDefaultSimulationFilterShader;
+	
+	m_pPxScene = m_pPxPhysicsSDK->createScene(sceneDesc);
+	m_pPxControllerManager = PxCreateControllerManager(*m_pPxScene);
+
 	// check if PvdConnection manager is available on this platform
 	if (NULL == m_pPxPhysicsSDK->getPvdConnectionManager())
 	{
@@ -456,36 +459,36 @@ void CGameFramework::InitializePhysxEngine()
 		return;
 	}
 	// setup connection parameters
-	
+
 	// consoles and remote PCs need a higher timeout.
 	PxVisualDebuggerConnectionFlags connectionFlags = PxVisualDebuggerExt::getAllConnectionFlags();
 	m_pPxPhysicsSDK->getVisualDebugger()->setVisualDebuggerFlag(PxVisualDebuggerFlag::eTRANSMIT_SCENEQUERIES, true);
-	m_pPVDConnection = PxVisualDebuggerExt::createConnection(m_pPxPhysicsSDK->getPvdConnectionManager(),"127.0.0.1",5425,1000,connectionFlags);
+	m_pPVDConnection = PxVisualDebuggerExt::createConnection(m_pPxPhysicsSDK->getPvdConnectionManager(), "127.0.0.1", 5425, 1000, connectionFlags);
 }
 
 void CGameFramework::ShutDownPhysxEngine()
 {
 	if (m_pPVDConnection) m_pPVDConnection->release();
-	if(m_pPxScene) m_pPxScene->release();
-	if(m_pPxPhysicsSDK) m_pPxPhysicsSDK->release();
-	if(m_pPxFoundation) m_pPxFoundation->release();
-	
+	if (m_pPxControllerManager) m_pPxControllerManager->release();
+	if (m_pPxScene) m_pPxScene->release();
+	if (m_pPxFoundation) m_pPxFoundation->release();
+	if (m_pPxPhysicsSDK) m_pPxPhysicsSDK->release();
 }
 
 void CGameFramework::InitializeFbxManager()
 {
-	if(m_pFbxSdkManager == NULL) 
-    {
-       m_pFbxSdkManager = FbxManager::Create(); // fbxManager를 만든다.
+	if (m_pFbxSdkManager == NULL)
+	{
+		m_pFbxSdkManager = FbxManager::Create(); // fbxManager를 만든다.
 
-       FbxIOSettings* pIOsettings = FbxIOSettings::Create(m_pFbxSdkManager, IOSROOT ); // FbxIO를 셋팅한다.
-       m_pFbxSdkManager->SetIOSettings(pIOsettings);
-    }
+		FbxIOSettings* pIOsettings = FbxIOSettings::Create(m_pFbxSdkManager, IOSROOT); // FbxIO를 셋팅한다.
+		m_pFbxSdkManager->SetIOSettings(pIOsettings);
+	}
 }
 
 void CGameFramework::ShutDownFbxManager()
 {
-	if(m_pFbxSdkManager)
+	if (m_pFbxSdkManager)
 	{
 		m_pFbxSdkManager->Destroy();
 	}
@@ -530,4 +533,3 @@ void CGameFramework::InitializeWorkerThreads()
 		ResumeThread(m_pRenderingThreadInfo[i].m_hRenderingThread);
 	}
 }
-

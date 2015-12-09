@@ -78,7 +78,7 @@ void CShader::UpdateShaderVariables(ID3D11DeviceContext *pd3dImmediateDeviceCont
 {
 }
 
-void CShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhysics, PxScene *pPxScene, FbxManager *pFbxSdkManager)
+void CShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhysics, PxScene *pPxScene, PxControllerManager *pPxControllerManager, FbxManager *pFbxSdkManager)
 {
 }
 void CShader::AnimateObjects(float fTimeElapsed, PxScene *pPxScene)
@@ -171,7 +171,7 @@ void CTexturedIlluminatedShader::UpdateShaderVariables(ID3D11DeviceContext *pd3d
 	pd3dImmediateDeviceContext->VSSetConstantBuffers(VS_SLOT_WORLD_MATRIX, 1, &m_pd3dcbWorldMatrix);
 }
 
-void CTexturedIlluminatedShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhysics, PxScene *pPxScene, FbxManager *pFbxSdkManager){
+void CTexturedIlluminatedShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhysics, PxScene *pPxScene, PxControllerManager *pPxControllerManager, FbxManager *pFbxSdkManager){
 
 }
 
@@ -371,7 +371,7 @@ void CInstancingShader::CreateShaderVariables(ID3D11Device *pd3dDevice)
 	pd3dDevice->CreateBuffer(&bd, NULL, &m_pd3dcbAnimationTextureWidth);
 }
 
-void CInstancingShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhysics, PxScene *pPxScene, FbxManager *pFbxSdkManager){
+void CInstancingShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhysics, PxScene *pPxScene, PxControllerManager *pPxControllerManager, FbxManager *pFbxSdkManager){
 	CreateShaderVariables(pd3dDevice);
 
 	CMaterial *pMaterial = new CMaterial(D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f), D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f), D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f), D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f));
@@ -472,9 +472,9 @@ void CInstancingShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhy
 	m_InstanceDataVector[1]->GetAnimationInstancing()->LoadAnimationFromFile(pFbxSdkManager, "Data/Model/Character/GoblinWizard/mon_goblinWizard@Run.fbx", "Run", true);
 	m_InstanceDataVector[1]->GetAnimationInstancing()->LoadAnimationFromFile(pFbxSdkManager, "Data/Model/Character/GoblinWizard/mon_goblinWizard@Idle.fbx", "Idle", true);
 	m_InstanceDataVector[1]->GetAnimationInstancing()->CreateAnimationTexture(pd3dDevice);
-	CDynamicObject *pCharacter = NULL;
-	for (int i = 0; i < 10; ++i){
-	pCharacter = new CDynamicObject(true);
+	CCharacterObject *pCharacter = NULL;
+	for (int i = 0; i < 100; ++i){
+		pCharacter = new CCharacterObject(true);
 	CAnimationController *pAnimationController = pCharacter->GetAnimationController();
 	pAnimationController->SetAnimationData("Attack", m_InstanceDataVector[1]->GetAnimationInstancing()->m_vAnimationList.m_Animation["Attack"].m_fLength);
 	pAnimationController->SetAnimationData("Run", m_InstanceDataVector[1]->GetAnimationInstancing()->m_vAnimationList.m_Animation["Run"].m_fLength);
@@ -489,15 +489,16 @@ void CInstancingShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhy
 	pCharacter->SetMesh(m_InstanceDataVector[1]->GetMesh());
 	pCharacter->SetMaterial(pMaterial);
 	pCharacter->SetTexture(m_TexturesVector[4]);
-	pCharacter->BuildObjects(pPxPhysics, pPxScene, pPxM);
+	pCharacter->BuildObjects(pPxPhysics, pPxScene, pPxM, pPxControllerManager);
 	pCharacter->SetOffset(D3DXVECTOR3(0, 0, -1));
-	pCharacter->Rotate(90, 0, 0);
-	pCharacter->SetPosition(D3DXVECTOR3(200, i, 200));
+	pCharacter->RotateOffset(-90, 0, 0);
+	pCharacter->Rotate(0, i * 20, 0);
+	pCharacter->SetPosition(D3DXVECTOR3(100 + i * 20, 50, 100 + i * 20));
 
 	m_ObjectsVector.push_back(make_pair(1, pCharacter));
 	}
 	
-	/*
+	
 	ifstream ifsFbxList;
 	ifsFbxList.open("Data/ImportData/ImportModelName.txt");
 
@@ -588,7 +589,7 @@ void CInstancingShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhy
 		}
 	}
 	ifsModelTransform.close();
-	*/
+	
 	//인스턴스 데이터(렌더링할 객체들의 위치 벡터 배열)를 메쉬의 정점 버퍼에 추가한다.
 	for (int i = 0; i < m_InstanceDataVector.size(); ++i){
 		ID3D11Buffer *InstanceBuffer = m_InstanceDataVector[i]->GetInstanceBuffer();
@@ -634,6 +635,12 @@ void CInstancingShader::AddObject(PxPhysics *pPxPhysics, PxScene *pPxScene, int 
 		pObject->BuildObjects(pPxPhysics, pPxScene, pPxM);
 		pObject->SetPosition(_d3dxvPosition);
 		pObject->AddForce(_Force.x, _Force.y, _Force.z);
+		/*
+		CAnimationController *pAnimationController = pObject->GetAnimationController();
+		pAnimationController->SetAnimationData("Attack", m_InstanceDataVector[1]->GetAnimationInstancing()->m_vAnimationList.m_Animation["Attack"].m_fLength);
+		pAnimationController->SetAnimationData("Run", m_InstanceDataVector[1]->GetAnimationInstancing()->m_vAnimationList.m_Animation["Run"].m_fLength);
+		pAnimationController->SetAnimationData("Idle", m_InstanceDataVector[1]->GetAnimationInstancing()->m_vAnimationList.m_Animation["Idle"].m_fLength);
+		pAnimationController->Play("Attack");*/
 		m_ObjectsVector.push_back(make_pair(_IndexOfInstanceDataVector, pObject));
 	}
 }
@@ -702,7 +709,7 @@ void CInstancingShader::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, 
 							pLastMaterial = m_ObjectsVector[j].second->GetMaterial();
 						}
 						if (m_InstanceDataVector[i]->GetHasAnimation()){
-							CDynamicObject *pObject = (CDynamicObject *)m_ObjectsVector[j].second;
+							CCharacterObject *pObject = (CCharacterObject*)m_ObjectsVector[j].second;
 							CAnimationController *pAnimationController = pObject->GetAnimationController();
 							pd3dxmInstances[nVisibleObjects].AnimationPos[0] =
 								m_InstanceDataVector[i]->GetAnimationInstancing()->GetCurrentOffset(pAnimationController->GetCurrentAnimationName(), pAnimationController->GetCurrentAnimationTime());
@@ -730,7 +737,7 @@ CSkyBoxShader::~CSkyBoxShader()
 {
 }
 
-void CSkyBoxShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhysics, PxScene *pPxScene, FbxManager *pFbxSdkManager)
+void CSkyBoxShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhysics, PxScene *pPxScene, PxControllerManager *pPxControllerManager, FbxManager *pFbxSdkManager)
 {
 	CreateShaderVariables(pd3dDevice);
 	ID3D11SamplerState *pd3dSamplerState = NULL;
@@ -827,7 +834,7 @@ CTerrainShader::~CTerrainShader()
 {
 }
 
-void CTerrainShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhysics, PxScene *pPxScene, FbxManager *pFbxSdkManager)
+void CTerrainShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhysics, PxScene *pPxScene, PxControllerManager *pPxControllerManager, FbxManager *pFbxSdkManager)
 {
 	CTexturedIlluminatedShader::CreateShaderVariables(pd3dDevice);
 

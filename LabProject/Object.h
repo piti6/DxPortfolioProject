@@ -146,15 +146,26 @@ public:
 
 	virtual void SetPosition(D3DXVECTOR3 d3dxvPosition);
 	
-	virtual void Rotate(float fPitch = 10.0f, float fYaw = 10.0f, float fRoll = 10.0f);
+	virtual void MoveStrafe(float fDistance = 1.0f);
+	virtual void MoveUp(float fDistance = 1.0f);
+	virtual void MoveForward(float fDistance = 1.0f);
 
-	void AddForce(float fx, float fy, float fz);
+	virtual void Rotate(float fPitch = 10.0f, float fYaw = 10.0f, float fRoll = 10.0f);
+	virtual void Rotate(D3DXVECTOR3 rotation);
+	virtual void Rotate(D3DXVECTOR3 *pd3dxvAxis, float fAngle);
+	void RotateOffset(float fPitch, float fYaw, float fRoll);
+
+	virtual D3DXVECTOR3 GetLookAt();
+	virtual D3DXVECTOR3 GetUp();
+	virtual D3DXVECTOR3 GetRight();
 
 	CAnimationController* GetAnimationController(){ return &m_AnimationController; }
 
 private:
-	CAnimationController		m_AnimationController;
+	D3DXMATRIX					m_d3dxmtxRotate;
+	D3DXMATRIX					m_d3dxmtxRotateOffset;
 
+	CAnimationController		m_AnimationController;
 	PxController				*m_pPxCharacterController;
 
 	/////////////// Animation Part ///////////////

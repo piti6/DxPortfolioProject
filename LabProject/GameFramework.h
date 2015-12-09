@@ -93,6 +93,8 @@ private:
 	PxScene							*m_pPxScene;
 	PxFoundation					*m_pPxFoundation;
 	PxVisualDebuggerConnection		*m_pPVDConnection;
+	PxControllerManager				*m_pPxControllerManager;
+
 /*						FBX SDK Member Variables					*/
 
 	FbxManager						*m_pFbxSdkManager;

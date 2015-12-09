@@ -50,7 +50,7 @@ bool CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 		switch (wParam)
 		{
 		case 'F':
-			m_pInstancingShader->AddObject(m_pPxPhysicsSDK, m_pPxScene, 1, 0, 1, m_ppPlayers[0]->GetPosition(), false, m_ppPlayers[0]->GetCamera()->GetLookVector() * 100);
+			m_pInstancingShader->AddObject(m_pPxPhysicsSDK, m_pPxScene, rand()%30, 0, 1, m_ppPlayers[0]->GetPosition(), false, m_ppPlayers[0]->GetCamera()->GetLookVector() * 100);
 			break;
 		}
 		
@@ -61,18 +61,18 @@ bool CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 	return(false);
 }
 
-void CScene::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhysics, PxScene *pPxScene, FbxManager *pFbxSdkManager)
+void CScene::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhysics, PxScene *pPxScene, PxControllerManager *pPxControllerManager, FbxManager *pFbxSdkManager)
 {
 	m_nShaders = 2;
 	m_ppShaders = new CShader*[m_nShaders];
 	m_pInstancingShader = new CInstancingShader();
 	m_ppShaders[0] = m_pInstancingShader;
 	m_ppShaders[0]->CreateShader(pd3dDevice);
-	m_ppShaders[0]->BuildObjects(pd3dDevice,pPxPhysics,pPxScene, pFbxSdkManager);
+	m_ppShaders[0]->BuildObjects(pd3dDevice, pPxPhysics, pPxScene, pPxControllerManager, pFbxSdkManager);
 
 	m_ppShaders[1] = new CSkyBoxShader();
 	m_ppShaders[1]->CreateShader(pd3dDevice);
-	m_ppShaders[1]->BuildObjects(pd3dDevice,pPxPhysics,pPxScene, pFbxSdkManager);
+	m_ppShaders[1]->BuildObjects(pd3dDevice, pPxPhysics, pPxScene, pPxControllerManager, pFbxSdkManager);
 	/*
 	m_ppShaders[2] = new CTerrainShader();
 	m_ppShaders[2]->CreateShader(pd3dDevice);

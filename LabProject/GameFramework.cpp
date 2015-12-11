@@ -288,16 +288,8 @@ void CGameFramework::BuildObjects()
 {
 	m_nPlayers = 1;
 	m_ppPlayers = new CPlayer*[m_nPlayers];
-	CGamePlayer *pGamePlayer = new CGamePlayer(m_pd3dDevice);
-	pGamePlayer->ChangeCamera(m_pd3dDevice, FIRST_PERSON_CAMERA, m_GameTimer.GetTimeElapsed());
-
-	CCamera *pCamera = pGamePlayer->GetCamera();
-	pCamera->SetViewport(m_pd3dImmediateDeviceContext, 0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT, 0.0f, 1.0f);
-	pCamera->GenerateProjectionMatrix(1.01f, 500.0f, ASPECT_RATIO, 90.0f);
-	pCamera->GenerateViewMatrix();
-
-	pGamePlayer->SetPosition(D3DXVECTOR3(200.0f, 1.0f, 200.0f));
-
+	
+	CPlayer *pGamePlayer = new CPlayer();
 	m_ppPlayers[0] = pGamePlayer;
 
 	m_pScene = new CScene(m_pPxPhysicsSDK, m_pPxScene, m_ppPlayers);
@@ -305,18 +297,15 @@ void CGameFramework::BuildObjects()
 	if (m_pScene){
 		m_pScene->BuildObjects(m_pd3dDevice, m_pPxPhysicsSDK, m_pPxScene, m_pPxControllerManager, m_pFbxSdkManager);
 	}
+	CCamera *pCamera = m_ppPlayers[0]->GetCamera();
+	pCamera->SetViewport(m_pd3dImmediateDeviceContext, 0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT, 0.0f, 1.0f);
+	pCamera->GenerateViewMatrix();
 }
 
 void CGameFramework::ReleaseObjects()
 {
 	if (m_pScene) m_pScene->ReleaseObjects();
 	if (m_pScene) delete m_pScene;
-
-	if (m_ppPlayers)
-	{
-		for (int j = 0; j < m_nPlayers; j++) delete m_ppPlayers[j];
-		delete[] m_ppPlayers;
-	}
 }
 
 void CGameFramework::ProcessInput()
@@ -348,25 +337,31 @@ void CGameFramework::ProcessInput()
 			cyDelta = (float)(ptCursorPos.y - m_ptOldCursorPos.y) / 3.0f;
 			SetCursorPos(m_ptOldCursorPos.x, m_ptOldCursorPos.y);
 		}
-		if ((dwForward != 0) || (dwBackward != 0) || (dwLeft != 0) || (dwRight != 0) || (dwUp != 0) || (dwDown != 0) || (cxDelta != 0.0f) || (cyDelta != 0.0f))
+		if ((dwForward != 0) || (dwBackward != 0) || (dwLeft != 0) || (dwRight != 0) || (dwUp != 0) || (dwDown != 0))
 		{
-			if (cxDelta || cyDelta)
-			{
-				if (pKeyBuffer[VK_RBUTTON] & 0xF0)
-					m_ppPlayers[0]->Rotate(cyDelta, cxDelta, 0.0f);
-			}
+			
 			if (dwForward == DIR_FORWARD)
-				m_ppPlayers[0]->Move(dwForward, 50.0f * m_GameTimer.GetTimeElapsed(), false);
+				m_ppPlayers[0]->Move(dwForward, 10.0f, m_GameTimer.GetTimeElapsed());
 			if (dwBackward == DIR_BACKWARD)
-				m_ppPlayers[0]->Move(dwBackward, 50.0f * m_GameTimer.GetTimeElapsed(), false);
+				m_ppPlayers[0]->Move(dwBackward, 10.0f, m_GameTimer.GetTimeElapsed());
 			if (dwLeft == DIR_LEFT)
-				m_ppPlayers[0]->Move(dwLeft, 50.0f * m_GameTimer.GetTimeElapsed(), false);
+				m_ppPlayers[0]->Move(dwLeft, 10.0f, m_GameTimer.GetTimeElapsed());
 			if (dwRight == DIR_RIGHT)
-				m_ppPlayers[0]->Move(dwRight, 50.0f * m_GameTimer.GetTimeElapsed(), false);
+				m_ppPlayers[0]->Move(dwRight, 10.0f, m_GameTimer.GetTimeElapsed());
 			if (dwUp == DIR_UP)
-				m_ppPlayers[0]->Move(dwUp, 50.0f * m_GameTimer.GetTimeElapsed(), false);
+				m_ppPlayers[0]->Move(dwUp, 10.0f, m_GameTimer.GetTimeElapsed());
 			if (dwDown == DIR_DOWN)
-				m_ppPlayers[0]->Move(dwDown, 50.0f * m_GameTimer.GetTimeElapsed(), false);
+				m_ppPlayers[0]->Move(dwDown, 10.0f, m_GameTimer.GetTimeElapsed());
+		}
+		else{
+			CAnimationController* pAnimationController = m_ppPlayers[0]->GetAnimationController();
+			if (pAnimationController->GetCurrentAnimationName() != "Idle")
+					pAnimationController->Play("Idle");
+		}
+		if (cxDelta || cyDelta)
+		{
+			if (pKeyBuffer[VK_RBUTTON] & 0xF0)
+				m_ppPlayers[0]->Rotate(cyDelta, cxDelta, 0.0f);
 		}
 		m_ppPlayers[0]->Update(m_GameTimer.GetTimeElapsed());
 	}
@@ -380,7 +375,7 @@ void CGameFramework::AnimateObjects()
 void CGameFramework::FrameAdvance()
 {
 
-	m_GameTimer.Tick();
+	m_GameTimer.Tick(120);
 
 	ProcessInput();
 
@@ -401,18 +396,12 @@ void CGameFramework::FrameAdvance()
 	if (m_ppPlayers)
 		for (int i = 0; i < m_nPlayers; ++i){
 			m_ppPlayers[i]->UpdateShaderVariables(m_pd3dImmediateDeviceContext);
-			m_ppPlayers[i]->Render(m_pd3dImmediateDeviceContext, -1);
 		}
 	for (int i = 0; i < m_nRenderThreads; ++i)
 	{
 		m_pd3dImmediateDeviceContext->ExecuteCommandList(m_pRenderingThreadInfo[i].m_pd3dCommandList, true);
 		m_pRenderingThreadInfo[i].m_pd3dCommandList->Release();
 	}
-	if (m_ppPlayers)
-		for (int i = 0; i < m_nPlayers; ++i){
-
-		}
-
 
 	m_pDXGISwapChain->Present(0, 0);
 
@@ -438,7 +427,6 @@ void CGameFramework::InitializePhysxEngine()
 	PxInitExtensions(*m_pPxPhysicsSDK);
 	PxSceneDesc sceneDesc(m_pPxPhysicsSDK->getTolerancesScale());
 	sceneDesc.gravity = PxVec3(0.0f, -9.8f, 0.0f);
-	//sceneDesc.
 	
 	if (!sceneDesc.cpuDispatcher)
 	{

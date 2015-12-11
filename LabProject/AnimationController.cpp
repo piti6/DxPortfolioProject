@@ -42,6 +42,7 @@ void CAnimationController::Play(string _AnimationName)
 		{
 			m_CurrentPlayingAnimationName = _AnimationName;
 			m_fCurrentAnimLength = m_vAnimationTimeData[i].second;
+			m_fCurrentAnimTime = 0;
 			m_bIsPlaying = true;
 			break;
 		}

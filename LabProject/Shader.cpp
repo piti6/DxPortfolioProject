@@ -326,8 +326,9 @@ void CTexturedShader::UpdateShaderVariables(ID3D11DeviceContext *pd3dImmediateDe
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 
-CInstancingShader::CInstancingShader()
+CInstancingShader::CInstancingShader(CPlayer *pPlayer)
 {
+	m_pPlayer = pPlayer;
 	m_pd3dcbAnimationTextureWidth = NULL;
 }
 CInstancingShader::~CInstancingShader()
@@ -461,44 +462,62 @@ void CInstancingShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhy
 	pPlaneObject->SetMesh(m_InstanceDataVector[0]->GetMesh());
 	pPlaneObject->SetMaterial(pMaterial);
 	pPlaneObject->SetTexture(m_TexturesVector[0]);
-	pPlaneObject->BuildObjects(pPxPhysics, pPxScene, pPxM);
+	pPlaneObject->BuildObjects(pPxPhysics, pPxScene, pPxM, "Plane");
 	pPlaneObject->SetPosition(D3DXVECTOR3(0, 0, 0));
 	m_ObjectsVector.push_back(make_pair(0, pPlaneObject));
 	//
-	
+
 	m_InstanceDataVector.push_back(new InstanceData(new CFbxMeshIlluminatedTextured(pd3dDevice, pFbxSdkManager, "Data/Model/Character/GoblinWizard/mon_goblinWizard@Attack01.fbx", 1.0f, true), true, "Monster1", CreateInstanceBuffer(pd3dDevice, 3000, sizeof(InstanceBuffer))));
 	ID3D11Texture2D *pd3dAnimationTexture = NULL;
 	m_InstanceDataVector[1]->GetAnimationInstancing()->LoadAnimationFromFile(pFbxSdkManager, "Data/Model/Character/GoblinWizard/mon_goblinWizard@Attack01.fbx", "Attack", true);
 	m_InstanceDataVector[1]->GetAnimationInstancing()->LoadAnimationFromFile(pFbxSdkManager, "Data/Model/Character/GoblinWizard/mon_goblinWizard@Run.fbx", "Run", true);
 	m_InstanceDataVector[1]->GetAnimationInstancing()->LoadAnimationFromFile(pFbxSdkManager, "Data/Model/Character/GoblinWizard/mon_goblinWizard@Idle.fbx", "Idle", true);
 	m_InstanceDataVector[1]->GetAnimationInstancing()->CreateAnimationTexture(pd3dDevice);
-	CCharacterObject *pCharacter = NULL;
-	for (int i = 0; i < 100; ++i){
-		pCharacter = new CCharacterObject(true);
-	CAnimationController *pAnimationController = pCharacter->GetAnimationController();
+
+	CAnimationController *pAnimationController = m_pPlayer->GetAnimationController();
 	pAnimationController->SetAnimationData("Attack", m_InstanceDataVector[1]->GetAnimationInstancing()->m_vAnimationList.m_Animation["Attack"].m_fLength);
 	pAnimationController->SetAnimationData("Run", m_InstanceDataVector[1]->GetAnimationInstancing()->m_vAnimationList.m_Animation["Run"].m_fLength);
 	pAnimationController->SetAnimationData("Idle", m_InstanceDataVector[1]->GetAnimationInstancing()->m_vAnimationList.m_Animation["Idle"].m_fLength);
-	if (i%3 == 0)
-		pAnimationController->Play("Attack");
-	else if (i%3 == 1)
-		pAnimationController->Play("Idle");
-	else
-		pAnimationController->Play("Run");
-	pAnimationController->SetCurrentAnimationTime((float)(rand() % 300/100));
-	pCharacter->SetMesh(m_InstanceDataVector[1]->GetMesh());
-	pCharacter->SetMaterial(pMaterial);
-	pCharacter->SetTexture(m_TexturesVector[4]);
-	pCharacter->BuildObjects(pPxPhysics, pPxScene, pPxM, pPxControllerManager);
-	pCharacter->SetOffset(D3DXVECTOR3(0, 0, -1));
-	pCharacter->RotateOffset(-90, 0, 0);
-	pCharacter->Rotate(0, i * 20, 0);
-	pCharacter->SetPosition(D3DXVECTOR3(100 + i * 20, 50, 100 + i * 20));
+	pAnimationController->Play("Idle");
+	m_pPlayer->SetMesh(m_InstanceDataVector[1]->GetMesh());
+	m_pPlayer->SetMaterial(pMaterial);
+	m_pPlayer->SetTexture(m_TexturesVector[4]);
+	m_pPlayer->BuildObjects(pPxPhysics, pPxScene, pPxM, pPxControllerManager);
+	m_pPlayer->SetOffset(D3DXVECTOR3(0, 0, -1));
+	m_pPlayer->RotateOffset(-90, 0, 0);
+	//m_pPlayer->Rotate(0, 30, 0); 
+	m_pPlayer->ChangeCamera(pd3dDevice, FIRST_PERSON_CAMERA, 0);
+	m_pPlayer->SetPosition(D3DXVECTOR3(200.0f, 1.0f, 200.0f));
 
-	m_ObjectsVector.push_back(make_pair(1, pCharacter));
+	m_ObjectsVector.push_back(make_pair(1, m_pPlayer));
+
+
+
+	/*
+	CDynamicObject *pCharacter = NULL;
+	for (int i = 0; i < 20; ++i){
+		pCharacter = new CDynamicObject(true);
+		CAnimationController *pAnimation = pCharacter->GetAnimationController();
+		pAnimation->SetAnimationData("Attack", m_InstanceDataVector[1]->GetAnimationInstancing()->m_vAnimationList.m_Animation["Attack"].m_fLength);
+		pAnimation->SetAnimationData("Run", m_InstanceDataVector[1]->GetAnimationInstancing()->m_vAnimationList.m_Animation["Run"].m_fLength);
+		pAnimation->SetAnimationData("Idle", m_InstanceDataVector[1]->GetAnimationInstancing()->m_vAnimationList.m_Animation["Idle"].m_fLength);
+		if (i % 3 == 0)
+			pAnimation->Play("Attack");
+		else if (i % 3 == 1)
+			pAnimation->Play("Idle");
+		else
+			pAnimation->Play("Run");
+		pCharacter->SetMesh(m_InstanceDataVector[1]->GetMesh());
+		pCharacter->SetMaterial(pMaterial);
+		pCharacter->SetTexture(m_TexturesVector[4]);
+		pCharacter->BuildObjects(pPxPhysics, pPxScene, pPxM);
+		pCharacter->SetOffset(D3DXVECTOR3(0, 0, -1));
+		pCharacter->Rotate(0, i * 20, 0);
+		pCharacter->SetPosition(D3DXVECTOR3(200 + i / 2, 50, 200 + i / 2));
+		m_ObjectsVector.push_back(make_pair(1, pCharacter));
 	}
-	
-	
+	*/
+
 	ifstream ifsFbxList;
 	ifsFbxList.open("Data/ImportData/ImportModelName.txt");
 
@@ -541,16 +560,32 @@ void CInstancingShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhy
 		{
 			if (m_InstanceDataVector[i]->GetName() == FbxName)
 			{
-				CStaticObject *pMapObject = NULL;
-				pMapObject = new CStaticObject();
-				pMapObject->SetMesh(m_InstanceDataVector[i]->GetMesh());
-				pMapObject->SetMaterial(pMaterial);
-				pMapObject->SetTexture(m_TexturesVector[1]);
-				pMapObject->BuildObjects(pPxPhysics, pPxScene, pPxM);
-				pMapObject->Rotate(d3dxvEulerRotation.x, d3dxvEulerRotation.y, d3dxvEulerRotation.z);
-				pMapObject->SetPosition(d3dxvPosition);
-				m_ObjectsVector.push_back(make_pair(i, pMapObject));
-				break;
+				if (FbxName == "Powerpole_cable50M" || FbxName == "Powerpole1_cable")
+				{
+					CGameObject *pMapObject = NULL;
+					pMapObject = new CGameObject();
+					pMapObject->SetMesh(m_InstanceDataVector[i]->GetMesh());
+					pMapObject->SetMaterial(pMaterial);
+					pMapObject->SetTexture(m_TexturesVector[1]);
+					pMapObject->BuildObjects(pPxPhysics, pPxScene, pPxM);
+					pMapObject->Rotate(d3dxvEulerRotation.x, d3dxvEulerRotation.y, d3dxvEulerRotation.z);
+					pMapObject->SetPosition(d3dxvPosition);
+					m_ObjectsVector.push_back(make_pair(i, pMapObject));
+					break;
+				}
+				else
+				{
+					CStaticObject *pMapObject = NULL;
+					pMapObject = new CStaticObject();
+					pMapObject->SetMesh(m_InstanceDataVector[i]->GetMesh());
+					pMapObject->SetMaterial(pMaterial);
+					pMapObject->SetTexture(m_TexturesVector[1]);
+					pMapObject->BuildObjects(pPxPhysics, pPxScene, pPxM, FbxName.c_str());
+					pMapObject->Rotate(d3dxvEulerRotation.x, d3dxvEulerRotation.y, d3dxvEulerRotation.z);
+					pMapObject->SetPosition(d3dxvPosition);
+					m_ObjectsVector.push_back(make_pair(i, pMapObject));
+					break;
+				}
 			}
 		}
 	}
@@ -571,25 +606,38 @@ void CInstancingShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhy
 		{
 			if (m_InstanceDataVector[i]->GetName() == FbxName)
 			{
-				CStaticObject *pMapObject = NULL;
-				pMapObject = new CStaticObject();
-				pMapObject->SetMesh(m_InstanceDataVector[i]->GetMesh());
-				pMapObject->SetMaterial(pMaterial);
-				pMapObject->SetTexture(m_TexturesVector[2]);
-				pMapObject->BuildObjects(pPxPhysics, pPxScene, pPxM);
-
-				pMapObject->Rotate(d3dxvEulerRotation.x, d3dxvEulerRotation.y, d3dxvEulerRotation.z);
-
-				pMapObject->SetPosition(d3dxvPosition);
-
-
-				m_ObjectsVector.push_back(make_pair(i, pMapObject));
-				break;
+				if (FbxName == "Street_el1")
+				{
+					CGameObject *pMapObject = NULL;
+					pMapObject = new CGameObject();
+					pMapObject->SetMesh(m_InstanceDataVector[i]->GetMesh());
+					pMapObject->SetMaterial(pMaterial);
+					pMapObject->SetTexture(m_TexturesVector[2]);
+					pMapObject->BuildObjects(pPxPhysics, pPxScene, pPxM);
+					pMapObject->Rotate(d3dxvEulerRotation.x, d3dxvEulerRotation.y, d3dxvEulerRotation.z);
+					pMapObject->SetPosition(d3dxvPosition);
+					m_ObjectsVector.push_back(make_pair(i, pMapObject));
+					break;
+				}
+				else
+				{
+					CStaticObject *pMapObject = NULL;
+					pMapObject = new CStaticObject();
+					pMapObject->SetMesh(m_InstanceDataVector[i]->GetMesh());
+					pMapObject->SetMaterial(pMaterial);
+					pMapObject->SetTexture(m_TexturesVector[2]);
+					pMapObject->BuildObjects(pPxPhysics, pPxScene, pPxM, FbxName.c_str());
+					pMapObject->Rotate(d3dxvEulerRotation.x, d3dxvEulerRotation.y, d3dxvEulerRotation.z);
+					pMapObject->SetPosition(d3dxvPosition);
+					m_ObjectsVector.push_back(make_pair(i, pMapObject));
+					break;
+				}
+				
 			}
 		}
 	}
 	ifsModelTransform.close();
-	
+
 	//인스턴스 데이터(렌더링할 객체들의 위치 벡터 배열)를 메쉬의 정점 버퍼에 추가한다.
 	for (int i = 0; i < m_InstanceDataVector.size(); ++i){
 		ID3D11Buffer *InstanceBuffer = m_InstanceDataVector[i]->GetInstanceBuffer();
@@ -622,7 +670,7 @@ void CInstancingShader::AddObject(PxPhysics *pPxPhysics, PxScene *pPxScene, int 
 		pObject->SetMesh(m_InstanceDataVector[_IndexOfInstanceDataVector]->GetMesh());
 		pObject->SetMaterial(m_MaterialsVector[_IndexOfMaterial]);
 		pObject->SetTexture(m_TexturesVector[_IndexOfTexture]);
-		pObject->BuildObjects(pPxPhysics, pPxScene, pPxM);
+		pObject->BuildObjects(pPxPhysics, pPxScene, pPxM, "UserThrown");
 		pObject->SetPosition(_d3dxvPosition);
 		m_ObjectsVector.push_back(make_pair(_IndexOfInstanceDataVector, pObject));
 	}
@@ -709,7 +757,7 @@ void CInstancingShader::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, 
 							pLastMaterial = m_ObjectsVector[j].second->GetMaterial();
 						}
 						if (m_InstanceDataVector[i]->GetHasAnimation()){
-							CCharacterObject *pObject = (CCharacterObject*)m_ObjectsVector[j].second;
+							CDynamicObject *pObject = (CDynamicObject*)m_ObjectsVector[j].second;
 							CAnimationController *pAnimationController = pObject->GetAnimationController();
 							pd3dxmInstances[nVisibleObjects].AnimationPos[0] =
 								m_InstanceDataVector[i]->GetAnimationInstancing()->GetCurrentOffset(pAnimationController->GetCurrentAnimationName(), pAnimationController->GetCurrentAnimationTime());
@@ -721,7 +769,7 @@ void CInstancingShader::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, 
 			}
 		}
 		pd3dImmediateDeviceContext->Unmap(m_InstanceDataVector[i]->GetInstanceBuffer(), 0);
-		if (nVisibleObjects>0)
+		if (nVisibleObjects > 0)
 			m_InstanceDataVector[i]->GetMesh()->RenderInstanced(pd3dImmediateDeviceContext, nVisibleObjects, 0);
 	}
 }

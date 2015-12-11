@@ -137,7 +137,7 @@ private:
 class CInstancingShader : public CTexturedIlluminatedShader
 {
 public:
-	CInstancingShader();
+	CInstancingShader(CPlayer *pPlayer);
 	~CInstancingShader();
 
 	virtual void CreateShader(ID3D11Device *pd3dDevice);
@@ -155,7 +155,7 @@ public:
 	vector<InstanceData*>		m_InstanceDataVector;
 	ID3D11Buffer				*m_pd3dcbAnimationTextureWidth;
 
-	
+	CPlayer						*m_pPlayer;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

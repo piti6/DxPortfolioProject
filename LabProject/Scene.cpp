@@ -50,7 +50,8 @@ bool CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 		switch (wParam)
 		{
 		case 'F':
-			m_pInstancingShader->AddObject(m_pPxPhysicsSDK, m_pPxScene, rand()%30, 0, 1, m_ppPlayers[0]->GetPosition(), false, m_ppPlayers[0]->GetCamera()->GetLookVector() * 100);
+			m_pInstancingShader->AddObject(m_pPxPhysicsSDK, m_pPxScene, rand() % 80 + 2, 0, 1, m_ppPlayers[0]->GetPosition() + m_ppPlayers[0]->GetLookAt() * 5, false, m_ppPlayers[0]->GetLookAt() * 100 + m_ppPlayers[0]->GetUp() * 3);
+			m_ppPlayers[0]->GetAnimationController()->Play("Attack");
 			break;
 		}
 		
@@ -65,7 +66,7 @@ void CScene::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhysics, PxSce
 {
 	m_nShaders = 2;
 	m_ppShaders = new CShader*[m_nShaders];
-	m_pInstancingShader = new CInstancingShader();
+	m_pInstancingShader = new CInstancingShader(m_ppPlayers[0]);
 	m_ppShaders[0] = m_pInstancingShader;
 	m_ppShaders[0]->CreateShader(pd3dDevice);
 	m_ppShaders[0]->BuildObjects(pd3dDevice, pPxPhysics, pPxScene, pPxControllerManager, pFbxSdkManager);
@@ -73,11 +74,7 @@ void CScene::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhysics, PxSce
 	m_ppShaders[1] = new CSkyBoxShader();
 	m_ppShaders[1]->CreateShader(pd3dDevice);
 	m_ppShaders[1]->BuildObjects(pd3dDevice, pPxPhysics, pPxScene, pPxControllerManager, pFbxSdkManager);
-	/*
-	m_ppShaders[2] = new CTerrainShader();
-	m_ppShaders[2]->CreateShader(pd3dDevice);
-	m_ppShaders[2]->BuildObjects(pd3dDevice,pPxPhysics,pPxScene);
-	*/
+	
 	BuildLights(pd3dDevice);
 }
 

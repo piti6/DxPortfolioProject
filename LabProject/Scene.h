@@ -9,7 +9,6 @@
 #include "Camera.h"
 #include "Shader.h"
 #include "Light.h"
-#include "Player.h"
 
 class CScene
 {

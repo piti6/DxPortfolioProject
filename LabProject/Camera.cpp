@@ -1,19 +1,13 @@
 #include "stdafx.h"
-#include "Object.h"
-#include "Player.h"
 #include "Camera.h"
+#include "Object.h"
+
 
 CCamera::CCamera(CCamera *pCamera) 
 {
 	if (pCamera)
 	{
 		m_d3dxvPosition = pCamera->GetPosition();
-		m_d3dxvRight = pCamera->GetRightVector();
-		m_d3dxvLook = pCamera->GetLookVector();
-		m_d3dxvUp = pCamera->GetUpVector();
-		m_fPitch = pCamera->GetPitch();
-		m_fRoll = pCamera->GetRoll(); 
-		m_fYaw = pCamera->GetYaw();  
 		m_d3dxmtxView = pCamera->GetViewMatrix();
 		m_d3dxmtxProjection = pCamera->GetProjectionMatrix();
 		m_d3dViewport = pCamera->GetViewport();
@@ -21,6 +15,16 @@ CCamera::CCamera(CCamera *pCamera)
 		m_d3dxvOffset = pCamera->GetOffset();
 		m_fTimeLag = pCamera->GetTimeLag();
 		m_pPlayer = pCamera->GetPlayer();
+		if (m_pPlayer){
+			m_d3dxvRight = m_pPlayer->GetRightVector();
+			m_d3dxvUp = m_pPlayer->GetUpVector();
+			m_d3dxvLook = m_pPlayer->GetLookVector();
+		}
+		/*
+		m_d3dxvRight = D3DXVECTOR3(1.0f, 0.0f, 0.0f);
+		m_d3dxvUp = D3DXVECTOR3(0.0f, 1.0f, 0.0f);
+		m_d3dxvLook = D3DXVECTOR3(0.0f, 0.0f, 1.0f);
+		*/
 		m_pd3dcbViewProjection = pCamera->GetViewProjectionConstantBuffer();
 		if (m_pd3dcbViewProjection) m_pd3dcbViewProjection->AddRef();
 	}
@@ -30,10 +34,6 @@ CCamera::CCamera(CCamera *pCamera)
 		m_d3dxvRight = D3DXVECTOR3(1.0f, 0.0f, 0.0f); 
 		m_d3dxvUp = D3DXVECTOR3(0.0f, 1.0f, 0.0f); 
 		m_d3dxvLook = D3DXVECTOR3(0.0f, 0.0f, 1.0f); 
-
-		m_fPitch = 0.0f;             
-		m_fRoll = 0.0f;              
-		m_fYaw = 0.0f;  
 
 		m_fTimeLag = 0.0f;
 
@@ -189,7 +189,7 @@ void CThirdPersonCamera::Update(float fTimeElapsed)
 		if (fDistance > 0)
 		{
 			m_d3dxvPosition += d3dxvDirection * fDistance;
-			SetLookAt(GetLookAtPosition());
+			SetLookAt(m_pPlayer->GetPosition());
 		} 
 	}
 }
@@ -201,6 +201,43 @@ void CThirdPersonCamera::SetLookAt(D3DXVECTOR3& d3dxvLookAt)
     m_d3dxvRight = D3DXVECTOR3(mtxLookAt._11, mtxLookAt._21, mtxLookAt._31);
     m_d3dxvUp = D3DXVECTOR3(mtxLookAt._12, mtxLookAt._22, mtxLookAt._32);
     m_d3dxvLook = D3DXVECTOR3(mtxLookAt._13, mtxLookAt._23, mtxLookAt._33);
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// CSpectator
+
+CSpectator::CSpectator(CCamera *pCamera) : CCamera(pCamera)
+{
+	m_nMode = SPECTATOR_CAMERA;
+}
+
+void CSpectator::Rotate(float x, float y, float z)
+{
+	D3DXMATRIX mtxRotate;
+	if (x != 0.0f)
+	{
+		D3DXMatrixRotationAxis(&mtxRotate, &m_d3dxvRight, (float)D3DXToRadian(x));
+		D3DXVec3TransformNormal(&m_d3dxvLook, &m_d3dxvLook, &mtxRotate);
+		D3DXVec3TransformNormal(&m_d3dxvUp, &m_d3dxvUp, &mtxRotate);
+		D3DXVec3TransformNormal(&m_d3dxvRight, &m_d3dxvRight, &mtxRotate);
+	}
+	if (m_pPlayer && (y != 0.0f))
+	{
+		D3DXMatrixRotationAxis(&mtxRotate, &m_pPlayer->GetUpVector(), (float)D3DXToRadian(y));
+		D3DXVec3TransformNormal(&m_d3dxvLook, &m_d3dxvLook, &mtxRotate);
+		D3DXVec3TransformNormal(&m_d3dxvUp, &m_d3dxvUp, &mtxRotate);
+		D3DXVec3TransformNormal(&m_d3dxvRight, &m_d3dxvRight, &mtxRotate);
+	}
+	if (m_pPlayer && (z != 0.0f))
+	{
+		D3DXMatrixRotationAxis(&mtxRotate, &m_pPlayer->GetLookVector(), (float)D3DXToRadian(z));
+		m_d3dxvPosition -= m_pPlayer->GetPosition();
+		D3DXVec3TransformCoord(&m_d3dxvPosition, &m_d3dxvPosition, &mtxRotate);
+		m_d3dxvPosition += m_pPlayer->GetPosition();
+		D3DXVec3TransformNormal(&m_d3dxvLook, &m_d3dxvLook, &mtxRotate);
+		D3DXVec3TransformNormal(&m_d3dxvUp, &m_d3dxvUp, &mtxRotate);
+		D3DXVec3TransformNormal(&m_d3dxvRight, &m_d3dxvRight, &mtxRotate);
+	}
 }
 
 void CCamera::CalculateFrustumPlanes()

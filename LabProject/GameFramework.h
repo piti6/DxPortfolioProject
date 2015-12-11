@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Timer.h"
-#include "Player.h"
 #include "Scene.h"
 
 struct RENDERINGTHREADINFO{

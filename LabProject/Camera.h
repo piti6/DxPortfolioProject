@@ -1,15 +1,12 @@
 #pragma once
 
-
-
 #define FRAME_BUFFER_WIDTH			1280
 #define FRAME_BUFFER_HEIGHT			960
 #define ASPECT_RATIO				(float(FRAME_BUFFER_WIDTH)/float(FRAME_BUFFER_HEIGHT))
 
 #define FIRST_PERSON_CAMERA			0x01
+#define SPECTATOR_CAMERA			0x02
 #define THIRD_PERSON_CAMERA			0x03
-
-class CPlayer;
 
 struct VS_CB_VIEWPROJECTION_MATRIX
 {
@@ -17,6 +14,7 @@ struct VS_CB_VIEWPROJECTION_MATRIX
     D3DXMATRIX						m_d3dxmtxProjection;   
 };
 
+class CPlayer;
 
 class CCamera
 {
@@ -25,11 +23,7 @@ protected:
     D3DXVECTOR3						m_d3dxvRight;             
     D3DXVECTOR3						m_d3dxvUp;             
     D3DXVECTOR3						m_d3dxvLook;   
-
-    float           				m_fPitch;             
-    float           				m_fRoll;              
-    float           				m_fYaw;               
-
+   
 	DWORD							m_nMode;
 
     D3DXVECTOR3						m_d3dxvLookAtWorld;   
@@ -79,10 +73,6 @@ public:
     D3DXVECTOR3& GetUpVector() { return(m_d3dxvUp); }
     D3DXVECTOR3& GetLookVector() { return(m_d3dxvLook); }
 
-    float& GetPitch() { return(m_fPitch); }
-    float& GetRoll() { return(m_fRoll); }
-    float& GetYaw() { return(m_fYaw); }
-
 	void SetOffset(D3DXVECTOR3 d3dxvOffset) { m_d3dxvOffset = d3dxvOffset; m_d3dxvPosition += d3dxvOffset; } 
     D3DXVECTOR3& GetOffset() { return(m_d3dxvOffset); }
 	void SetTimeLag(float fTimeLag) { m_fTimeLag = fTimeLag; } 
@@ -115,5 +105,13 @@ public:
 
     virtual void Update(float fTimeScale);
     virtual void SetLookAt(D3DXVECTOR3& vLookAt);
+};
+
+class CSpectator : public CCamera
+{
+public:
+	CSpectator(CCamera *pCamera);
+
+	virtual void Rotate(float fPitch = 0.0f, float fYaw = 0.0f, float fRoll = 0.0f);
 };
 

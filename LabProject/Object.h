@@ -103,14 +103,13 @@ public:
 
 
 private:
-	CAnimationController		m_AnimationController;
-
 	PxRigidDynamic				*m_pPxActor;
-	PxMaterial					*m_pPxMaterial;
 
 	/////////////// Animation Part ///////////////
+protected:
 
 	bool						m_bHasAnimation;
+	CAnimationController		m_AnimationController;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -122,7 +121,7 @@ public:
 	CStaticObject();
 	virtual ~CStaticObject();
 
-	virtual void BuildObjects(PxPhysics *pPxPhysics, PxScene *pPxScene, PxMaterial *pPxMaterial);
+	virtual void BuildObjects(PxPhysics *pPxPhysics, PxScene *pPxScene, PxMaterial *pPxMaterial, const char* name);
 	virtual void SetPosition(D3DXVECTOR3 d3dxvPosition);
 
 private:
@@ -133,7 +132,7 @@ private:
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 
-class CCharacterObject : public CGameObject
+class CCharacterObject : public CDynamicObject
 {
 public:
 	CCharacterObject(bool _HasAnimation = false);
@@ -159,18 +158,12 @@ public:
 	virtual D3DXVECTOR3 GetUp();
 	virtual D3DXVECTOR3 GetRight();
 
-	CAnimationController* GetAnimationController(){ return &m_AnimationController; }
-
-private:
+protected:
 	D3DXMATRIX					m_d3dxmtxRotate;
 	D3DXMATRIX					m_d3dxmtxRotateOffset;
 
-	CAnimationController		m_AnimationController;
 	PxController				*m_pPxCharacterController;
 
-	/////////////// Animation Part ///////////////
-
-	bool						m_bHasAnimation;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -216,3 +209,50 @@ public:
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
+
+class CPlayer : public CCharacterObject
+{
+protected:
+	
+	D3DXVECTOR3					m_d3dxvRight;
+	D3DXVECTOR3					m_d3dxvUp;
+	D3DXVECTOR3					m_d3dxvLook;
+	
+	float           			m_fPitch;
+	float           			m_fYaw;
+	float           			m_fRoll;
+	
+	CCamera						*m_pCamera;
+
+public:
+	D3DXVECTOR3					m_d3dxvPosition;
+	
+	CPlayer();
+	~CPlayer();
+	D3DXVECTOR3 GetPosition() { return(D3DXVECTOR3(m_pPxCharacterController->getPosition().x, m_pPxCharacterController->getPosition().y, m_pPxCharacterController->getPosition().z)); }
+	
+	virtual void CreateShaderVariables(ID3D11Device *pd3dDevice);
+	virtual void UpdateShaderVariables(ID3D11DeviceContext *pd3dImmediateDeviceContext);
+
+	CCamera *OnChangeCamera(ID3D11Device *pd3dDevice, DWORD nNewCameraMode, DWORD nCurrentCameraMode);
+	virtual void ChangeCamera(ID3D11Device *pd3dDevice, DWORD nNewCameraMode, float fTimeElapsed);
+
+	void Animate(float fTimeElapsed, PxScene *pPxScene);
+	void Update(float fTimeElapsed);
+
+	void Move(ULONG nDirection, float fDistance, float fTimeElapsed);
+	void Move(const D3DXVECTOR3& d3dxvShift, float fTimeElapsed);
+	void Move(float fxOffset = 0.0f, float fyOffset = 0.0f, float fzOffset = 0.0f);
+
+	void Rotate(float x, float y, float z);
+
+	
+	D3DXVECTOR3 GetLookVector() { return(m_d3dxvLook); }
+	D3DXVECTOR3 GetUpVector() { return(m_d3dxvUp); }
+	D3DXVECTOR3 GetRightVector() { return(m_d3dxvRight); }
+
+	CCamera *GetCamera() { return(m_pCamera); }
+	void SetCamera(CCamera *pCamera) { m_pCamera = pCamera; }
+
+	void SetPosition(D3DXVECTOR3 d3dxvPosition);
+};

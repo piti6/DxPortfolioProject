@@ -6,7 +6,7 @@
 #include <list>
 using namespace std;
 
-enum{TCP_NULL=0,TCP_CLIENT_MOVE,TCP_CLIENT_LOGIN,TCP_CLIENT_DISCONNECT,UDP_SERVER_PLAYER};
+enum{ TCP_NULL = 0, TCP_CLIENT_MOVE, TCP_CLIENT_TRANSFORM, TCP_CLIENT_LOGIN, TCP_CLIENT_DISCONNECT, UDP_SERVER_PLAYER };
 
 int recvn(SOCKET s, char *buf, int len, int flags);
 void err_quit(char *msg);
@@ -78,8 +78,10 @@ void CNetworkServer::UDPSendData(SOCKET* sock,char _Protocol,T _Data,SOCKADDR_IN
 	if(UDPSend == SOCKET_ERROR){
 		err_display("UDPsend()");
 	}		
+	/*
 	else{
 		ProtocolToChar(_Protocol,cProtocol);
 		printf("[%s -> UDPSend]Protocol : %s, DataSize : %d\n",inet_ntoa(clientaddr.sin_addr),cProtocol,size);
 	}
+	*/
 }

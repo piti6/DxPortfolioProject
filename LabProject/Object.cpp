@@ -492,7 +492,7 @@ CPlayer::CPlayer() : CCharacterObject(true)
 	m_d3dxvRight = D3DXVECTOR3(1.0f, 0.0f, 0.0f);
 	m_d3dxvUp = D3DXVECTOR3(0.0f, 1.0f, 0.0f);
 	m_d3dxvLook = D3DXVECTOR3(0.0f, 0.0f, 1.0f);
-
+	m_d3dxvRotation = D3DXVECTOR3(0, 0, 0);
 	m_fPitch = 0.0f;
 	m_fRoll = 0.0f;
 	m_fYaw = 0.0f;
@@ -543,8 +543,6 @@ void CPlayer::Move(const D3DXVECTOR3& d3dxvShift, float fTimeElapsed)
 	DWORD nCurrentCameraMode = m_pCamera->GetMode();
 	if (nCurrentCameraMode == FIRST_PERSON_CAMERA || nCurrentCameraMode == THIRD_PERSON_CAMERA){
 		m_pPxCharacterController->move(PxVec3(d3dxvShift.x, d3dxvShift.y, d3dxvShift.z) * fTimeElapsed, 0, fTimeElapsed, PxControllerFilters());
-		if (m_AnimationController.GetCurrentAnimationName() != "Run")
-			m_AnimationController.Play("Run");
 	}
 	else{
 		m_pCamera->Move(d3dxvShift * fTimeElapsed);
@@ -554,7 +552,7 @@ void CPlayer::Move(const D3DXVECTOR3& d3dxvShift, float fTimeElapsed)
 void CPlayer::Rotate(float x, float y, float z)
 {
 	D3DXMATRIX mtxRotate;
-
+	m_d3dxvRotation += D3DXVECTOR3(y, x, z);
 	if (x != 0.0f)
 	{
 		m_fPitch += x;

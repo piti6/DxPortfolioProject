@@ -145,7 +145,7 @@ void CGameFramework::OnDestroy()
 	ShutDownFbxManager();
 	ShutDownPhysxEngine();
 	ReleaseNetworkState();
-
+	DeleteCriticalSection(&cs);
 	for (int i = 0; i < m_nRenderThreads; ++i)
 	{
 		m_pRenderingThreadInfo[i].m_pd3dDeferredContext->Release();
@@ -333,7 +333,7 @@ void CGameFramework::ProcessInput()
 			cyDelta = (float)(ptCursorPos.y - m_ptOldCursorPos.y) / 3.0f;
 			SetCursorPos(m_ptOldCursorPos.x, m_ptOldCursorPos.y);
 		}
-		if ((dwForward != 0) || (dwBackward != 0) || (dwLeft != 0) || (dwRight != 0) || (dwUp != 0) || (dwDown != 0))
+		if ((dwForward != 0) || (dwBackward != 0) || (dwLeft != 0) || (dwRight != 0) || (dwUp != 0) || (dwDown != 0) || cxDelta || cyDelta)
 		{
 
 			if (dwForward == DIR_FORWARD)
@@ -348,16 +348,31 @@ void CGameFramework::ProcessInput()
 				m_pPlayer->Move(dwUp, 10.0f, m_GameTimer.GetTimeElapsed());
 			if (dwDown == DIR_DOWN)
 				m_pPlayer->Move(dwDown, 10.0f, m_GameTimer.GetTimeElapsed());
+			if (pKeyBuffer[VK_RBUTTON] & 0xF0)
+				m_pPlayer->Rotate(cyDelta, cxDelta, 0.0f);
+			Network_Packet pkt;
+			strncpy(pkt.m_ID, m_pPlayer->GetName().c_str(), sizeof(pkt.m_ID));
+			pkt.m_ID[9] = 0;
+			pkt.m_d3dxvPosition = m_pPlayer->GetPosition();
+			pkt.m_d3dxvRotation = m_pPlayer->GetRotation();
+			m_pNetworkClient->TCPSendData(&m_pNetworkClient->TCPsock, TCP_CLIENT_TRANSFORM, pkt);
+		}
+		if ((dwForward != 0) || (dwBackward != 0) || (dwLeft != 0) || (dwRight != 0) || (dwUp != 0) || (dwDown != 0))
+		{
+			CAnimationController* pAnimationController = m_pPlayer->GetAnimationController();
+			if (pAnimationController->GetCurrentAnimationName() != "Run")
+			{
+				pAnimationController->Play("Run");
+				m_pNetworkClient->TCPSendInt(&m_pNetworkClient->TCPsock, TCP_CLIENT_MOVE, 1);
+			}
 		}
 		else{
 			CAnimationController* pAnimationController = m_pPlayer->GetAnimationController();
 			if (pAnimationController->GetCurrentAnimationName() != "Idle")
+			{
 				pAnimationController->Play("Idle");
-		}
-		if (cxDelta || cyDelta)
-		{
-			if (pKeyBuffer[VK_RBUTTON] & 0xF0)
-				m_pPlayer->Rotate(cyDelta, cxDelta, 0.0f);
+				m_pNetworkClient->TCPSendInt(&m_pNetworkClient->TCPsock, TCP_CLIENT_MOVE, 0);
+			}
 		}
 		m_pPlayer->Update(m_GameTimer.GetTimeElapsed());
 	}
@@ -373,15 +388,17 @@ void CGameFramework::FrameAdvance()
 
 	m_GameTimer.Tick(120);
 
+	EnterCriticalSection(&cs);
 	ProcessInput();
+	LeaveCriticalSection(&cs);
 
 	if (m_pPxScene){
 		m_pPxScene->simulate(m_GameTimer.GetTimeElapsed());
 		m_pPxScene->fetchResults(true);
 	}
-
+	EnterCriticalSection(&cs);
 	AnimateObjects();
-
+	LeaveCriticalSection(&cs);
 	float fClearColor[4] = { 0.0f, 0.125f, 0.3f, 1.0f };
 	if (m_pd3dRenderTargetView) m_pd3dImmediateDeviceContext->ClearRenderTargetView(m_pd3dRenderTargetView, fClearColor);
 	for (int i = 0; i < m_nRenderThreads; ++i)
@@ -517,10 +534,9 @@ void CGameFramework::InitializeWorkerThreads()
 }
 
 void CGameFramework::InitializeNetworkState(){
-	/*
 	m_pNetworkClient = new CNetworkClient("127.0.0.1", 9000);
 	m_pNetworkClient->Init();
-
+	InitializeCriticalSection(&cs);
 	int optval = 3000;	// TimeOut
 	SetSocketOption(m_pNetworkClient->TCPsock, SOL_SOCKET, SO_RCVTIMEO, (char *) &optval, sizeof(int));
 
@@ -538,11 +554,8 @@ void CGameFramework::InitializeNetworkState(){
 	optval = 0;
 	SetSocketOption(m_pNetworkClient->TCPsock, SOL_SOCKET, SO_RCVTIMEO, (char *)&optval, sizeof(int));
 
-	m_hTCPThread = (HANDLE) ::_beginthreadex(NULL, 0, ThreadProcTCP, this, CREATE_SUSPENDED, NULL);
 	m_hUDPThread = (HANDLE) ::_beginthreadex(NULL, 0, ThreadProcUDP, this, CREATE_SUSPENDED, NULL);
-	ResumeThread(m_hTCPThread);
 	ResumeThread(m_hUDPThread);
-	*/
 }
 
 void CGameFramework::ReleaseNetworkState()
@@ -571,11 +584,13 @@ UINT CGameFramework::ThreadProcTCP(CGameFramework* _GameFramework)
 	while (1){
 		/*
 		Network_Packet pkt;
+		strncpy(pkt.m_ID,m_pPlayer->GetName().c_str(),sizeof(pkt.m_ID));
+		pkt.m_ID[9] = 0;
 		pkt.m_d3dxvPosition = m_pPlayer->GetPosition();
-		pkt.m_d3dxvRotation = D3DXVECTOR3(0, 0, 0);
+		pkt.m_d3dxvRotation = m_pPlayer->GetRotation();
 		m_pNetworkClient->TCPSendData(&m_pNetworkClient->TCPsock, TCP_CLIENT_MOVE, pkt);
 
-		Sleep(100);
+		Sleep(30);
 		*/
 	}
 }
@@ -590,7 +605,6 @@ UINT CGameFramework::ThreadProcUDP(CGameFramework* _GameFramework)
 	Network_Packet packet;
 	char Data[50] = { 0, };
 	while (1){
-		/*
 		int recv = pNetworkClient->UDPReceive(UDP_Sock, Data);
 		if (!recv)
 			break;
@@ -602,12 +616,22 @@ UINT CGameFramework::ThreadProcUDP(CGameFramework* _GameFramework)
 				for (nPlayers = 0; nPlayers < m_vPlayers.size(); ++nPlayers){
 					if (m_vPlayers[nPlayers].first == packet.m_ID)
 					{
+						EnterCriticalSection(&cs);
 						m_vPlayers[nPlayers].second->SetPosition(packet.m_d3dxvPosition);
 						m_vPlayers[nPlayers].second->SetRotation(packet.m_d3dxvRotation);
+						if (m_vPlayers[nPlayers].second->GetAnimationController()->GetCurrentAnimationName() != "Run" && packet.m_isMoving)
+						{
+							m_vPlayers[nPlayers].second->GetAnimationController()->Play("Run");
+						}
+						else if (m_vPlayers[nPlayers].second->GetAnimationController()->GetCurrentAnimationName() != "Idle" && !packet.m_isMoving)
+						{
+							m_vPlayers[nPlayers].second->GetAnimationController()->Play("Idle");
+						}
+						LeaveCriticalSection(&cs);
 						break;
 					}
 				}
-				if (nPlayers == m_vPlayers.size() && packet.m_ID != m_pPlayer->GetName())
+				if (nPlayers == m_vPlayers.size() && strcmp(packet.m_ID,m_pPlayer->GetName().c_str()))
 				{
 					CCharacterObject *pCharacterObject = pInstancingShader->AddCharacter(m_pPxPhysicsSDK, m_pPxScene, m_pPxControllerManager, 1, 0, 4, packet.m_d3dxvPosition);
 					pCharacterObject->SetRotation(packet.m_d3dxvRotation);
@@ -618,8 +642,7 @@ UINT CGameFramework::ThreadProcUDP(CGameFramework* _GameFramework)
 			}
 		}
 
-		Sleep(100);
-		*/
+		//Sleep(100);
 	}
 
 	return 0;

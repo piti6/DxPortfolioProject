@@ -5,11 +5,12 @@ typedef struct Network_Packet{
 	D3DXVECTOR3	m_d3dxvPosition;
 	D3DXVECTOR3	m_d3dxvRotation;
 	char		m_ID[10];
+	int			m_isMoving;
 }NETWORK_PACKET;
 
 void SetSocketOption(SOCKET s, int level, int optname, char* optval, int optlen);
 
-enum{ TCP_NULL = 0, TCP_CLIENT_MOVE, TCP_CLIENT_LOGIN, TCP_CLIENT_DISCONNECT, UDP_SERVER_PLAYER };
+enum{ TCP_NULL = 0, TCP_CLIENT_MOVE, TCP_CLIENT_TRANSFORM, TCP_CLIENT_LOGIN, TCP_CLIENT_DISCONNECT, UDP_SERVER_PLAYER };
 
 int recvn(SOCKET s, char *buf, int len, int flags);
 void err_quit(char *msg);

@@ -66,7 +66,7 @@ DWORD CSceneServer::ThreadProcTCP(CSceneServer* _SceneServer)
 	int recv;
 	char* PlayerID = new char[20];
 	wsprintfA(PlayerID, "%s%d", "Player", m_pSceneServer->m_iPlayerNum++);
-	CGameObject* m_pPlayer = new CGameObject(PlayerID, D3DXVECTOR3(200, 1, 200),D3DXVECTOR3(0,0,0));
+	CGameObject* m_pPlayer = new CGameObject(PlayerID, D3DXVECTOR3(200, 1, 200),D3DXVECTOR3(0,0,0),0);
 
 	NETWORK_PACKET m_PlayerPacket;
 	strcpy(m_PlayerPacket.m_ID, m_pPlayer->m_Network_Packet.m_ID);
@@ -87,13 +87,24 @@ DWORD CSceneServer::ThreadProcTCP(CSceneServer* _SceneServer)
 			case TCP_NULL:
 				break;
 			case TCP_CLIENT_MOVE:
+				for (auto m_vPIt = m_pSceneServer->m_vPlayer.begin(); m_vPIt != m_pSceneServer->m_vPlayer.end(); ++m_vPIt){
+					if (!strcmp(m_PlayerPacket.m_ID, m_vPIt->m_Network_Packet.m_ID)){
+						EnterCriticalSection(&cs);
+						m_vPIt->m_Network_Packet.m_isMoving = Data[2];
+						LeaveCriticalSection(&cs);
+						break;
+					}
+				}
+				break;
+			case TCP_CLIENT_TRANSFORM:
 				memcpy(&m_PlayerPacket, &Data[2], Data[1]);
 				for (auto m_vPIt = m_pSceneServer->m_vPlayer.begin(); m_vPIt != m_pSceneServer->m_vPlayer.end(); ++m_vPIt){
 					if (!strcmp(m_PlayerPacket.m_ID, m_vPIt->m_Network_Packet.m_ID)){
 						EnterCriticalSection(&cs);
-						m_vPIt->m_Network_Packet = m_PlayerPacket;
+						m_vPIt->m_Network_Packet.m_d3dxvPosition = m_PlayerPacket.m_d3dxvPosition;
+						m_vPIt->m_Network_Packet.m_d3dxvRotation = m_PlayerPacket.m_d3dxvRotation;
 						LeaveCriticalSection(&cs);
-						printf("플레이어:%s 좌표:(%d,%d,%d)로 이동\n", m_PlayerPacket.m_ID, m_PlayerPacket.m_d3dxvPosition.x, m_PlayerPacket.m_d3dxvPosition.y, m_PlayerPacket.m_d3dxvPosition.z);
+						printf("플레이어:%s 좌표:(%5.2f,%5.2f,%5.2f)로 이동\n", m_PlayerPacket.m_ID, m_PlayerPacket.m_d3dxvPosition.x, m_PlayerPacket.m_d3dxvPosition.y, m_PlayerPacket.m_d3dxvPosition.z);
 						break;
 					}
 				}
@@ -134,6 +145,10 @@ DWORD CSceneServer::ThreadProcUDP(CSceneServer* _SceneServer)
 	while (1){
 		EnterCriticalSection(&cs);
 		for (auto m_vPIt = m_pSceneServer->m_vPlayer.begin(); m_vPIt != m_pSceneServer->m_vPlayer.end(); ++m_vPIt){
+			if (m_vPlayer.size() == 2)
+			{
+				m_vPlayer.size();
+			}
 			m_pSceneServer->m_pNetworkServer->UDPSendData(&m_pSceneServer->m_pNetworkServer->UDPsock, UDP_SERVER_PLAYER, *m_vPIt, &remoteaddr);
 		}
 		LeaveCriticalSection(&cs);

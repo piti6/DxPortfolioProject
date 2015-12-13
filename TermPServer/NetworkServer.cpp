@@ -175,12 +175,15 @@ void CNetworkServer::ProtocolToChar(char _Protocol, char* _cProtocol){
 		strcpy(_cProtocol, "TCP_MOVE");
 		break;
 	case 2:
-		strcpy(_cProtocol, "TCP_LOGIN");
+		strcpy(_cProtocol, "TCP_TRANSFORM");
 		break;
 	case 3:
-		strcpy(_cProtocol, "TCP_DISCONNECT");
+		strcpy(_cProtocol, "TCP_LOGIN");
 		break;
 	case 4:
+		strcpy(_cProtocol, "TCP_DISCONNECT");
+		break;
+	case 5:
 		strcpy(_cProtocol, "UDP_PLAYER");
 		break;
 	}

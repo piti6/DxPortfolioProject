@@ -498,7 +498,7 @@ void CInstancingShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhy
 	m_pPlayer->SetPosition(D3DXVECTOR3(200.0f, 1.0f, 200.0f));
 
 	m_ObjectsVector.push_back(make_pair(1, m_pPlayer));
-
+	/*
 	CDynamicObject *pCharacter = NULL;
 	for (int i = 0; i < 2000; ++i){
 		pCharacter = new CDynamicObject(true);
@@ -521,7 +521,7 @@ void CInstancingShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhy
 		pCharacter->SetPosition(D3DXVECTOR3(200, i, 200));
 		m_ObjectsVector.push_back(make_pair(1, pCharacter));
 	}
-
+	*/
 
 	ifstream ifsFbxList;
 	ifsFbxList.open("Data/ImportData/ImportModelName.txt");
@@ -718,18 +718,21 @@ CCharacterObject* CInstancingShader::AddCharacter(PxPhysics *pPxPhysics, PxScene
 
 	PxMaterial *pPxM = pPxPhysics->createMaterial(0.9, 0.9, 0.001);
 
-	CCharacterObject *pObject = new CCharacterObject();
+	CCharacterObject *pObject = new CCharacterObject(true);
 	pObject->SetMesh(m_InstanceDataVector[_IndexOfInstanceDataVector]->GetMesh());
 	pObject->SetMaterial(m_MaterialsVector[_IndexOfMaterial]);
 	pObject->SetTexture(m_TexturesVector[_IndexOfTexture]);
 	pObject->BuildObjects(pPxPhysics, pPxScene, pPxM, pPxControllerManager);
 	pObject->SetPosition(_d3dxvPosition);
+	pObject->RotateOffset(-90, 0, 0);
 	CAnimationController *pAnimationController = pObject->GetAnimationController();
 	pAnimationController->SetAnimationData("Attack", m_InstanceDataVector[1]->GetAnimationInstancing()->GetAnimation()->m_Animation["Attack"].m_fLength);
 	pAnimationController->SetAnimationData("Run", m_InstanceDataVector[1]->GetAnimationInstancing()->GetAnimation()->m_Animation["Run"].m_fLength);
 	pAnimationController->SetAnimationData("Idle", m_InstanceDataVector[1]->GetAnimationInstancing()->GetAnimation()->m_Animation["Idle"].m_fLength);
 	pAnimationController->Play("Idle");
 	m_ObjectsVector.push_back(make_pair(_IndexOfInstanceDataVector, pObject));
+
+	return pObject;
 }
 
 ID3D11Buffer *CInstancingShader::CreateInstanceBuffer(ID3D11Device *pd3dDevice, int nObjects, UINT nBufferStride)

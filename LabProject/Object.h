@@ -227,6 +227,7 @@ public:
 	void Rotate(float x, float y, float z);
 
 	D3DXVECTOR3 GetPosition() { return(D3DXVECTOR3(m_pPxCharacterController->getPosition().x, m_pPxCharacterController->getPosition().y, m_pPxCharacterController->getPosition().z)); }
+	D3DXVECTOR3 GetRotation() { return D3DXVECTOR3(m_d3dxvRotation.x,0,0); }
 	void SetPosition(D3DXVECTOR3 d3dxvPosition);
 
 	D3DXVECTOR3 GetLookVector() { return(m_d3dxvLook); }
@@ -248,6 +249,7 @@ protected:
 	D3DXVECTOR3					m_d3dxvUp;
 	D3DXVECTOR3					m_d3dxvLook;
 
+
 	float           			m_fPitch;
 	float           			m_fYaw;
 	float           			m_fRoll;
@@ -255,4 +257,5 @@ protected:
 	CCamera						*m_pCamera;
 
 	D3DXVECTOR3					m_d3dxvPosition;
+	D3DXVECTOR3					m_d3dxvRotation;
 };

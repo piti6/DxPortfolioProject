@@ -99,10 +99,9 @@ private:
 
 	/////////////// Network ///////////////
 
-	HANDLE							m_hTCPThread;
 	HANDLE							m_hUDPThread;
 	CNetworkClient					*m_pNetworkClient;
-
+	CRITICAL_SECTION				cs;
 	/////////////// Physx SDK Member Variables ///////////////
 
 	PxPhysics						*m_pPxPhysicsSDK;

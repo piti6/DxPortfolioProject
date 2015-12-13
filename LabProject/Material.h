@@ -14,7 +14,7 @@ public:
 	CMaterial(D3DXCOLOR _d3dxcAmbient, D3DXCOLOR _d3dxcDiffuse, D3DXCOLOR _d3dxcSpecular, D3DXCOLOR _d3dxcEmissive);
 	virtual ~CMaterial();
 
-	
+
 	void AddRef();
 	void Release();
 

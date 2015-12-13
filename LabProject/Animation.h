@@ -10,7 +10,7 @@ public:
 	vector<D3DXMATRIX>			m_vBoneList;
 };
 
-class CAnimationDataContainer					
+class CAnimationDataContainer
 {
 public:
 	CAnimationDataContainer(){}
@@ -22,7 +22,7 @@ public:
 class CAnimation
 {
 public:
-	CAnimation(bool _isLooping=false){m_bIsLooping = _isLooping;}
+	CAnimation(bool _isLooping = false){ m_bIsLooping = _isLooping; }
 	~CAnimation(){}
 
 	CAnimationDataContainer		m_vAnimation;
@@ -36,7 +36,7 @@ public:
 	CAnimationList(){}
 	~CAnimationList(){}
 
-	unordered_map<string,CAnimation>				  m_Animation;
+	unordered_map<string, CAnimation>				  m_Animation;
 };
 
 

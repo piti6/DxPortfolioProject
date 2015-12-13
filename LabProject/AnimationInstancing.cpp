@@ -189,15 +189,10 @@ D3DXMATRIX CAnimationInstancing::GetClusterMatrix(FbxAMatrix & pGlobalPosition, 
 	return GetD3DMatrix(ClusterMatrix);
 }
 
-
-/*
-This creates and populates a texture that contains all the animation data for all frames of all m_animations.
-*/
 void CAnimationInstancing::CreateAnimationTexture(ID3D11Device* pd3dDevice)
 {
 	if (!m_vAnimationList.m_Animation.size()) return;
 
-	// Loop through all m_animations and find the total size of all m_animations in bones
 	int nTotalBones = 0;
 	for (auto currentAnimation = m_vAnimationList.m_Animation.begin(); currentAnimation != m_vAnimationList.m_Animation.end(); ++currentAnimation)
 	{
@@ -207,23 +202,19 @@ void CAnimationInstancing::CreateAnimationTexture(ID3D11Device* pd3dDevice)
 
 	UINT texelsPerBone = 4;
 
-	UINT pixelCount = nTotalBones * texelsPerBone;    // rowsPerBone lines per matrix, since no projection
+	UINT pixelCount = nTotalBones * texelsPerBone;
 	UINT texWidth = 0;
 	UINT texHeight = 0;
 
-	// This basically fits the animation into a roughly square texture where the 
-	//      width is a multiple of rowsPerBone(our size requirement for matrix storage)
-	//      AND both dimensions are power of 2 since it seems to fail without this...
-	texWidth = (int)sqrt((float)pixelCount) + 1;    // gives us a starting point
+	texWidth = (int)sqrt((float)pixelCount) + 1;
 	texHeight = 1;
 	while (texHeight < texWidth)
 		texHeight = texHeight << 1;
 	texWidth = texHeight;
 	m_TextureWidth = texWidth;
+
 	D3D11_TEXTURE2D_DESC desc;
 	ZeroMemory(&desc, sizeof(D3D11_TEXTURE2D_DESC));
-
-	// Create our texture
 	desc.MipLevels = 1;
 	desc.Usage = D3D11_USAGE_IMMUTABLE;
 	desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
@@ -235,10 +226,9 @@ void CAnimationInstancing::CreateAnimationTexture(ID3D11Device* pd3dDevice)
 	desc.Height = texHeight;
 	desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
 
-	// Make a offline buffer that is the full size of the texture
 	UINT bufferSize = texHeight*texWidth*sizeof(D3DXVECTOR4);
 	D3DXVECTOR4 *pData = new D3DXVECTOR4[desc.Width*desc.Height];
-	memset((void*)pData, 0, bufferSize);    // clear it
+	memset((void*)pData, 0, bufferSize);
 
 	int nData = 0;
 	for (auto currentAnimation = m_vAnimationList.m_Animation.begin(); currentAnimation != m_vAnimationList.m_Animation.end(); ++currentAnimation)
@@ -289,10 +279,8 @@ int CAnimationInstancing::GetIndexAtCurrentTime(string AnimationName, float fCur
 	{
 		return pAnimation->m_vAnimation.m_vBoneContainer.size() - 1;
 	}
-	// get a [0.f ... 1.f) value by allowing the percent to wrap around 1
 	float percent = fCurrentTime / pAnimation->m_fLength;
 	int percentINT = (int)percent;
-	//percent = percent - (float)percentINT;
 	return (int)((float)pAnimation->m_vAnimation.m_vBoneContainer.size() * percent);
 }
 
@@ -309,7 +297,7 @@ UINT CAnimationInstancing::GetAnimationOffset(string AnimationName)
 		CAnimationDataContainer *pAnimationData = &currentAnimation->second.m_vAnimation;
 		bonesOffset += pAnimationData->m_vBoneContainer.size() * pAnimationData->m_vBoneContainer[0].m_vBoneList.size();
 	}
-	return bonesOffset * 4;    // 4 pixels per bone
+	return bonesOffset * 4;
 }
 
 UINT CAnimationInstancing::GetFrameOffset(string AnimationName, float fCurrentTime)
@@ -320,7 +308,6 @@ UINT CAnimationInstancing::GetFrameOffset(string AnimationName, float fCurrentTi
 		return -1;
 	}
 	int frameOffset;
-	// this is offset in elements, so # bones * frame index
 	UINT texelsPerBone = 4;
 	frameOffset = texelsPerBone*m_vAnimationList.m_Animation[AnimationName].m_vAnimation.m_vBoneContainer[0].m_vBoneList.size() * GetIndexAtCurrentTime(AnimationName, fCurrentTime);
 	return frameOffset;

@@ -1,4 +1,4 @@
-//------------------------------------------------------- ----------------------
+﻿//------------------------------------------------------- ----------------------
 // File: Mesh.h
 //-----------------------------------------------------------------------------
 
@@ -9,7 +9,7 @@
 #include "Animation.h"
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
-//
+//基本的なメッシュです。
 class CMesh
 {
 public:
@@ -20,7 +20,7 @@ public:
 	void Release();
 
 	virtual void SetRasterizerState(ID3D11Device *pd3dDevice);
-	virtual void Render(ID3D11DeviceContext *pd3dImmediateDeviceContext);
+	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext);
 	virtual void RenderInstanced(ID3D11DeviceContext *pd3dDeviceContext, int nInstances, int nStartInstance);
 	virtual void AppendVertexBuffer(int nBuffers, ID3D11Buffer **pd3dBuffer, UINT *nStride, UINT *nOffset);
 
@@ -51,7 +51,7 @@ protected:
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
-//
+//テクスチャを持っているメッシュです。
 class CMeshTextured : public CMesh
 {
 public:
@@ -63,22 +63,22 @@ protected:
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
-//
+//ライティングの影響を受けるメッシュです。
 class CMeshIlluminated : public CMesh
 {
 public:
 	CMeshIlluminated(ID3D11Device *pd3dDevice);
 	virtual ~CMeshIlluminated();
-	//������ ���Ե� �ﰢ���� �������͸� ����ϴ� �Լ��̴�.
+	//頂点が含まれている三角形の法線ベクトルを計算する関数
 	D3DXVECTOR3 CalculateTriAngleNormal(BYTE *pVertices, UINT nIndex0, UINT nIndex1, UINT nIndex2);
 	void SetTriAngleListVertexNormal(BYTE *pVertices);
-	//������ ���������� ����� ����ϴ� �Լ��̴�.
+	//頂点の法線ベクトルの平均を計算する関数
 	void SetAverageVertexNormal(BYTE *pVertices, UINT *pIndices, int nPrimitives, int nOffset, bool bStrip);
 	void CalculateVertexNormal(BYTE *pVertices, UINT *pIndices);
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
-//
+//ライティングの影響を受けるキューブメッシュです。
 class CCubeMeshIlluminated : public CMeshIlluminated
 {
 public:
@@ -87,7 +87,7 @@ public:
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
-//
+//テクスチャを持っており、ライティングの影響も受けるキューブメッシュです。
 class CCubeMeshIlluminatedTextured : public CMeshIlluminated
 {
 public:
@@ -96,7 +96,7 @@ public:
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
-//
+//スカイボックスメッシュです。
 class CSkyBoxMesh : public CMeshTextured
 {
 public:
@@ -105,7 +105,7 @@ public:
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
-//
+//ハイトマップです。（未使用）
 
 class CHeightMap
 {
@@ -150,7 +150,7 @@ private:
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
-//
+//テクスチャを持っており、光の影響を受けるFBXモデルのメッシュです。
 
 class CFbxMeshIlluminatedTextured : public CMesh
 {
@@ -164,7 +164,7 @@ public:
 	void SetBoneAtVertices(FbxNode *pNode, unordered_map<int, vector<pair<UINT, float>>> *pClusterIndexVector, vector<string> *pBoneName);
 	void SetVertices(FbxNode *pNode, vector<CBoneWeightVertex> *pVertexVector, unordered_map<int, vector<pair<UINT, float>>> *pClusterIndexVector);
 
-	bool						m_bHasAnimation;
+	
 private:
-
+	bool						m_bHasAnimation;
 };

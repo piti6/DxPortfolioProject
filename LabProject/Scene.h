@@ -12,22 +12,9 @@
 
 class CScene
 {
-private:
-	CShader										**m_ppShaders;
-	int											m_nShaders;
-
-	CInstancingShader							*m_pInstancingShader;
-	
-	LIGHTS										*m_pLights;
-	ID3D11Buffer								*m_pd3dcbLights;
-
-	PxPhysics									*m_pPxPhysicsSDK;
-	PxScene										*m_pPxScene;
-
-	CPlayer										**m_ppPlayers;
 public:
-    CScene(PxPhysics *pPxPhysicsSDK, PxScene *pPxScene, CPlayer **ppPlayers);
-    ~CScene();
+	CScene(PxPhysics *pPxPhysicsSDK, PxScene *pPxScene, CPlayer *pPlayer);
+	~CScene();
 
 	bool OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
 	bool OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
@@ -38,13 +25,25 @@ public:
 	void ReleaseObjects();
 
 	bool ProcessInput();
-    void AnimateObjects(float fTimeElapsed,PxScene *pPxScene);
+	void AnimateObjects(float fTimeElapsed, PxScene *pPxScene);
 
-	void Render(ID3D11DeviceContext	*pD3DImmediateDeviceContext, int nThreadID, CCamera *pCamera);
-	
+	void Render(ID3D11DeviceContext	*pd3dDeviceContext, int nThreadID, CCamera *pCamera);
 
 	void BuildLights(ID3D11Device *pd3dDevice);
 	void UpdateLights(ID3D11DeviceContext *pd3dDeviceContext);
 	void ReleaseLights();
 
+	CInstancingShader* GetInstancingShader(){ return m_pInstancingShader; }
+
+private:
+	CInstancingShader							*m_pInstancingShader;
+	CShader										**m_ppShaders;
+	CPlayer										*m_pPlayer;
+	int											m_nShaders;
+
+	LIGHTS										*m_pLights;
+	ID3D11Buffer								*m_pd3dcbLights;
+
+	PxPhysics									*m_pPxPhysicsSDK;
+	PxScene										*m_pPxScene;
 };

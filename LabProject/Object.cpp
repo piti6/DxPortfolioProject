@@ -82,13 +82,13 @@ void CGameObject::Animate(float fTimeElapsed, PxScene *pPxScene)
 	//cout << fTimeElapsed << endl;
 }
 
-void CGameObject::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext)
+void CGameObject::Render(ID3D11DeviceContext *pd3dDeviceContext)
 {
 	for (int i = 0; i < m_MeshesVector.size(); ++i)
-		if (m_MeshesVector[i]) m_MeshesVector[i]->Render(pd3dImmediateDeviceContext);
+		if (m_MeshesVector[i]) m_MeshesVector[i]->Render(pd3dDeviceContext);
 }
 
-void CGameObject::UpdateAnimation(ID3D11DeviceContext *pd3dImmediateDeviceContext){
+void CGameObject::UpdateAnimation(ID3D11DeviceContext *pd3dDeviceContext){
 
 }
 
@@ -200,7 +200,7 @@ void CStaticObject::BuildObjects(PxPhysics *pPxPhysics, PxScene *pPxScene, PxMat
 	D3DXVECTOR3 _d3dxvBoundMaximum = m_MeshesVector[0]->GetBoundingCube().GetMaximum();
 	D3DXVECTOR3 _d3dxvExtents =
 		D3DXVECTOR3((abs(_d3dxvBoundMinimum.x) + abs(_d3dxvBoundMaximum.x)) / 2, (abs(_d3dxvBoundMinimum.y) + abs(_d3dxvBoundMaximum.y)) / 2, (abs(_d3dxvBoundMinimum.z) + abs(_d3dxvBoundMaximum.z)) / 2);
-	PxTransform _PxTransform(0,0,0);
+	PxTransform _PxTransform(0, 0, 0);
 	PxBoxGeometry _PxBoxGeometry(_d3dxvExtents.x, _d3dxvExtents.y, _d3dxvExtents.z);
 	m_pPxActor = PxCreateStatic(*pPxPhysics, _PxTransform, _PxBoxGeometry, *m_pPxMaterial);
 	m_pPxActor->setName(name);
@@ -250,7 +250,7 @@ void CDynamicObject::Animate(float fTimeElapsed, PxScene *pPxScene)
 	PxTransform pT = m_pPxActor->getGlobalPose();
 	PxMat44 m = PxMat44(pT);
 	PxVec3 RotatedOffset = m.rotate(PxVec3(m_d3dxvOffset.x, m_d3dxvOffset.y, m_d3dxvOffset.z));
-	m.setPosition(PxVec3(m.getPosition()+RotatedOffset));
+	m.setPosition(PxVec3(m.getPosition() + RotatedOffset));
 	m_d3dxmtxWorld = D3DXMATRIX(m.front());
 }
 
@@ -268,8 +268,8 @@ void CDynamicObject::Rotate(float fPitch, float fYaw, float fRoll)
 {
 
 	PxTransform _PxTransform = m_pPxActor->getGlobalPose();
-	
-	_PxTransform.q *= PxQuat(D3DXToDegree(fPitch), PxVec3(1,0,0));
+
+	_PxTransform.q *= PxQuat(D3DXToDegree(fPitch), PxVec3(1, 0, 0));
 	m_pPxActor->setGlobalPose(_PxTransform);
 }
 
@@ -306,7 +306,7 @@ CCharacterObject::~CCharacterObject()
 void CCharacterObject::BuildObjects(PxPhysics *pPxPhysics, PxScene *pPxScene, PxMaterial *pPxMaterial, PxControllerManager *pPxControllerManager)
 {
 
-	
+
 	D3DXVECTOR3 _d3dxvBoundMinimum = m_MeshesVector[0]->GetBoundingCube().GetMinimum();
 	D3DXVECTOR3 _d3dxvBoundMaximum = m_MeshesVector[0]->GetBoundingCube().GetMaximum();
 	D3DXVECTOR3 _d3dxvExtents =
@@ -327,10 +327,11 @@ void CCharacterObject::Animate(float fTimeElapsed, PxScene *pPxScene)
 {
 	if (m_bHasAnimation)
 		m_AnimationController.UpdateTime(fTimeElapsed);
-	m_pPxCharacterController->move(PxVec3(0, - 9.8f, 0) * fTimeElapsed, 0, fTimeElapsed, PxControllerFilters());
-	PxMat44 m = PxMat44(PxIdentity);
-	m.setPosition(PxVec3(m_pPxCharacterController->getFootPosition().x, m_pPxCharacterController->getFootPosition().y, m_pPxCharacterController->getFootPosition().z));
-	m_d3dxmtxWorld = m_d3dxmtxRotateOffset * m_d3dxmtxRotate * D3DXMATRIX(m.front());
+	m_pPxCharacterController->move(PxVec3(0, -9.8f, 0) * fTimeElapsed, 0, fTimeElapsed, PxControllerFilters());
+	
+	D3DXMATRIX d3dxmtxTranslation;
+	D3DXMatrixTranslation(&d3dxmtxTranslation, m_pPxCharacterController->getFootPosition().x, m_pPxCharacterController->getFootPosition().y, m_pPxCharacterController->getFootPosition().z);
+	m_d3dxmtxWorld = m_d3dxmtxRotateOffset * m_d3dxmtxRotate * d3dxmtxTranslation;
 }
 
 void CCharacterObject::SetPosition(D3DXVECTOR3 d3dxvPosition)
@@ -416,10 +417,16 @@ void CCharacterObject::SetActive(bool isActive)
 	m_bIsActive = isActive;
 	/*
 	if (m_bIsActive)
-		m_pPxCharacterController->;
+	m_pPxCharacterController->;
 	else
-		m_pPxActor->putToSleep();
-		*/
+	m_pPxActor->putToSleep();
+	*/
+}
+
+void CCharacterObject::SetRotation(D3DXVECTOR3 d3dxvRotation){
+	D3DXMATRIX mtxRotate;
+	D3DXMatrixRotationYawPitchRoll(&mtxRotate, (float)D3DXToRadian(d3dxvRotation.x), (float)D3DXToRadian(d3dxvRotation.y), (float)D3DXToRadian(d3dxvRotation.z));
+	m_d3dxmtxRotate = mtxRotate;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -485,11 +492,11 @@ CPlayer::CPlayer() : CCharacterObject(true)
 	m_d3dxvRight = D3DXVECTOR3(1.0f, 0.0f, 0.0f);
 	m_d3dxvUp = D3DXVECTOR3(0.0f, 1.0f, 0.0f);
 	m_d3dxvLook = D3DXVECTOR3(0.0f, 0.0f, 1.0f);
-	
+
 	m_fPitch = 0.0f;
 	m_fRoll = 0.0f;
 	m_fYaw = 0.0f;
-	
+
 }
 
 CPlayer::~CPlayer()
@@ -501,18 +508,18 @@ void CPlayer::CreateShaderVariables(ID3D11Device *pd3dDevice)
 {
 }
 
-void CPlayer::UpdateShaderVariables(ID3D11DeviceContext *pd3dImmediateDeviceContext)
+void CPlayer::UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext)
 {
-	if (m_pCamera) m_pCamera->UpdateShaderVariables(pd3dImmediateDeviceContext);
+	if (m_pCamera) m_pCamera->UpdateShaderVariables(pd3dDeviceContext);
 }
 
 /*
 void CPlayer::RegenerateWorldMatrix()
 {
-	m_d3dxmtxWorld._11 = m_d3dxvRight.x; m_d3dxmtxWorld._12 = m_d3dxvRight.y; m_d3dxmtxWorld._13 = m_d3dxvRight.z;
-	m_d3dxmtxWorld._21 = m_d3dxvUp.x; m_d3dxmtxWorld._22 = m_d3dxvUp.y; m_d3dxmtxWorld._23 = m_d3dxvUp.z;
-	m_d3dxmtxWorld._31 = m_d3dxvLook.x; m_d3dxmtxWorld._32 = m_d3dxvLook.y; m_d3dxmtxWorld._33 = m_d3dxvLook.z;
-	m_d3dxmtxWorld._41 = m_d3dxvPosition.x; m_d3dxmtxWorld._42 = m_d3dxvPosition.y; m_d3dxmtxWorld._43 = m_d3dxvPosition.z;
+m_d3dxmtxWorld._11 = m_d3dxvRight.x; m_d3dxmtxWorld._12 = m_d3dxvRight.y; m_d3dxmtxWorld._13 = m_d3dxvRight.z;
+m_d3dxmtxWorld._21 = m_d3dxvUp.x; m_d3dxmtxWorld._22 = m_d3dxvUp.y; m_d3dxmtxWorld._23 = m_d3dxvUp.z;
+m_d3dxmtxWorld._31 = m_d3dxvLook.x; m_d3dxmtxWorld._32 = m_d3dxvLook.y; m_d3dxmtxWorld._33 = m_d3dxvLook.z;
+m_d3dxmtxWorld._41 = m_d3dxvPosition.x; m_d3dxmtxWorld._42 = m_d3dxvPosition.y; m_d3dxmtxWorld._43 = m_d3dxvPosition.z;
 }
 */
 void CPlayer::Move(DWORD dwDirection, float fDistance, float fTimeElapsed)
@@ -548,41 +555,41 @@ void CPlayer::Rotate(float x, float y, float z)
 {
 	D3DXMATRIX mtxRotate;
 
-		if (x != 0.0f)
-		{
-			m_fPitch += x;
-			if (m_fPitch > +60.0f) { x -= (m_fPitch - 60.0f); m_fPitch = +60.0f; }
-			if (m_fPitch < -30.0f) { x -= (m_fPitch + 30.0f); m_fPitch = -30.0f; }
-		}
-		if (y != 0.0f)
-		{
-			m_fYaw += y;
-			if (m_fYaw > 360.0f) m_fYaw -= 360.0f;
-			if (m_fYaw < 0.0f) m_fYaw += 360.0f;
-		}
-		if (z != 0.0f)
-		{
-			m_fRoll += z;
-			if (m_fRoll > +20.0f) { z -= (m_fRoll - 20.0f); m_fRoll = +20.0f; }
-			if (m_fRoll < -20.0f) { z -= (m_fRoll + 20.0f); m_fRoll = -20.0f; }
-		}
-		m_pCamera->Rotate(x, y, z);
-		
-		if (y != 0.0f)
-		{
-			D3DXMatrixRotationAxis(&mtxRotate, &m_d3dxvUp, (float)D3DXToRadian(y));
-			D3DXVec3TransformNormal(&m_d3dxvLook, &m_d3dxvLook, &mtxRotate);
-			D3DXVec3TransformNormal(&m_d3dxvRight, &m_d3dxvRight, &mtxRotate);
-		}
-		
-		D3DXVec3Normalize(&m_d3dxvLook, &m_d3dxvLook);
-		D3DXVec3Cross(&m_d3dxvRight, &m_d3dxvUp, &m_d3dxvLook);
-		D3DXVec3Normalize(&m_d3dxvRight, &m_d3dxvRight);
-		D3DXVec3Cross(&m_d3dxvUp, &m_d3dxvLook, &m_d3dxvRight);
-		D3DXVec3Normalize(&m_d3dxvUp, &m_d3dxvUp);
-		
-		D3DXMatrixRotationYawPitchRoll(&mtxRotate, (float)D3DXToRadian(y), 0, 0);
-		m_d3dxmtxRotate = mtxRotate * m_d3dxmtxRotate;
+	if (x != 0.0f)
+	{
+		m_fPitch += x;
+		if (m_fPitch > +60.0f) { x -= (m_fPitch - 60.0f); m_fPitch = +60.0f; }
+		if (m_fPitch < -30.0f) { x -= (m_fPitch + 30.0f); m_fPitch = -30.0f; }
+	}
+	if (y != 0.0f)
+	{
+		m_fYaw += y;
+		if (m_fYaw > 360.0f) m_fYaw -= 360.0f;
+		if (m_fYaw < 0.0f) m_fYaw += 360.0f;
+	}
+	if (z != 0.0f)
+	{
+		m_fRoll += z;
+		if (m_fRoll > +20.0f) { z -= (m_fRoll - 20.0f); m_fRoll = +20.0f; }
+		if (m_fRoll < -20.0f) { z -= (m_fRoll + 20.0f); m_fRoll = -20.0f; }
+	}
+	m_pCamera->Rotate(x, y, z);
+
+	if (y != 0.0f)
+	{
+		D3DXMatrixRotationAxis(&mtxRotate, &m_d3dxvUp, (float)D3DXToRadian(y));
+		D3DXVec3TransformNormal(&m_d3dxvLook, &m_d3dxvLook, &mtxRotate);
+		D3DXVec3TransformNormal(&m_d3dxvRight, &m_d3dxvRight, &mtxRotate);
+	}
+
+	D3DXVec3Normalize(&m_d3dxvLook, &m_d3dxvLook);
+	D3DXVec3Cross(&m_d3dxvRight, &m_d3dxvUp, &m_d3dxvLook);
+	D3DXVec3Normalize(&m_d3dxvRight, &m_d3dxvRight);
+	D3DXVec3Cross(&m_d3dxvUp, &m_d3dxvLook, &m_d3dxvRight);
+	D3DXVec3Normalize(&m_d3dxvUp, &m_d3dxvUp);
+
+	D3DXMatrixRotationYawPitchRoll(&mtxRotate, (float)D3DXToRadian(y), 0, 0);
+	m_d3dxmtxRotate = mtxRotate * m_d3dxmtxRotate;
 }
 
 void CPlayer::Update(float fTimeElapsed)
@@ -668,7 +675,7 @@ void CPlayer::Animate(float fTimeElapsed, PxScene *pPxScene)
 	if (m_pCamera)
 		if (m_pCamera->GetMode() == FIRST_PERSON_CAMERA){
 			PxExtendedVec3 pxvPos = m_pPxCharacterController->getPosition();
-			D3DXVECTOR3 d3dxvPosition = D3DXVECTOR3(pxvPos.x, pxvPos.y+2, pxvPos.z);
+			D3DXVECTOR3 d3dxvPosition = D3DXVECTOR3(pxvPos.x, pxvPos.y + 2, pxvPos.z);
 			m_pCamera->SetPosition(d3dxvPosition);
 		}
 }

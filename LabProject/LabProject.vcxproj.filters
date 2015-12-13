@@ -43,6 +43,12 @@
     <Filter Include="소스 파일\FBX\Animation">
       <UniqueIdentifier>{0e398302-b709-4caa-99a7-8c02473a6fbc}</UniqueIdentifier>
     </Filter>
+    <Filter Include="헤더 파일\Network">
+      <UniqueIdentifier>{140e98d2-1b01-4a1e-8def-5c5e56e2a475}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\Network">
+      <UniqueIdentifier>{e87e9d34-d8a3-4136-a3d0-6bfe288e74b8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />
@@ -115,6 +121,9 @@
     <ClInclude Include="AnimationInstancing.h">
       <Filter>헤더 파일\FBX\Animation</Filter>
     </ClInclude>
+    <ClInclude Include="NetworkClient.h">
+      <Filter>헤더 파일\Network</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Mesh.cpp">
@@ -164,6 +173,9 @@
     </ClCompile>
     <ClCompile Include="Shader.cpp">
       <Filter>소스 파일\DX11</Filter>
+    </ClCompile>
+    <ClCompile Include="NetworkClient.cpp">
+      <Filter>소스 파일\Network</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

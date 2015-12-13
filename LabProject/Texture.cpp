@@ -13,13 +13,13 @@ CTexture::CTexture(int nTextures)
 
 CTexture::~CTexture()
 {
-	if (m_ppd3dsrvTextures) delete [] m_ppd3dsrvTextures;
-	if (m_ppd3dSamplerStates) delete [] m_ppd3dSamplerStates;
+	if (m_ppd3dsrvTextures) delete[] m_ppd3dsrvTextures;
+	if (m_ppd3dSamplerStates) delete[] m_ppd3dSamplerStates;
 }
 
-void CTexture::AddRef() 
-{ 
-	m_nReferences++; 
+void CTexture::AddRef()
+{
+	m_nReferences++;
 }
 
 void CTexture::Release()

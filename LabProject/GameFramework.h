@@ -2,8 +2,10 @@
 
 #include "Timer.h"
 #include "Scene.h"
+#include "NetworkClient.h"
 
-struct RENDERINGTHREADINFO{
+struct RENDERINGTHREADINFO
+{
 	int m_nRenderingThreadID;
 	HANDLE m_hRenderingThread;
 	HANDLE m_hRenderingBeginEvent;
@@ -26,51 +28,61 @@ public:
 	bool OnCreate(HINSTANCE hInstance, HWND hMainWnd);
 	void OnDestroy();
 
-/*						Input Callbacks					*/
+	/////////////// Input Callbacks ///////////////
 
 	void OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
 	void OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
 	LRESULT CALLBACK OnProcessingWindowMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
 
-/*						DirectX SDK Member Function					*/
+	/////////////// DirectX SDK Member Function ///////////////
 
 	bool CreateRenderTargetDepthStencilView();
 	bool CreateDirect3DDisplay();
-    
-    void BuildObjects();
-    void ReleaseObjects();
 
-    void ProcessInput();
-    void AnimateObjects();
-    void FrameAdvance();
+	void BuildObjects();
+	void ReleaseObjects();
+
+	void ProcessInput();
+	void AnimateObjects();
+	void FrameAdvance();
 
 	void InitializeWorkerThreads();
 
-/*						Physx SDK Member Function					*/
+	/////////////// Physx SDK Member Function ///////////////
 
 	void InitializePhysxEngine();
 	void ShutDownPhysxEngine();
 
-/*						FBX SDK Member Function					*/
+	/////////////// FBX SDK Member Function ///////////////
 
 	void InitializeFbxManager();
 	void ShutDownFbxManager();
 
+	/////////////// Network Function ///////////////
 
-private:  
+	void InitializeNetworkState();
+	void ReleaseNetworkState();
 
-/*						Windows Member Variables					*/
+	static UINT WINAPI ThreadProcTCP(LPVOID arg);
+	static UINT WINAPI ThreadProcUDP(LPVOID arg);
+	UINT ThreadProcTCP(CGameFramework* _GameFramework);   // 角力 贸府 窃荐
+	UINT ThreadProcUDP(CGameFramework* _GameFramework);   // 角力 贸府 窃荐
+
+private:
+
+	/////////////// Windows Member Variables ///////////////
+
 	HINSTANCE						m_hInstance;
-	HWND							m_hWnd; 
+	HWND							m_hWnd;
 	HMENU							m_hMenu;
 
 	int								m_nWndClientWidth;
 	int								m_nWndClientHeight;
-        
-	POINT							m_ptOldCursorPos;    
+
+	POINT							m_ptOldCursorPos;
 	_TCHAR							m_pszBuffer[50];
 
-/*						DirectX SDK Member Variables					*/
+	/////////////// DirectX SDK Member Variables ///////////////
 
 	ID3D11Device					*m_pd3dDevice;
 	IDXGISwapChain					*m_pDXGISwapChain;
@@ -79,12 +91,19 @@ private:
 	ID3D11DepthStencilView			*m_pd3dDepthStencilView;
 	ID3D11DeviceContext				*m_pd3dImmediateDeviceContext;
 
-/*						Threading					*/
+	/////////////// Threading ///////////////
+
 	int								m_nRenderThreads;
 	RENDERINGTHREADINFO				*m_pRenderingThreadInfo;
 	HANDLE							*m_hRenderingEndEvents;
 
-/*						Physx SDK Member Variables					*/
+	/////////////// Network ///////////////
+
+	HANDLE							m_hTCPThread;
+	HANDLE							m_hUDPThread;
+	CNetworkClient					*m_pNetworkClient;
+
+	/////////////// Physx SDK Member Variables ///////////////
 
 	PxPhysics						*m_pPxPhysicsSDK;
 	PxDefaultErrorCallback			m_PxDefaultErrorCallback;
@@ -94,15 +113,14 @@ private:
 	PxVisualDebuggerConnection		*m_pPVDConnection;
 	PxControllerManager				*m_pPxControllerManager;
 
-/*						FBX SDK Member Variables					*/
+	/////////////// FBX SDK Member Variables ///////////////
 
 	FbxManager						*m_pFbxSdkManager;
 
-/*						User Defined Member Variables					*/
+	/////////////// User Defined Member Variables ///////////////
 
-	CGameTimer						m_GameTimer;
-	CScene							*m_pScene;
-    CPlayer							**m_ppPlayers; 
-
-	int								m_nPlayers;
+	CGameTimer								m_GameTimer;
+	CScene									*m_pScene;
+	CPlayer									*m_pPlayer;
+	vector<pair<string, CCharacterObject*>>	m_vPlayers;
 };

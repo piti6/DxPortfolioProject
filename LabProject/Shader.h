@@ -30,10 +30,10 @@ public:
 	virtual void CreateShader(ID3D11Device *pd3dDevice);
 	virtual void CreateShaderVariables(ID3D11Device *pd3dDevice);
 	virtual void UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext, MATERIAL *pMaterial=NULL);
-	virtual void UpdateShaderVariables(ID3D11DeviceContext *pd3dImmediateDeviceContext, D3DXMATRIX *pd3dxmtxWorld);
+	virtual void UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext, D3DXMATRIX *pd3dxmtxWorld);
 	virtual void UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext, CTexture *pTexture);
 	virtual void OnPostRender(ID3D11DeviceContext *pd3dDeviceContext);
-	virtual void Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, int nThreadID, CCamera *pCamera);
+	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, int nThreadID, CCamera *pCamera);
 
 	virtual void AnimateObjects(float fTimeElapsed,PxScene *pPxScene);
 	virtual void BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhysics, PxScene *pPxScene, PxControllerManager *pPxControllerManager, FbxManager *pFbxSdkManager);
@@ -64,12 +64,12 @@ public:
 
 	virtual void CreateShader(ID3D11Device *pd3dDevice);
 	virtual void CreateShaderVariables(ID3D11Device *pd3dDevice);
-	virtual void UpdateShaderVariables(ID3D11DeviceContext *pd3dImmediateDeviceContext, D3DXMATRIX *pd3dxmtxWorld);
+	virtual void UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext, D3DXMATRIX *pd3dxmtxWorld);
 	virtual void UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext, MATERIAL *pMaterial=NULL);
 	virtual void UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext, CTexture *pTexture);
 
 	virtual void BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhysics, PxScene *pPxScene, PxControllerManager *pPxControllerManager, FbxManager *pFbxSdkManager);
-	virtual void Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, int nThreadID, CCamera *pCamera = NULL);
+	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, int nThreadID, CCamera *pCamera = NULL);
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -83,7 +83,7 @@ public:
 	virtual void UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext, CTexture *pTexture);
 	virtual void CreateShader(ID3D11Device *pd3dDevice);
 	virtual void CreateShaderVariables(ID3D11Device *pd3dDevice);
-	virtual void UpdateShaderVariables(ID3D11DeviceContext *pd3dImmediateDeviceContext, D3DXMATRIX *pd3dxmtxWorld);
+	virtual void UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext, D3DXMATRIX *pd3dxmtxWorld);
 	virtual void UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext, MATERIAL *pMaterial=NULL);
 
 };
@@ -100,37 +100,28 @@ public:
 		m_MeshName = _Name;
 		if(m_bHasAnimation){
 			m_pAnimationInstancing = new CAnimationInstancing();
-
 		}
 		else
 			m_pAnimationInstancing = NULL;
 	}
 	~InstanceData(){}
 
+	void Release(){ if (m_pMesh) m_pMesh->Release(); if (m_pd3dInstances) m_pd3dInstances->Release(); if (m_pAnimationInstancing) delete m_pAnimationInstancing; }
+
 	void SetMesh(CMesh* _Mesh){if(m_pMesh) m_pMesh->Release(); m_pMesh = _Mesh;}
+	void SetInstanceBuffer(ID3D11Buffer* _InstanceBuffer){ if (m_pd3dInstances) m_pd3dInstances->Release(); m_pd3dInstances = _InstanceBuffer; }
+
 	CMesh* GetMesh(){return m_pMesh;}
-
-	void SetInstanceBuffer(ID3D11Buffer* _InstanceBuffer){if(m_pd3dInstances) m_pd3dInstances->Release(); m_pd3dInstances = _InstanceBuffer;}
 	ID3D11Buffer* GetInstanceBuffer(){return m_pd3dInstances;}
-
-	void Release(){if(m_pMesh) m_pMesh->Release(); if(m_pd3dInstances) m_pd3dInstances->Release(); if(m_pAnimationInstancing) delete m_pAnimationInstancing;}
-
 	bool GetHasAnimation(){ return m_bHasAnimation; }
-	
 	string GetName(){ return m_MeshName; }
-
 	CAnimationInstancing *GetAnimationInstancing(){ return m_pAnimationInstancing; }
 	
-	
-
 private:
 	bool					m_bHasAnimation;
-
 	string					m_MeshName;
-
 	CMesh					*m_pMesh;
 	ID3D11Buffer			*m_pd3dInstances;
-
 	CAnimationInstancing	*m_pAnimationInstancing;
 };
 
@@ -144,11 +135,12 @@ public:
 	virtual void CreateShaderVariables(ID3D11Device *pd3dDevice);
 
 	virtual void BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhysics, PxScene *pPxScene, PxControllerManager *pPxControllerManager, FbxManager *pFbxSdkManager);
-	virtual void Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, int nThreadID, CCamera *pCamera = NULL);
+	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, int nThreadID, CCamera *pCamera = NULL);
 	
 	ID3D11Buffer* CreateInstanceBuffer(ID3D11Device *pd3dDevice, int nObjects, UINT nBufferStride);
 
 	void AddObject(PxPhysics *pPxPhysics, PxScene *pPxScene, int _IndexOfInstanceDataVector, int _IndexOfMaterial, int _IndexOfTexture, D3DXVECTOR3 _d3dxvPosition, int _isStatic, D3DXVECTOR3 _Force);
+	CCharacterObject* AddCharacter(PxPhysics *pPxPhysics, PxScene *pPxScene, PxControllerManager *pPxControllerManager, int _IndexOfInstanceDataVector, int _IndexOfMaterial, int _IndexOfTexture, D3DXVECTOR3 _d3dxvPosition);
 
 public:
 	//객체의 인스턴스 버퍼이다.
@@ -170,7 +162,7 @@ public:
 	virtual void CreateShader(ID3D11Device *pd3dDevice);
 	virtual void CreateShaderVariables(ID3D11Device *pd3dDevice);
 	virtual void UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext, CTexture *pTexture);
-	virtual void UpdateShaderVariables(ID3D11DeviceContext *pd3dImmediateDeviceContext, D3DXMATRIX *pd3dxmtxWorld);
+	virtual void UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext, D3DXMATRIX *pd3dxmtxWorld);
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -68,13 +68,13 @@ void CShader::CreateShaderVariables(ID3D11Device *pd3dDevice)
 {
 }
 
-void CShader::UpdateShaderVariables(ID3D11DeviceContext *pd3dImmediateDeviceContext, MATERIAL *pMaterial)
+void CShader::UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext, MATERIAL *pMaterial)
 {
 }
 void CShader::UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext, CTexture *pTexture)
 {
 }
-void CShader::UpdateShaderVariables(ID3D11DeviceContext *pd3dImmediateDeviceContext, D3DXMATRIX *pd3dxmtxWorld)
+void CShader::UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext, D3DXMATRIX *pd3dxmtxWorld)
 {
 }
 
@@ -95,7 +95,7 @@ void CShader::OnPostRender(ID3D11DeviceContext *pd3dDeviceContext)
 	pd3dDeviceContext->VSSetShader(m_pd3dVertexShader, NULL, 0);
 	pd3dDeviceContext->PSSetShader(m_pd3dPixelShader, NULL, 0);
 }
-void CShader::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, int nThreadID, CCamera *pCamera)
+void CShader::Render(ID3D11DeviceContext *pd3dDeviceContext, int nThreadID, CCamera *pCamera)
 {
 }
 
@@ -148,8 +148,8 @@ void CTexturedIlluminatedShader::CreateShaderVariables(ID3D11Device *pd3dDevice)
 
 void CTexturedIlluminatedShader::UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext, CTexture *pTexture)
 {
-	pd3dDeviceContext->PSSetShaderResources(PS_SLOT_TEXTURE, pTexture->m_nTextures, pTexture->m_ppd3dsrvTextures);
-	pd3dDeviceContext->PSSetSamplers(PS_SLOT_SAMPLER_STATE, pTexture->m_nTextures, pTexture->m_ppd3dSamplerStates);
+	pd3dDeviceContext->PSSetShaderResources(PS_SLOT_TEXTURE, pTexture->GetNumberOfTexture(), pTexture->GetTextures());
+	pd3dDeviceContext->PSSetSamplers(PS_SLOT_SAMPLER_STATE, pTexture->GetNumberOfTexture(), pTexture->GetSamplerStates());
 }
 void CTexturedIlluminatedShader::UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext, MATERIAL *pMaterial)
 {
@@ -160,24 +160,24 @@ void CTexturedIlluminatedShader::UpdateShaderVariables(ID3D11DeviceContext *pd3d
 	pd3dDeviceContext->Unmap(m_pd3dcbMaterial, 0);
 	pd3dDeviceContext->PSSetConstantBuffers(PS_SLOT_MATERIAL, 1, &m_pd3dcbMaterial);
 }
-void CTexturedIlluminatedShader::UpdateShaderVariables(ID3D11DeviceContext *pd3dImmediateDeviceContext, D3DXMATRIX *pd3dxmtxWorld)
+void CTexturedIlluminatedShader::UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext, D3DXMATRIX *pd3dxmtxWorld)
 {
 	//Update World Matrix Constant Buffer
 	D3D11_MAPPED_SUBRESOURCE d3dMappedResource;
-	pd3dImmediateDeviceContext->Map(m_pd3dcbWorldMatrix, 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
+	pd3dDeviceContext->Map(m_pd3dcbWorldMatrix, 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
 	VS_CB_WORLD_MATRIX *pcbWorldMatrix = (VS_CB_WORLD_MATRIX *)d3dMappedResource.pData;
 	D3DXMatrixTranspose(&pcbWorldMatrix->m_d3dxmtxWorld, pd3dxmtxWorld);
-	pd3dImmediateDeviceContext->Unmap(m_pd3dcbWorldMatrix, 0);
-	pd3dImmediateDeviceContext->VSSetConstantBuffers(VS_SLOT_WORLD_MATRIX, 1, &m_pd3dcbWorldMatrix);
+	pd3dDeviceContext->Unmap(m_pd3dcbWorldMatrix, 0);
+	pd3dDeviceContext->VSSetConstantBuffers(VS_SLOT_WORLD_MATRIX, 1, &m_pd3dcbWorldMatrix);
 }
 
 void CTexturedIlluminatedShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhysics, PxScene *pPxScene, PxControllerManager *pPxControllerManager, FbxManager *pFbxSdkManager){
 
 }
 
-void CTexturedIlluminatedShader::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, int nThreadID, CCamera *pCamera)
+void CTexturedIlluminatedShader::Render(ID3D11DeviceContext *pd3dDeviceContext, int nThreadID, CCamera *pCamera)
 {
-	OnPostRender(pd3dImmediateDeviceContext);
+	OnPostRender(pd3dDeviceContext);
 	//카메라의 절두체에 포함되는 객체들만을 렌더링한다. 
 	bool bIsVisible = false;
 	AABB bcBoundingCube;
@@ -197,11 +197,11 @@ void CTexturedIlluminatedShader::Render(ID3D11DeviceContext *pd3dImmediateDevice
 			{
 
 				if (m_ObjectsVector[i].second->GetTexture())
-					UpdateShaderVariables(pd3dImmediateDeviceContext, m_ObjectsVector[i].second->GetTexture());
+					UpdateShaderVariables(pd3dDeviceContext, m_ObjectsVector[i].second->GetTexture());
 				if (m_ObjectsVector[i].second->GetMaterial())
-					UpdateShaderVariables(pd3dImmediateDeviceContext, &m_ObjectsVector[i].second->GetMaterial()->GetMaterial());
-				UpdateShaderVariables(pd3dImmediateDeviceContext, &m_ObjectsVector[i].second->GetWorldMatrix());
-				m_ObjectsVector[i].second->Render(pd3dImmediateDeviceContext);
+					UpdateShaderVariables(pd3dDeviceContext, &m_ObjectsVector[i].second->GetMaterial()->GetMaterial());
+				UpdateShaderVariables(pd3dDeviceContext, &m_ObjectsVector[i].second->GetWorldMatrix());
+				m_ObjectsVector[i].second->Render(pd3dDeviceContext);
 			}
 		}
 	}
@@ -249,16 +249,17 @@ void CPlayerShader::CreateShaderVariables(ID3D11Device *pd3dDevice)
 	pd3dDevice->CreateBuffer(&d3dBufferDesc, NULL, &m_pd3dcbMaterial);
 }
 
-void CPlayerShader::UpdateShaderVariables(ID3D11DeviceContext *pd3dImmediateDeviceContext, D3DXMATRIX *pd3dxmtxWorld)
+void CPlayerShader::UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext, D3DXMATRIX *pd3dxmtxWorld)
 {
 	//Update World Matrix Constant Buffer
 	D3D11_MAPPED_SUBRESOURCE d3dMappedResource;
-	pd3dImmediateDeviceContext->Map(m_pd3dcbWorldMatrix, 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
+	pd3dDeviceContext->Map(m_pd3dcbWorldMatrix, 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
 	VS_CB_WORLD_MATRIX *pcbWorldMatrix = (VS_CB_WORLD_MATRIX *)d3dMappedResource.pData;
 	D3DXMatrixTranspose(&pcbWorldMatrix->m_d3dxmtxWorld, pd3dxmtxWorld);
-	pd3dImmediateDeviceContext->Unmap(m_pd3dcbWorldMatrix, 0);
-	pd3dImmediateDeviceContext->VSSetConstantBuffers(VS_SLOT_WORLD_MATRIX, 1, &m_pd3dcbWorldMatrix);
+	pd3dDeviceContext->Unmap(m_pd3dcbWorldMatrix, 0);
+	pd3dDeviceContext->VSSetConstantBuffers(VS_SLOT_WORLD_MATRIX, 1, &m_pd3dcbWorldMatrix);
 }
+
 void CPlayerShader::UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext, MATERIAL *pMaterial)
 {
 	D3D11_MAPPED_SUBRESOURCE d3dMappedResource;
@@ -268,10 +269,11 @@ void CPlayerShader::UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext
 	pd3dDeviceContext->Unmap(m_pd3dcbMaterial, 0);
 	pd3dDeviceContext->PSSetConstantBuffers(PS_SLOT_MATERIAL, 1, &m_pd3dcbMaterial);
 }
+
 void CPlayerShader::UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext, CTexture *pTexture)
 {
-	pd3dDeviceContext->PSSetShaderResources(PS_SLOT_TEXTURE, pTexture->m_nTextures, pTexture->m_ppd3dsrvTextures);
-	pd3dDeviceContext->PSSetSamplers(PS_SLOT_SAMPLER_STATE, pTexture->m_nTextures, pTexture->m_ppd3dSamplerStates);
+	pd3dDeviceContext->PSSetShaderResources(PS_SLOT_TEXTURE, pTexture->GetNumberOfTexture(), pTexture->GetTextures());
+	pd3dDeviceContext->PSSetSamplers(PS_SLOT_SAMPLER_STATE, pTexture->GetNumberOfTexture(), pTexture->GetSamplerStates());
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -280,9 +282,11 @@ void CPlayerShader::UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext
 CTexturedShader::CTexturedShader()
 {
 }
+
 CTexturedShader::~CTexturedShader()
 {
 }
+
 void CTexturedShader::CreateShader(ID3D11Device *pd3dDevice)
 {
 	CShader::CreateShader(pd3dDevice);
@@ -296,6 +300,7 @@ void CTexturedShader::CreateShader(ID3D11Device *pd3dDevice)
 	CreateVertexShaderFromFile(pd3dDevice, L"Effect.fx", "VSTexturedColor", "vs_5_0", &m_pd3dVertexShader, d3dInputLayout, nElements, &m_pd3dVertexLayout);
 	CreatePixelShaderFromFile(pd3dDevice, L"Effect.fx", "PSTexturedColor", "ps_5_0", &m_pd3dPixelShader);
 }
+
 void CTexturedShader::CreateShaderVariables(ID3D11Device *pd3dDevice)
 {
 	D3D11_BUFFER_DESC bd;
@@ -309,18 +314,19 @@ void CTexturedShader::CreateShaderVariables(ID3D11Device *pd3dDevice)
 
 void CTexturedShader::UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext, CTexture *pTexture)
 {
-	pd3dDeviceContext->PSSetShaderResources(PS_SLOT_TEXTURE, pTexture->m_nTextures, pTexture->m_ppd3dsrvTextures);
-	pd3dDeviceContext->PSSetSamplers(PS_SLOT_SAMPLER_STATE, pTexture->m_nTextures, pTexture->m_ppd3dSamplerStates);
+	pd3dDeviceContext->PSSetShaderResources(PS_SLOT_TEXTURE, pTexture->GetNumberOfTexture(), pTexture->GetTextures());
+	pd3dDeviceContext->PSSetSamplers(PS_SLOT_SAMPLER_STATE, pTexture->GetNumberOfTexture(), pTexture->GetSamplerStates());
 }
-void CTexturedShader::UpdateShaderVariables(ID3D11DeviceContext *pd3dImmediateDeviceContext, D3DXMATRIX *pd3dxmtxWorld)
+
+void CTexturedShader::UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext, D3DXMATRIX *pd3dxmtxWorld)
 {
 	//Update World Matrix Constant Buffer
 	D3D11_MAPPED_SUBRESOURCE d3dMappedResource;
-	pd3dImmediateDeviceContext->Map(m_pd3dcbWorldMatrix, 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
+	pd3dDeviceContext->Map(m_pd3dcbWorldMatrix, 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
 	VS_CB_WORLD_MATRIX *pcbWorldMatrix = (VS_CB_WORLD_MATRIX *)d3dMappedResource.pData;
 	D3DXMatrixTranspose(&pcbWorldMatrix->m_d3dxmtxWorld, pd3dxmtxWorld);
-	pd3dImmediateDeviceContext->Unmap(m_pd3dcbWorldMatrix, 0);
-	pd3dImmediateDeviceContext->VSSetConstantBuffers(VS_SLOT_WORLD_MATRIX, 1, &m_pd3dcbWorldMatrix);
+	pd3dDeviceContext->Unmap(m_pd3dcbWorldMatrix, 0);
+	pd3dDeviceContext->VSSetConstantBuffers(VS_SLOT_WORLD_MATRIX, 1, &m_pd3dcbWorldMatrix);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -331,6 +337,7 @@ CInstancingShader::CInstancingShader(CPlayer *pPlayer)
 	m_pPlayer = pPlayer;
 	m_pd3dcbAnimationTextureWidth = NULL;
 }
+
 CInstancingShader::~CInstancingShader()
 {
 	for (int i = 0; i < m_InstanceDataVector.size(); ++i)
@@ -360,6 +367,7 @@ void CInstancingShader::CreateShader(ID3D11Device *pd3dDevice)
 	CreateVertexShaderFromFile(pd3dDevice, L"Effect.fx", "VSInstancedTexturedLightingAnimation", "vs_5_0", &m_pd3dVertexShader, d3dInputLayout, nElements, &m_pd3dVertexLayout);
 	CreatePixelShaderFromFile(pd3dDevice, L"Effect.fx", "PSInstancedTexturedLightingAnimation", "ps_5_0", &m_pd3dPixelShader);
 }
+
 void CInstancingShader::CreateShaderVariables(ID3D11Device *pd3dDevice)
 {
 	CTexturedIlluminatedShader::CreateShaderVariables(pd3dDevice);
@@ -475,9 +483,9 @@ void CInstancingShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhy
 	m_InstanceDataVector[1]->GetAnimationInstancing()->CreateAnimationTexture(pd3dDevice);
 
 	CAnimationController *pAnimationController = m_pPlayer->GetAnimationController();
-	pAnimationController->SetAnimationData("Attack", m_InstanceDataVector[1]->GetAnimationInstancing()->m_vAnimationList.m_Animation["Attack"].m_fLength);
-	pAnimationController->SetAnimationData("Run", m_InstanceDataVector[1]->GetAnimationInstancing()->m_vAnimationList.m_Animation["Run"].m_fLength);
-	pAnimationController->SetAnimationData("Idle", m_InstanceDataVector[1]->GetAnimationInstancing()->m_vAnimationList.m_Animation["Idle"].m_fLength);
+	pAnimationController->SetAnimationData("Attack", m_InstanceDataVector[1]->GetAnimationInstancing()->GetAnimation()->m_Animation["Attack"].m_fLength);
+	pAnimationController->SetAnimationData("Run", m_InstanceDataVector[1]->GetAnimationInstancing()->GetAnimation()->m_Animation["Run"].m_fLength);
+	pAnimationController->SetAnimationData("Idle", m_InstanceDataVector[1]->GetAnimationInstancing()->GetAnimation()->m_Animation["Idle"].m_fLength);
 	pAnimationController->Play("Idle");
 	m_pPlayer->SetMesh(m_InstanceDataVector[1]->GetMesh());
 	m_pPlayer->SetMaterial(pMaterial);
@@ -491,16 +499,13 @@ void CInstancingShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhy
 
 	m_ObjectsVector.push_back(make_pair(1, m_pPlayer));
 
-
-
-	/*
 	CDynamicObject *pCharacter = NULL;
-	for (int i = 0; i < 20; ++i){
+	for (int i = 0; i < 2000; ++i){
 		pCharacter = new CDynamicObject(true);
 		CAnimationController *pAnimation = pCharacter->GetAnimationController();
-		pAnimation->SetAnimationData("Attack", m_InstanceDataVector[1]->GetAnimationInstancing()->m_vAnimationList.m_Animation["Attack"].m_fLength);
-		pAnimation->SetAnimationData("Run", m_InstanceDataVector[1]->GetAnimationInstancing()->m_vAnimationList.m_Animation["Run"].m_fLength);
-		pAnimation->SetAnimationData("Idle", m_InstanceDataVector[1]->GetAnimationInstancing()->m_vAnimationList.m_Animation["Idle"].m_fLength);
+		pAnimation->SetAnimationData("Attack", m_InstanceDataVector[1]->GetAnimationInstancing()->GetAnimation()->m_Animation["Attack"].m_fLength);
+		pAnimation->SetAnimationData("Run", m_InstanceDataVector[1]->GetAnimationInstancing()->GetAnimation()->m_Animation["Run"].m_fLength);
+		pAnimation->SetAnimationData("Idle", m_InstanceDataVector[1]->GetAnimationInstancing()->GetAnimation()->m_Animation["Idle"].m_fLength);
 		if (i % 3 == 0)
 			pAnimation->Play("Attack");
 		else if (i % 3 == 1)
@@ -513,10 +518,10 @@ void CInstancingShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhy
 		pCharacter->BuildObjects(pPxPhysics, pPxScene, pPxM);
 		pCharacter->SetOffset(D3DXVECTOR3(0, 0, -1));
 		pCharacter->Rotate(0, i * 20, 0);
-		pCharacter->SetPosition(D3DXVECTOR3(200 + i / 2, 50, 200 + i / 2));
+		pCharacter->SetPosition(D3DXVECTOR3(200, i, 200));
 		m_ObjectsVector.push_back(make_pair(1, pCharacter));
 	}
-	*/
+
 
 	ifstream ifsFbxList;
 	ifsFbxList.open("Data/ImportData/ImportModelName.txt");
@@ -632,7 +637,7 @@ void CInstancingShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhy
 					m_ObjectsVector.push_back(make_pair(i, pMapObject));
 					break;
 				}
-				
+
 			}
 		}
 	}
@@ -693,6 +698,40 @@ void CInstancingShader::AddObject(PxPhysics *pPxPhysics, PxScene *pPxScene, int 
 	}
 }
 
+CCharacterObject* CInstancingShader::AddCharacter(PxPhysics *pPxPhysics, PxScene *pPxScene, PxControllerManager *pPxControllerManager, int _IndexOfInstanceDataVector, int _IndexOfMaterial, int _IndexOfTexture, D3DXVECTOR3 _d3dxvPosition)
+{
+	if (_IndexOfInstanceDataVector >= m_InstanceDataVector.size())
+	{
+		cout << "InstanceDataVector index out of range." << endl;
+		return NULL;
+	}
+	if (_IndexOfMaterial >= m_MaterialsVector.size())
+	{
+		cout << "MaterialsVector index out of range." << endl;
+		return NULL;
+	}
+	if (_IndexOfTexture >= m_TexturesVector.size())
+	{
+		cout << "TexturesVector index out of range." << endl;
+		return NULL;
+	}
+
+	PxMaterial *pPxM = pPxPhysics->createMaterial(0.9, 0.9, 0.001);
+
+	CCharacterObject *pObject = new CCharacterObject();
+	pObject->SetMesh(m_InstanceDataVector[_IndexOfInstanceDataVector]->GetMesh());
+	pObject->SetMaterial(m_MaterialsVector[_IndexOfMaterial]);
+	pObject->SetTexture(m_TexturesVector[_IndexOfTexture]);
+	pObject->BuildObjects(pPxPhysics, pPxScene, pPxM, pPxControllerManager);
+	pObject->SetPosition(_d3dxvPosition);
+	CAnimationController *pAnimationController = pObject->GetAnimationController();
+	pAnimationController->SetAnimationData("Attack", m_InstanceDataVector[1]->GetAnimationInstancing()->GetAnimation()->m_Animation["Attack"].m_fLength);
+	pAnimationController->SetAnimationData("Run", m_InstanceDataVector[1]->GetAnimationInstancing()->GetAnimation()->m_Animation["Run"].m_fLength);
+	pAnimationController->SetAnimationData("Idle", m_InstanceDataVector[1]->GetAnimationInstancing()->GetAnimation()->m_Animation["Idle"].m_fLength);
+	pAnimationController->Play("Idle");
+	m_ObjectsVector.push_back(make_pair(_IndexOfInstanceDataVector, pObject));
+}
+
 ID3D11Buffer *CInstancingShader::CreateInstanceBuffer(ID3D11Device *pd3dDevice, int nObjects, UINT nBufferStride)
 {
 	ID3D11Buffer *pd3dInstanceBuffer = NULL;
@@ -709,25 +748,25 @@ ID3D11Buffer *CInstancingShader::CreateInstanceBuffer(ID3D11Device *pd3dDevice, 
 	return(pd3dInstanceBuffer);
 }
 
-void CInstancingShader::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, int nThreadID, CCamera *pCamera){
-	OnPostRender(pd3dImmediateDeviceContext);
+void CInstancingShader::Render(ID3D11DeviceContext *pd3dDeviceContext, int nThreadID, CCamera *pCamera){
+	OnPostRender(pd3dDeviceContext);
 
 	AABB bcBoundingCube;
 	bool bIsVisible = false;
 	for (int i = 0; i < m_InstanceDataVector.size(); ++i){
 		if (i % MAX_THREAD != nThreadID) continue;
 		if (m_InstanceDataVector[i]->GetHasAnimation() == true){
-			m_InstanceDataVector[i]->GetAnimationInstancing()->UpdateShaderVariables(pd3dImmediateDeviceContext);
+			m_InstanceDataVector[i]->GetAnimationInstancing()->UpdateShaderVariables(pd3dDeviceContext);
 			D3D11_MAPPED_SUBRESOURCE d3dMappedResource;
-			pd3dImmediateDeviceContext->Map(m_pd3dcbAnimationTextureWidth, 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
+			pd3dDeviceContext->Map(m_pd3dcbAnimationTextureWidth, 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
 			ANIM_WIDTH *pd3dxmTexWidth = (ANIM_WIDTH*)d3dMappedResource.pData;
 			pd3dxmTexWidth->WIDTH[0] = m_InstanceDataVector[i]->GetAnimationInstancing()->GetTextureWidth();
-			pd3dImmediateDeviceContext->Unmap(m_pd3dcbAnimationTextureWidth, 0);
-			pd3dImmediateDeviceContext->VSSetConstantBuffers(VS_SLOT_ANIMATION_WIDTH, 1, &m_pd3dcbAnimationTextureWidth);
+			pd3dDeviceContext->Unmap(m_pd3dcbAnimationTextureWidth, 0);
+			pd3dDeviceContext->VSSetConstantBuffers(VS_SLOT_ANIMATION_WIDTH, 1, &m_pd3dcbAnimationTextureWidth);
 		}
 		int nVisibleObjects = 0;
 		D3D11_MAPPED_SUBRESOURCE d3dMappedResource;
-		pd3dImmediateDeviceContext->Map(m_InstanceDataVector[i]->GetInstanceBuffer(), 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
+		pd3dDeviceContext->Map(m_InstanceDataVector[i]->GetInstanceBuffer(), 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
 		InstanceBuffer *pd3dxmInstances = (InstanceBuffer *)d3dMappedResource.pData;
 		CTexture *pLastTexture = NULL;
 		CMaterial *pLastMaterial = NULL;
@@ -745,7 +784,7 @@ void CInstancingShader::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, 
 					{
 						if (m_ObjectsVector[j].second->GetTexture()) {
 							if (m_ObjectsVector[j].second->GetTexture() != pLastTexture){
-								CTexturedIlluminatedShader::UpdateShaderVariables(pd3dImmediateDeviceContext, m_ObjectsVector[j].second->GetTexture());
+								CTexturedIlluminatedShader::UpdateShaderVariables(pd3dDeviceContext, m_ObjectsVector[j].second->GetTexture());
 								pLastTexture = m_ObjectsVector[j].second->GetTexture();
 							}
 						}
@@ -753,7 +792,7 @@ void CInstancingShader::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, 
 						if (m_ObjectsVector[j].second->GetMaterial())
 						{
 							if (m_ObjectsVector[j].second->GetMaterial() != pLastMaterial)
-								CTexturedIlluminatedShader::UpdateShaderVariables(pd3dImmediateDeviceContext, &m_ObjectsVector[j].second->GetMaterial()->GetMaterial());
+								CTexturedIlluminatedShader::UpdateShaderVariables(pd3dDeviceContext, &m_ObjectsVector[j].second->GetMaterial()->GetMaterial());
 							pLastMaterial = m_ObjectsVector[j].second->GetMaterial();
 						}
 						if (m_InstanceDataVector[i]->GetHasAnimation()){
@@ -768,9 +807,9 @@ void CInstancingShader::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext, 
 				}
 			}
 		}
-		pd3dImmediateDeviceContext->Unmap(m_InstanceDataVector[i]->GetInstanceBuffer(), 0);
+		pd3dDeviceContext->Unmap(m_InstanceDataVector[i]->GetInstanceBuffer(), 0);
 		if (nVisibleObjects > 0)
-			m_InstanceDataVector[i]->GetMesh()->RenderInstanced(pd3dImmediateDeviceContext, nVisibleObjects, 0);
+			m_InstanceDataVector[i]->GetMesh()->RenderInstanced(pd3dDeviceContext, nVisibleObjects, 0);
 	}
 }
 

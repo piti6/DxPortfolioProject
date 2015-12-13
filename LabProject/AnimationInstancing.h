@@ -27,12 +27,13 @@ public:
 	UINT GetFrameOffset(string AnimationName, float fCurrentTime);
 	int GetIndexAtCurrentTime(string AnimationName, float fCurrentTime);
 	UINT GetTextureWidth(){ return m_TextureWidth; }
+	CAnimationList* GetAnimation(){ return &m_vAnimationList; }
 
-	CAnimationList				m_vAnimationList;
-public:
+private:
 	ID3D11ShaderResourceView	*m_pd3dAnimationTextureResourceView;
 	ID3D11Texture2D				*m_pd3dAnimationTexture;
 
+	CAnimationList				m_vAnimationList;
 
 	UINT						m_TextureWidth;
 

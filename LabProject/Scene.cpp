@@ -6,7 +6,7 @@
 #include "Scene.h"
 
 
-CScene::CScene(PxPhysics *pPxPhysicsSDK, PxScene *pPxScene,CPlayer **ppPlayers)
+CScene::CScene(PxPhysics *pPxPhysicsSDK, PxScene *pPxScene, CPlayer *pPlayer)
 {
 	m_ppShaders = NULL;
 	m_nShaders = 0;
@@ -15,7 +15,7 @@ CScene::CScene(PxPhysics *pPxPhysicsSDK, PxScene *pPxScene,CPlayer **ppPlayers)
 
 	m_pPxPhysicsSDK = pPxPhysicsSDK;
 	m_pPxScene = pPxScene;
-	m_ppPlayers = ppPlayers;
+	m_pPlayer = pPlayer;
 }
 
 CScene::~CScene()
@@ -50,11 +50,11 @@ bool CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 		switch (wParam)
 		{
 		case 'F':
-			m_pInstancingShader->AddObject(m_pPxPhysicsSDK, m_pPxScene, rand() % 80 + 2, 0, 1, m_ppPlayers[0]->GetPosition() + m_ppPlayers[0]->GetLookAt() * 5, false, m_ppPlayers[0]->GetLookAt() * 100 + m_ppPlayers[0]->GetUp() * 3);
-			m_ppPlayers[0]->GetAnimationController()->Play("Attack");
+			m_pInstancingShader->AddObject(m_pPxPhysicsSDK, m_pPxScene, rand() % 80 + 2, 0, 1, m_pPlayer->GetPosition() + m_pPlayer->GetLookAt() * 5, false, m_pPlayer->GetLookAt() * 100 + m_pPlayer->GetUp() * 3);
+			m_pPlayer->GetAnimationController()->Play("Attack");
 			break;
 		}
-		
+
 		break;
 	default:
 		break;
@@ -66,7 +66,7 @@ void CScene::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhysics, PxSce
 {
 	m_nShaders = 2;
 	m_ppShaders = new CShader*[m_nShaders];
-	m_pInstancingShader = new CInstancingShader(m_ppPlayers[0]);
+	m_pInstancingShader = new CInstancingShader(m_pPlayer);
 	m_ppShaders[0] = m_pInstancingShader;
 	m_ppShaders[0]->CreateShader(pd3dDevice);
 	m_ppShaders[0]->BuildObjects(pd3dDevice, pPxPhysics, pPxScene, pPxControllerManager, pFbxSdkManager);
@@ -74,7 +74,7 @@ void CScene::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhysics, PxSce
 	m_ppShaders[1] = new CSkyBoxShader();
 	m_ppShaders[1]->CreateShader(pd3dDevice);
 	m_ppShaders[1]->BuildObjects(pd3dDevice, pPxPhysics, pPxScene, pPxControllerManager, pFbxSdkManager);
-	
+
 	BuildLights(pd3dDevice);
 }
 
@@ -82,9 +82,9 @@ void CScene::ReleaseObjects()
 {
 	ReleaseLights();
 	for (int j = 0; j < m_nShaders; j++) {
-		if(m_ppShaders[j]) delete m_ppShaders[j];
+		if (m_ppShaders[j]) delete m_ppShaders[j];
 	}
-	if (m_ppShaders) delete [] m_ppShaders;
+	if (m_ppShaders) delete[] m_ppShaders;
 }
 
 bool CScene::ProcessInput()
@@ -92,23 +92,23 @@ bool CScene::ProcessInput()
 	return(false);
 }
 
-void CScene::AnimateObjects(float fTimeElapsed,PxScene *pPxScene)
+void CScene::AnimateObjects(float fTimeElapsed, PxScene *pPxScene)
 {
 	for (int i = 0; i < m_nShaders; i++)
 	{
-		m_ppShaders[i]->AnimateObjects(fTimeElapsed,pPxScene);
+		m_ppShaders[i]->AnimateObjects(fTimeElapsed, pPxScene);
 	}
 }
-void CScene::Render(ID3D11DeviceContext	*pd3dImmediateDeviceContext, int nThreadID, CCamera *pCamera)
+void CScene::Render(ID3D11DeviceContext	*pd3dDeviceContext, int nThreadID, CCamera *pCamera)
 {
-	if (m_pLights && m_pd3dcbLights) 
+	if (m_pLights && m_pd3dcbLights)
 	{
-		UpdateLights(pd3dImmediateDeviceContext);
+		UpdateLights(pd3dDeviceContext);
 	}
 
 	for (int i = 0; i < m_nShaders; i++)
 	{
-		m_ppShaders[i]->Render(pd3dImmediateDeviceContext, nThreadID, pCamera);
+		m_ppShaders[i]->Render(pd3dDeviceContext, nThreadID, pCamera);
 	}
 }
 void CScene::BuildLights(ID3D11Device *pd3dDevice)
@@ -146,7 +146,7 @@ void CScene::BuildLights(ID3D11Device *pd3dDevice)
 	m_pLights->m_pLights[0].m_d3dxcSpecular = D3DXCOLOR(0.7f, 0.7f, 0.7f, 0.7f);
 	m_pLights->m_pLights[0].m_d3dxvDirection = D3DXVECTOR3(0.0f, -1.0f, 0.0f);
 
-	
+
 
 	D3D11_BUFFER_DESC d3dBufferDesc;
 	ZeroMemory(&d3dBufferDesc, sizeof(d3dBufferDesc));

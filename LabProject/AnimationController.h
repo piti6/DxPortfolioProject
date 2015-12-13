@@ -17,8 +17,8 @@ public:
 
 	GET_SET_FUNC_IMPL(float, CurrentAnimationTime, m_fCurrentAnimTime);
 	GET_SET_FUNC_IMPL(string, CurrentAnimationName, m_CurrentPlayingAnimationName);
-private:
 
+private:
 	string						m_CurrentPlayingAnimationName;
 	float						m_fCurrentAnimTime;
 	float						m_fCurrentAnimLength;

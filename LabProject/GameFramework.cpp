@@ -7,7 +7,6 @@
 
 CGameFramework::CGameFramework()
 {
-
 	m_pd3dDevice = NULL;
 	m_pDXGISwapChain = NULL;
 	m_pd3dRenderTargetView = NULL;
@@ -16,7 +15,6 @@ CGameFramework::CGameFramework()
 	m_pd3dImmediateDeviceContext = NULL;
 
 	m_pScene = NULL;
-
 
 	_tcscpy_s(m_pszBuffer, _T("LapProject ("));
 
@@ -37,6 +35,7 @@ bool CGameFramework::OnCreate(HINSTANCE hInstance, HWND hMainWnd)
 
 	BuildObjects();
 	InitializeWorkerThreads();
+	InitializeNetworkState();
 	return(true);
 }
 
@@ -145,6 +144,7 @@ void CGameFramework::OnDestroy()
 	ReleaseObjects();
 	ShutDownFbxManager();
 	ShutDownPhysxEngine();
+	ReleaseNetworkState();
 
 	for (int i = 0; i < m_nRenderThreads; ++i)
 	{
@@ -210,7 +210,7 @@ void CGameFramework::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPA
 		case VK_F1:
 		case VK_F2:
 		case VK_F3:
-			m_ppPlayers[0]->ChangeCamera(m_pd3dDevice, (wParam - VK_F1 + 1), m_GameTimer.GetTimeElapsed());
+			m_pPlayer->ChangeCamera(m_pd3dDevice, (wParam - VK_F1 + 1), m_GameTimer.GetTimeElapsed());
 			break;
 		case VK_F9:
 		{
@@ -262,9 +262,9 @@ LRESULT CALLBACK CGameFramework::OnProcessingWindowMessage(HWND hWnd, UINT nMess
 
 		CreateRenderTargetDepthStencilView();
 
-		if (m_ppPlayers)
+		if (m_pPlayer)
 		{
-			CCamera *pCamera = m_ppPlayers[0]->GetCamera();
+			CCamera *pCamera = m_pPlayer->GetCamera();
 			pCamera->SetViewport(m_pd3dImmediateDeviceContext, 0, 0, m_nWndClientWidth, m_nWndClientHeight, 0.0f, 1.0f);
 		}
 		break;
@@ -286,18 +286,14 @@ LRESULT CALLBACK CGameFramework::OnProcessingWindowMessage(HWND hWnd, UINT nMess
 
 void CGameFramework::BuildObjects()
 {
-	m_nPlayers = 1;
-	m_ppPlayers = new CPlayer*[m_nPlayers];
-	
-	CPlayer *pGamePlayer = new CPlayer();
-	m_ppPlayers[0] = pGamePlayer;
+	m_pPlayer = new CPlayer();
 
-	m_pScene = new CScene(m_pPxPhysicsSDK, m_pPxScene, m_ppPlayers);
+	m_pScene = new CScene(m_pPxPhysicsSDK, m_pPxScene, m_pPlayer);
 
 	if (m_pScene){
 		m_pScene->BuildObjects(m_pd3dDevice, m_pPxPhysicsSDK, m_pPxScene, m_pPxControllerManager, m_pFbxSdkManager);
 	}
-	CCamera *pCamera = m_ppPlayers[0]->GetCamera();
+	CCamera *pCamera = m_pPlayer->GetCamera();
 	pCamera->SetViewport(m_pd3dImmediateDeviceContext, 0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT, 0.0f, 1.0f);
 	pCamera->GenerateViewMatrix();
 }
@@ -339,31 +335,35 @@ void CGameFramework::ProcessInput()
 		}
 		if ((dwForward != 0) || (dwBackward != 0) || (dwLeft != 0) || (dwRight != 0) || (dwUp != 0) || (dwDown != 0))
 		{
-			
+
 			if (dwForward == DIR_FORWARD)
-				m_ppPlayers[0]->Move(dwForward, 10.0f, m_GameTimer.GetTimeElapsed());
+				m_pPlayer->Move(dwForward, 10.0f, m_GameTimer.GetTimeElapsed());
 			if (dwBackward == DIR_BACKWARD)
-				m_ppPlayers[0]->Move(dwBackward, 10.0f, m_GameTimer.GetTimeElapsed());
+				m_pPlayer->Move(dwBackward, 10.0f, m_GameTimer.GetTimeElapsed());
 			if (dwLeft == DIR_LEFT)
-				m_ppPlayers[0]->Move(dwLeft, 10.0f, m_GameTimer.GetTimeElapsed());
+				m_pPlayer->Move(dwLeft, 10.0f, m_GameTimer.GetTimeElapsed());
 			if (dwRight == DIR_RIGHT)
-				m_ppPlayers[0]->Move(dwRight, 10.0f, m_GameTimer.GetTimeElapsed());
+				m_pPlayer->Move(dwRight, 10.0f, m_GameTimer.GetTimeElapsed());
 			if (dwUp == DIR_UP)
-				m_ppPlayers[0]->Move(dwUp, 10.0f, m_GameTimer.GetTimeElapsed());
+				m_pPlayer->Move(dwUp, 10.0f, m_GameTimer.GetTimeElapsed());
 			if (dwDown == DIR_DOWN)
-				m_ppPlayers[0]->Move(dwDown, 10.0f, m_GameTimer.GetTimeElapsed());
+				m_pPlayer->Move(dwDown, 10.0f, m_GameTimer.GetTimeElapsed());
 		}
 		else{
-			CAnimationController* pAnimationController = m_ppPlayers[0]->GetAnimationController();
+			CAnimationController* pAnimationController = m_pPlayer->GetAnimationController();
 			if (pAnimationController->GetCurrentAnimationName() != "Idle")
-					pAnimationController->Play("Idle");
+				pAnimationController->Play("Idle");
 		}
 		if (cxDelta || cyDelta)
 		{
 			if (pKeyBuffer[VK_RBUTTON] & 0xF0)
-				m_ppPlayers[0]->Rotate(cyDelta, cxDelta, 0.0f);
+				m_pPlayer->Rotate(cyDelta, cxDelta, 0.0f);
 		}
-		m_ppPlayers[0]->Update(m_GameTimer.GetTimeElapsed());
+		m_pPlayer->Update(m_GameTimer.GetTimeElapsed());
+		Network_Packet pkt;
+		pkt.m_d3dxvPosition = m_pPlayer->GetPosition();
+		pkt.m_d3dxvRotation = D3DXVECTOR3(0, 0, 0);
+		m_pNetworkClient->TCPSendData(&m_pNetworkClient->TCPsock, TCP_CLIENT_MOVE, pkt);
 	}
 }
 
@@ -393,10 +393,8 @@ void CGameFramework::FrameAdvance()
 		SetEvent(m_pRenderingThreadInfo[i].m_hRenderingBeginEvent);
 	}
 	WaitForMultipleObjects(m_nRenderThreads, m_hRenderingEndEvents, true, INFINITE);
-	if (m_ppPlayers)
-		for (int i = 0; i < m_nPlayers; ++i){
-			m_ppPlayers[i]->UpdateShaderVariables(m_pd3dImmediateDeviceContext);
-		}
+	if (m_pPlayer)
+		m_pPlayer->UpdateShaderVariables(m_pd3dImmediateDeviceContext);
 	for (int i = 0; i < m_nRenderThreads; ++i)
 	{
 		m_pd3dImmediateDeviceContext->ExecuteCommandList(m_pRenderingThreadInfo[i].m_pd3dCommandList, true);
@@ -427,16 +425,16 @@ void CGameFramework::InitializePhysxEngine()
 	PxInitExtensions(*m_pPxPhysicsSDK);
 	PxSceneDesc sceneDesc(m_pPxPhysicsSDK->getTolerancesScale());
 	sceneDesc.gravity = PxVec3(0.0f, -9.8f, 0.0f);
-	
+
 	if (!sceneDesc.cpuDispatcher)
 	{
 		PxDefaultCpuDispatcher* pCpuDispatcher = PxDefaultCpuDispatcherCreate(1);
 		sceneDesc.cpuDispatcher = pCpuDispatcher;
 	}
-	
+
 	if (!sceneDesc.filterShader)
 		sceneDesc.filterShader = PxDefaultSimulationFilterShader;
-	
+
 	m_pPxScene = m_pPxPhysicsSDK->createScene(sceneDesc);
 	m_pPxControllerManager = PxCreateControllerManager(*m_pPxScene);
 
@@ -506,7 +504,7 @@ void CGameFramework::InitializeWorkerThreads()
 	for (int i = 0; i < m_nRenderThreads; ++i)
 	{
 		m_pRenderingThreadInfo[i].m_nRenderingThreadID = i;
-		m_pRenderingThreadInfo[i].m_pPlayer = m_ppPlayers[0];
+		m_pRenderingThreadInfo[i].m_pPlayer = m_pPlayer;
 		m_pRenderingThreadInfo[i].m_pScene = m_pScene;
 		m_pRenderingThreadInfo[i].m_pd3dCommandList = NULL;
 		m_pRenderingThreadInfo[i].m_hRenderingBeginEvent = CreateEvent(NULL, false, false, NULL);
@@ -521,3 +519,100 @@ void CGameFramework::InitializeWorkerThreads()
 		ResumeThread(m_pRenderingThreadInfo[i].m_hRenderingThread);
 	}
 }
+
+void CGameFramework::InitializeNetworkState(){
+	m_pNetworkClient = new CNetworkClient("127.0.0.1", 9000);
+	m_pNetworkClient->Init();
+
+	int optval = 3000;	// TimeOut
+	SetSocketOption(m_pNetworkClient->TCPsock, SOL_SOCKET, SO_RCVTIMEO, (char *) &optval, sizeof(int));
+
+	char Login[100];
+	Network_Packet PlayerPacket;
+	while (1){
+		m_pNetworkClient->TCPReceive(&m_pNetworkClient->TCPsock, Login);
+		if (Login[0] == TCP_CLIENT_LOGIN){
+			memcpy(&PlayerPacket, &Login[2], Login[1]);	
+			m_pPlayer->SetName(PlayerPacket.m_ID);
+			break;
+		}
+	}
+
+	optval = 0;
+	SetSocketOption(m_pNetworkClient->TCPsock, SOL_SOCKET, SO_RCVTIMEO, (char *)&optval, sizeof(int));
+
+	m_hTCPThread = (HANDLE) ::_beginthreadex(NULL, 0, ThreadProcTCP, this, CREATE_SUSPENDED, NULL);
+	m_hUDPThread = (HANDLE) ::_beginthreadex(NULL, 0, ThreadProcUDP, this, CREATE_SUSPENDED, NULL);
+	ResumeThread(m_hTCPThread);
+	ResumeThread(m_hUDPThread);
+}
+
+void CGameFramework::ReleaseNetworkState()
+{
+	m_pNetworkClient->TCPSendInt(&m_pNetworkClient->TCPsock, TCP_CLIENT_DISCONNECT, 1);
+	m_pNetworkClient->Release();
+}
+
+UINT WINAPI CGameFramework::ThreadProcTCP(LPVOID arg)
+{
+
+	CGameFramework* m_pGameFramework = (CGameFramework*)arg;
+	return m_pGameFramework->ThreadProcTCP(m_pGameFramework);
+}
+UINT WINAPI CGameFramework::ThreadProcUDP(LPVOID arg)
+{
+
+	CGameFramework* m_pGameFramework = (CGameFramework*)arg;
+	return m_pGameFramework->ThreadProcUDP(m_pGameFramework);
+}
+
+UINT CGameFramework::ThreadProcTCP(CGameFramework* _GameFramework)
+{
+	CGameFramework *pGameFramework = _GameFramework;
+
+	while (1){
+
+	}
+}
+
+UINT CGameFramework::ThreadProcUDP(CGameFramework* _GameFramework)
+{
+	CGameFramework *pGameFramework = _GameFramework;
+	CNetworkClient *pNetworkClient = pGameFramework->m_pNetworkClient;
+	CInstancingShader *pInstancingShader = m_pScene->GetInstancingShader();
+	SOCKET *UDP_Sock = &pNetworkClient->UDPsock;
+	
+	Network_Packet packet;
+	char Data[50] = { 0, };
+	while (1){
+		int recv = pNetworkClient->UDPReceive(UDP_Sock, Data);
+		if (!recv)
+			break;
+		if (Data != NULL){
+			memcpy(&packet, &Data[2], Data[1]);
+			switch (Data[0]){
+			case UDP_SERVER_PLAYER:
+				int nPlayers = 0;
+				for (nPlayers = 0; nPlayers < m_vPlayers.size(); ++nPlayers){
+					if (m_vPlayers[nPlayers].first == packet.m_ID)
+					{
+						m_vPlayers[nPlayers].second->SetPosition(packet.m_d3dxvPosition);
+						m_vPlayers[nPlayers].second->SetRotation(packet.m_d3dxvRotation);
+						break;
+					}
+				}
+				if (nPlayers == m_vPlayers.size() && packet.m_ID != m_pPlayer->GetName())
+				{
+					CCharacterObject *pCharacterObject = pInstancingShader->AddCharacter(m_pPxPhysicsSDK, m_pPxScene, m_pPxControllerManager, 1, 0, 4, packet.m_d3dxvPosition);
+					pCharacterObject->SetRotation(packet.m_d3dxvRotation);
+					pCharacterObject->GetAnimationController()->Play("Idle");
+					m_vPlayers.push_back(make_pair(packet.m_ID, pCharacterObject));
+				}
+				break;
+			}
+		}
+	}
+
+	return 0;
+}
+

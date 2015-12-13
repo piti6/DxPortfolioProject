@@ -6,8 +6,6 @@
 #include "Mesh.h"
 #include "FbxToDxTranslation.h"
 
-#define RANDOM_COLOR	D3DXCOLOR((rand() * 0xFFFFFF) / RAND_MAX)
-
 CMesh::CMesh(ID3D11Device *pd3dDevice)
 {
 	m_nVertices = 0;
@@ -26,9 +24,9 @@ CMesh::CMesh(ID3D11Device *pd3dDevice)
 	m_bcBoundingCube.SetMinimum(D3DXVECTOR3(-FLT_MAX, -FLT_MAX, -FLT_MAX));
 	m_bcBoundingCube.SetMaximum(D3DXVECTOR3(+FLT_MAX, +FLT_MAX, +FLT_MAX));
 }
+
 CMesh::~CMesh()
 {
-
 	if (m_pd3dRasterizerState) m_pd3dRasterizerState->Release();
 	if (m_ppd3dVertexBuffers)
 	{
@@ -44,6 +42,7 @@ void CMesh::AddRef()
 {
 	m_nReferences++;
 }
+
 void CMesh::Release()
 {
 	m_nReferences--;
@@ -56,23 +55,23 @@ void CMesh::SetRasterizerState(ID3D11Device *pd3dDevice)
 	ZeroMemory(&d3dRasterizerDesc, sizeof(D3D11_RASTERIZER_DESC));
 	d3dRasterizerDesc.CullMode = D3D11_CULL_NONE;
 	d3dRasterizerDesc.FillMode = D3D11_FILL_SOLID;
-	//d3dRasterizerDesc.FillMode = D3D11_FILL_WIREFRAME;
 	d3dRasterizerDesc.DepthClipEnable = true;
 	pd3dDevice->CreateRasterizerState(&d3dRasterizerDesc, &m_pd3dRasterizerState);
 }
 
-void CMesh::Render(ID3D11DeviceContext *pd3dImmediateDeviceContext)
+void CMesh::Render(ID3D11DeviceContext *pd3dDeviceContext)
 {
-	if (m_ppd3dVertexBuffers) pd3dImmediateDeviceContext->IASetVertexBuffers(0, m_nVertexBuffers, m_ppd3dVertexBuffers, m_nStride, m_nOffset);
-	if (m_pd3dIndexBuffer) pd3dImmediateDeviceContext->IASetIndexBuffer(m_pd3dIndexBuffer, DXGI_FORMAT_R16_UINT, 0);
-	if (m_d3dPrimitiveTopology) pd3dImmediateDeviceContext->IASetPrimitiveTopology(m_d3dPrimitiveTopology);
-	if (m_pd3dRasterizerState) pd3dImmediateDeviceContext->RSSetState(m_pd3dRasterizerState);
+	if (m_ppd3dVertexBuffers) pd3dDeviceContext->IASetVertexBuffers(0, m_nVertexBuffers, m_ppd3dVertexBuffers, m_nStride, m_nOffset);
+	if (m_pd3dIndexBuffer) pd3dDeviceContext->IASetIndexBuffer(m_pd3dIndexBuffer, DXGI_FORMAT_R16_UINT, 0);
+	if (m_d3dPrimitiveTopology) pd3dDeviceContext->IASetPrimitiveTopology(m_d3dPrimitiveTopology);
+	if (m_pd3dRasterizerState) pd3dDeviceContext->RSSetState(m_pd3dRasterizerState);
 
 	if (m_pd3dIndexBuffer)
-		pd3dImmediateDeviceContext->DrawIndexed(m_nIndices, 0, 0);
+		pd3dDeviceContext->DrawIndexed(m_nIndices, 0, 0);
 	else
-		pd3dImmediateDeviceContext->Draw(m_nVertices, 0);
+		pd3dDeviceContext->Draw(m_nVertices, 0);
 }
+
 void CMesh::RenderInstanced(ID3D11DeviceContext *pd3dDeviceContext, int nInstances, int nStartInstance)
 {
 	if (m_ppd3dVertexBuffers) pd3dDeviceContext->IASetVertexBuffers(0, m_nVertexBuffers, m_ppd3dVertexBuffers, m_nStride, m_nOffset);
@@ -118,13 +117,10 @@ void CMesh::AppendVertexBuffer(int nBuffers, ID3D11Buffer **pd3dBuffer, UINT *nS
 		m_ppd3dVertexBuffers = ppd3dVertexBuffers;
 		m_nStride = pnVertexStrides;
 		m_nOffset = pnVertexOffsets;
-
-
 		//if (pd3dBuffer) pd3dBuffer->AddRef();
-
 	}
-
 }
+
 ID3D11Buffer* CMesh::CreateVertexBuffer(ID3D11Device *pd3dDevice, int nObjects, UINT nBufferStride, void *pBufferData)
 {
 	ID3D11Buffer *pd3dInstanceBuffer = NULL;
@@ -148,6 +144,7 @@ ID3D11Buffer* CMesh::CreateVertexBuffer(ID3D11Device *pd3dDevice, int nObjects, 
 CMeshIlluminated::CMeshIlluminated(ID3D11Device *pd3dDevice) : CMesh(pd3dDevice)
 {
 }
+
 CMeshIlluminated::~CMeshIlluminated()
 {
 }
@@ -171,6 +168,7 @@ void CMeshIlluminated::CalculateVertexNormal(BYTE *pVertices, UINT *pIndices)
 		break;
 	}
 }
+
 //인덱스 버퍼를 사용하지 않는 삼각형 리스트에 대하여 정점의 법선 벡터를 계산한다.
 void CMeshIlluminated::SetTriAngleListVertexNormal(BYTE *pVertices)
 {
@@ -189,6 +187,7 @@ void CMeshIlluminated::SetTriAngleListVertexNormal(BYTE *pVertices)
 		pVertex->SetNormal(d3dxvNormal);
 	}
 }
+
 //삼각형의 세 정점을 사용하여 삼각형의 법선 벡터를 계산한다.
 D3DXVECTOR3 CMeshIlluminated::CalculateTriAngleNormal(BYTE *pVertices, UINT nIndex0, UINT nIndex1, UINT nIndex2)
 {
@@ -202,6 +201,7 @@ D3DXVECTOR3 CMeshIlluminated::CalculateTriAngleNormal(BYTE *pVertices, UINT nInd
 	D3DXVec3Normalize(&d3dxvNormal, &d3dxvNormal);
 	return(d3dxvNormal);
 }
+
 /*프리미티브가 인덱스 버퍼를 사용하는 삼각형 리스트 또는 삼각형 스트립인 경우 정점의 법선 벡터는 그 정점을 포함하는 삼각형의 법선 벡터들의 평균으로 계산한다.*/
 void CMeshIlluminated::SetAverageVertexNormal(BYTE *pVertices, UINT *pIndices, int nPrimitives, int nOffset, bool bStrip)
 {
@@ -286,6 +286,7 @@ CCubeMeshIlluminated::CCubeMeshIlluminated(ID3D11Device *pd3dDevice, float fWidt
 
 	SetRasterizerState(pd3dDevice);
 }
+
 CCubeMeshIlluminated::~CCubeMeshIlluminated()
 {
 }
@@ -363,6 +364,7 @@ CCubeMeshIlluminatedTextured::CCubeMeshIlluminatedTextured(ID3D11Device *pd3dDev
 
 	SetRasterizerState(pd3dDevice);
 }
+
 CCubeMeshIlluminatedTextured::~CCubeMeshIlluminatedTextured()
 {
 }
@@ -400,6 +402,7 @@ CSkyBoxMesh::CSkyBoxMesh(ID3D11Device *pd3dDevice, float fWidth, float fHeight, 
 
 	delete[] pVertices;
 }
+
 CSkyBoxMesh::~CSkyBoxMesh()
 {
 }
@@ -411,6 +414,7 @@ CMeshTextured::CMeshTextured(ID3D11Device *pd3dDevice) : CMesh(pd3dDevice)
 {
 	m_pd3dTexCoordBuffer = NULL;
 }
+
 CMeshTextured::~CMeshTextured()
 {
 	if (m_pd3dTexCoordBuffer) m_pd3dTexCoordBuffer->Release();
@@ -445,6 +449,7 @@ CHeightMap::CHeightMap(LPCTSTR pFileName, int nWidth, int nLength, D3DXVECTOR3 d
 
 	delete[] pHeightMapImage;
 }
+
 CHeightMap::~CHeightMap()
 {
 	if (m_pHeightMapImage) delete[] m_pHeightMapImage;
@@ -468,6 +473,7 @@ D3DXVECTOR3 CHeightMap::GetHeightMapNormal(int x, int z)
 	D3DXVec3Normalize(&vNormal, &vNormal);
 	return(vNormal);
 }
+
 #define _WITH_APPROXIMATE_OPPOSITE_CORNER
 
 float CHeightMap::GetHeight(float fx, float fz, bool bReverseQuad)
@@ -632,6 +638,7 @@ CHeightMapGridMesh::CHeightMapGridMesh(ID3D11Device *pd3dDevice, int xStart, int
 	delete[]pVertices;
 	delete[]pIndices;
 }
+
 CHeightMapGridMesh::~CHeightMapGridMesh()
 {
 }
@@ -649,7 +656,7 @@ float CHeightMapGridMesh::OnGetHeight(int x, int z, void *pContext)
 /////////////////////////////////////////////////////////////////////////////////////////////////
 //
 
-CFbxMeshIlluminatedTextured::CFbxMeshIlluminatedTextured(ID3D11Device *pd3dDevice, FbxManager *pFbxSdkManager, string filename, float fScaleMultiplier,bool _bHasAnimation) : CMesh(pd3dDevice)
+CFbxMeshIlluminatedTextured::CFbxMeshIlluminatedTextured(ID3D11Device *pd3dDevice, FbxManager *pFbxSdkManager, string filename, float fScaleMultiplier, bool _bHasAnimation) : CMesh(pd3dDevice)
 {
 	m_nStride = new UINT[1];
 	m_nStride[0] = sizeof(CBoneWeightVertex);
@@ -671,7 +678,7 @@ CFbxMeshIlluminatedTextured::CFbxMeshIlluminatedTextured(ID3D11Device *pd3dDevic
 	}
 	pImporter->Destroy();
 	m_bHasAnimation = _bHasAnimation;
-	
+
 	// Convert mesh, NURBS and patch into triangle mesh
 	FbxGeometryConverter lGeomConverter(pFbxSdkManager);
 	lGeomConverter.Triangulate(pFbxScene, true);
@@ -697,7 +704,7 @@ CFbxMeshIlluminatedTextured::CFbxMeshIlluminatedTextured(ID3D11Device *pd3dDevic
 			OurAxisSystem.ConvertScene(pFbxScene);
 		}
 	}
-	
+
 	// 루트 노드가 있으면 데이터 얻어옴
 	SetVertices(pFbxRootNode, &VertexVector, &ClusterIndexVector);
 
@@ -716,8 +723,11 @@ CFbxMeshIlluminatedTextured::CFbxMeshIlluminatedTextured(ID3D11Device *pd3dDevic
 	delete[]pVertices;
 	pFbxScene->Destroy(true);
 }
-CFbxMeshIlluminatedTextured::~CFbxMeshIlluminatedTextured(){
+
+CFbxMeshIlluminatedTextured::~CFbxMeshIlluminatedTextured()
+{
 }
+
 void CFbxMeshIlluminatedTextured::SetRasterizerState(ID3D11Device *pd3dDevice)
 {
 	D3D11_RASTERIZER_DESC d3dRasterizerDesc;
@@ -728,7 +738,9 @@ void CFbxMeshIlluminatedTextured::SetRasterizerState(ID3D11Device *pd3dDevice)
 	d3dRasterizerDesc.DepthClipEnable = true;
 	pd3dDevice->CreateRasterizerState(&d3dRasterizerDesc, &m_pd3dRasterizerState);
 }
-void CFbxMeshIlluminatedTextured::SetBoneNameIndex(FbxNode *pNode, vector<string> *pBoneName){
+
+void CFbxMeshIlluminatedTextured::SetBoneNameIndex(FbxNode *pNode, vector<string> *pBoneName)
+{
 	if (pNode->GetNodeAttribute())
 	{
 		if (pNode->GetNodeAttribute()->GetAttributeType() == FbxNodeAttribute::eSkeleton){
@@ -740,6 +752,7 @@ void CFbxMeshIlluminatedTextured::SetBoneNameIndex(FbxNode *pNode, vector<string
 		SetBoneNameIndex(pNode->GetChild(iChildIndex), pBoneName);
 	}
 }
+
 void CFbxMeshIlluminatedTextured::SetVertices(FbxNode *pNode, vector<CBoneWeightVertex> *pVertexVector, unordered_map<int, vector<pair<UINT, float>>> *pClusterIndexVector)
 {
 	if (pNode->GetNodeAttribute())
@@ -758,7 +771,7 @@ void CFbxMeshIlluminatedTextured::SetVertices(FbxNode *pNode, vector<CBoneWeight
 			D3DXVECTOR3 tempMin;
 			D3DXVECTOR3	tempMax;
 			tempMin = tempMax = D3DXVECTOR3(0, 0, 0); // 메쉬의 최대최소점 저장
-			
+
 			// 폴리곤 숫자만큼 버텍스를 읽어옴
 			for (int j = 0; j < pMesh->GetPolygonCount(); j++) // j가 폴리곤 인덱스
 			{
@@ -779,7 +792,7 @@ void CFbxMeshIlluminatedTextured::SetVertices(FbxNode *pNode, vector<CBoneWeight
 						D3DXMATRIX d3dxmtxPivot = GetD3DMatrix(pNode->EvaluateGlobalTransform());
 						D3DXVec3TransformCoord(&d3dxvPos, &d3dxvPos, &d3dxmtxPivot);
 					}
-					
+
 					// 노말벡터 설정
 					FbxVector4 Normal;
 					pMesh->GetPolygonVertexNormal(j, k, Normal);
@@ -803,7 +816,7 @@ void CFbxMeshIlluminatedTextured::SetVertices(FbxNode *pNode, vector<CBoneWeight
 						{
 							for (int i = 0; i<(*pClusterIndexVector)[iControlPointIndex].size(); ++i){
 								Vertex.m_iBoneIndex[i] = (*pClusterIndexVector)[iControlPointIndex][i].first;
-								Vertex.m_iBoneWeight[i] = (*pClusterIndexVector)[iControlPointIndex][i].second;
+								Vertex.m_fBoneWeight[i] = (*pClusterIndexVector)[iControlPointIndex][i].second;
 							}
 						}
 
@@ -830,7 +843,7 @@ void CFbxMeshIlluminatedTextured::SetVertices(FbxNode *pNode, vector<CBoneWeight
 				tempMin *= 0.015f;
 				tempMax *= 0.015f;
 			}
-			
+
 			m_bcBoundingCube.SetMinimum(tempMin);
 			m_bcBoundingCube.SetMaximum(tempMax);
 		}

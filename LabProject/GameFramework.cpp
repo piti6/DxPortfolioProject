@@ -360,10 +360,6 @@ void CGameFramework::ProcessInput()
 				m_pPlayer->Rotate(cyDelta, cxDelta, 0.0f);
 		}
 		m_pPlayer->Update(m_GameTimer.GetTimeElapsed());
-		Network_Packet pkt;
-		pkt.m_d3dxvPosition = m_pPlayer->GetPosition();
-		pkt.m_d3dxvRotation = D3DXVECTOR3(0, 0, 0);
-		m_pNetworkClient->TCPSendData(&m_pNetworkClient->TCPsock, TCP_CLIENT_MOVE, pkt);
 	}
 }
 
@@ -521,6 +517,7 @@ void CGameFramework::InitializeWorkerThreads()
 }
 
 void CGameFramework::InitializeNetworkState(){
+	/*
 	m_pNetworkClient = new CNetworkClient("127.0.0.1", 9000);
 	m_pNetworkClient->Init();
 
@@ -545,6 +542,7 @@ void CGameFramework::InitializeNetworkState(){
 	m_hUDPThread = (HANDLE) ::_beginthreadex(NULL, 0, ThreadProcUDP, this, CREATE_SUSPENDED, NULL);
 	ResumeThread(m_hTCPThread);
 	ResumeThread(m_hUDPThread);
+	*/
 }
 
 void CGameFramework::ReleaseNetworkState()
@@ -571,7 +569,14 @@ UINT CGameFramework::ThreadProcTCP(CGameFramework* _GameFramework)
 	CGameFramework *pGameFramework = _GameFramework;
 
 	while (1){
+		/*
+		Network_Packet pkt;
+		pkt.m_d3dxvPosition = m_pPlayer->GetPosition();
+		pkt.m_d3dxvRotation = D3DXVECTOR3(0, 0, 0);
+		m_pNetworkClient->TCPSendData(&m_pNetworkClient->TCPsock, TCP_CLIENT_MOVE, pkt);
 
+		Sleep(100);
+		*/
 	}
 }
 
@@ -585,6 +590,7 @@ UINT CGameFramework::ThreadProcUDP(CGameFramework* _GameFramework)
 	Network_Packet packet;
 	char Data[50] = { 0, };
 	while (1){
+		/*
 		int recv = pNetworkClient->UDPReceive(UDP_Sock, Data);
 		if (!recv)
 			break;
@@ -611,6 +617,9 @@ UINT CGameFramework::ThreadProcUDP(CGameFramework* _GameFramework)
 				break;
 			}
 		}
+
+		Sleep(100);
+		*/
 	}
 
 	return 0;

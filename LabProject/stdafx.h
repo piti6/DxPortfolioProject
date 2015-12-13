@@ -1,15 +1,16 @@
 #pragma once
 
 #pragma comment(linker, "/entry:wWinMainCRTStartup /subsystem:console" )
+#pragma comment(lib, "ws2_32")
 
 #include "targetver.h"
 
-#define WIN32_LEAN_AND_MEAN
+//#define WIN32_LEAN_AND_MEAN
 
-
+#include <WinSock2.h>
 #include <windows.h>
-#include <winsock2.h>
 #include <ws2tcpip.h>
+
 
 // C
 

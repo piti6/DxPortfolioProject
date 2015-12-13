@@ -1,5 +1,5 @@
 #pragma once
-#pragma comment(lib, "ws2_32")
+
 
 typedef struct Network_Packet{
 	D3DXVECTOR3	m_d3dxvPosition;

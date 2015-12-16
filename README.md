@@ -1,3 +1,5 @@
+![Alt text](/Screen.png?raw=true "Screen Shot")
+
 # DxPortfolioProject
 
 個人的なポートフォリオですが、必要な情報があればご自由に使ってください。
@@ -10,7 +12,7 @@
 
 重点分野
 
-- DirectX11の最適化およびDeffered Contextを利用したマルチスレッド
+- DirectX11の最適化およびDeferred contextを利用したマルチスレッド
 - オブジェクトのインスタンス化
 - DirectX11とPhysx SDKの連動方法
 - FBX SDKからのモデルロード方法、ボーンスキニングやアニメーションインポート方法

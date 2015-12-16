@@ -1,3 +1,5 @@
+![Alt text](/Screen.png?raw=true "Screen Shot")
+
 # DxPortfolioProject
 
 個人的なポートフォリオですが、必要な情報があればご自由に使ってください。

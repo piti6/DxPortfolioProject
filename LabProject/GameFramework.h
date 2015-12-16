@@ -1,9 +1,10 @@
-#pragma once
+﻿#pragma once
 
 #include "Timer.h"
 #include "Scene.h"
 #include "NetworkClient.h"
 
+//マルチスレッドレンダリングに使う情報を持っている構造体です。
 struct RENDERINGTHREADINFO
 {
 	int m_nRenderingThreadID;
@@ -19,6 +20,7 @@ struct RENDERINGTHREADINFO
 	CPlayer *m_pPlayer;
 };
 
+//全体的なゲームのフレームワークです。
 class CGameFramework
 {
 public:
@@ -65,8 +67,8 @@ public:
 
 	static UINT WINAPI ThreadProcTCP(LPVOID arg);
 	static UINT WINAPI ThreadProcUDP(LPVOID arg);
-	UINT ThreadProcTCP(CGameFramework* _GameFramework);   // ���� ó�� �Լ�
-	UINT ThreadProcUDP(CGameFramework* _GameFramework);   // ���� ó�� �Լ�
+	UINT ThreadProcTCP(CGameFramework* _GameFramework);
+	UINT ThreadProcUDP(CGameFramework* _GameFramework);
 
 private:
 
@@ -100,8 +102,10 @@ private:
 	/////////////// Network ///////////////
 
 	HANDLE							m_hUDPThread;
+	HANDLE							m_hTCPThread;
 	CNetworkClient					*m_pNetworkClient;
 	CRITICAL_SECTION				cs;
+
 	/////////////// Physx SDK Member Variables ///////////////
 
 	PxPhysics						*m_pPxPhysicsSDK;

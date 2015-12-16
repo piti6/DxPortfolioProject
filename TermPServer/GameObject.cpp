@@ -1,4 +1,5 @@
 #include "GameObject.h"
+
 CGameObject::CGameObject(char* _ID, D3DXVECTOR3 _d3dxvPosition, D3DXVECTOR3 _d3dxvRotation, int isMoving){
 	strcpy(m_Network_Packet.m_ID,_ID);
 	m_Network_Packet.m_d3dxvPosition = _d3dxvPosition;

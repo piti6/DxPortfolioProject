@@ -1,4 +1,4 @@
-#include "stdafx.h"
+ï»¿#include "stdafx.h"
 #include "Camera.h"
 #include "Object.h"
 
@@ -20,11 +20,7 @@ CCamera::CCamera(CCamera *pCamera)
 			m_d3dxvUp = m_pPlayer->GetUpVector();
 			m_d3dxvLook = m_pPlayer->GetLookVector();
 		}
-		/*
-		m_d3dxvRight = D3DXVECTOR3(1.0f, 0.0f, 0.0f);
-		m_d3dxvUp = D3DXVECTOR3(0.0f, 1.0f, 0.0f);
-		m_d3dxvLook = D3DXVECTOR3(0.0f, 0.0f, 1.0f);
-		*/
+		
 		m_pd3dcbViewProjection = pCamera->GetViewProjectionConstantBuffer();
 		if (m_pd3dcbViewProjection) m_pd3dcbViewProjection->AddRef();
 	}
@@ -50,12 +46,12 @@ CCamera::CCamera(CCamera *pCamera)
 		m_pd3dcbViewProjection = NULL;
 	}
 }
-
 CCamera::~CCamera()
 {
 	if (m_pd3dcbViewProjection) m_pd3dcbViewProjection->Release();
 }
 
+//ãƒ“ãƒ¥ãƒ¼ãƒãƒ¼ãƒˆã®è¨­å®š
 void CCamera::SetViewport(ID3D11DeviceContext *pd3dDeviceContext, DWORD xTopLeft, DWORD yTopLeft, DWORD nWidth, DWORD nHeight, float fMinZ, float fMaxZ)
 {
 	m_d3dViewport.TopLeftX = float(xTopLeft);
@@ -66,17 +62,17 @@ void CCamera::SetViewport(ID3D11DeviceContext *pd3dDeviceContext, DWORD xTopLeft
 	m_d3dViewport.MaxDepth = fMaxZ;
 	pd3dDeviceContext->RSSetViewports(1, &m_d3dViewport);
 }
-
+//å°„å½±å¤‰æ›è¡Œåˆ—ã‚’ä½œã‚Šã¾ã™ã€‚
 void CCamera::GenerateProjectionMatrix(float fNearPlaneDistance, float fFarPlaneDistance, float fAspectRatio, float fFOVAngle)
 {
 	D3DXMatrixPerspectiveFovLH(&m_d3dxmtxProjection, (float)D3DXToRadian(fFOVAngle), fAspectRatio, fNearPlaneDistance, fFarPlaneDistance);
 }
-
+//ãƒ“ãƒ¥ãƒ¼è¡Œåˆ—ã‚’ä½œã‚Šã¾ã™ã€‚
 void CCamera::GenerateViewMatrix()
 {
 	D3DXMatrixLookAtLH(&m_d3dxmtxView, &m_d3dxvPosition, &m_d3dxvLookAtWorld, &m_d3dxvUp);
 }
-
+//ãƒ“ãƒ¥ãƒ¼è¡Œåˆ—ã‚’æ›´æ–°ã—ã¾ã™ã€‚
 void CCamera::RegenerateViewMatrix()
 {
 	D3DXVec3Normalize(&m_d3dxvLook, &m_d3dxvLook);
@@ -91,10 +87,11 @@ void CCamera::RegenerateViewMatrix()
 	m_d3dxmtxView._42 = -D3DXVec3Dot(&m_d3dxvPosition, &m_d3dxvUp);
 	m_d3dxmtxView._43 = -D3DXVec3Dot(&m_d3dxvPosition, &m_d3dxvLook);
 
-	//Ä«¸Ş¶óÀÇ À§Ä¡¿Í ¹æÇâÀÌ ¹Ù²î¸é(Ä«¸Ş¶ó º¯È¯ Çà·ÄÀÌ ¹Ù²î¸é) ÀıµÎÃ¼ Æò¸éÀ» ´Ù½Ã °è»êÇÑ´Ù.
+	//ã‚«ãƒ¡ãƒ©ã®ä½ç½®ã¨æ–¹å‘ãŒå¤‰ã‚ã‚Œã°ï¼ˆã‚«ãƒ¡ãƒ©å¤‰æ›è¡Œåˆ—å¤‰ã‚ã‚‹ï¼‰è¦–éŒå°å¹³é¢ã‚’å†è¨ˆç®—ã—ã¾ã™ã€‚
 	CalculateFrustumPlanes();
 }
 
+//å®šæ•°ãƒãƒƒãƒ•ã‚¡ã«è¡Œåˆ—æƒ…å ±ã‚’ç™»éŒ²ã—ã¾ã™
 void CCamera::CreateShaderVariables(ID3D11Device *pd3dDevice)
 {
 	D3D11_BUFFER_DESC bd;
@@ -105,7 +102,7 @@ void CCamera::CreateShaderVariables(ID3D11Device *pd3dDevice)
 	bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 	pd3dDevice->CreateBuffer(&bd, NULL, &m_pd3dcbViewProjection);
 }
-
+//è¡Œåˆ—æƒ…å ±ã‚’æ›´æ–°ã—ã¾ã™
 void CCamera::UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext)
 {
 	D3D11_MAPPED_SUBRESOURCE d3dMappedResource;
@@ -116,6 +113,107 @@ void CCamera::UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext)
 	pd3dDeviceContext->Unmap(m_pd3dcbViewProjection, 0);
 
 	pd3dDeviceContext->VSSetConstantBuffers(VS_SLOT_VIEWPROJECTION_MATRIX, 1, &m_pd3dcbViewProjection);
+}
+
+//è¦–éŒå°å¹³é¢ã‚’è¨ˆç®—ã—ã¾ã™ã€‚
+void CCamera::CalculateFrustumPlanes()
+{
+	/*ã‚«ãƒ¡ãƒ©å¤‰æ›è¡Œåˆ—ã¨é è¿‘æŠ•å½±å¤‰æ›è¡Œåˆ—ã‚’æ›ã‘ãŸè¡Œåˆ—ã‚’ä½¿ç”¨ã—ã¦è¦–éŒå°å¹³é¢ã‚’è¨ˆç®—ã—ã¾ã™ã€‚ã¤ã¾ã‚Šãƒ¯ãƒ¼ãƒ«ãƒ‰åº§æ¨™ç³»ã§è¦–éŒå°ã‚«ãƒ¼ãƒªãƒ³ã‚°ã‚’ã—ã¾ã™ã€‚*/
+	D3DXMATRIX mtxViewProject = m_d3dxmtxView * m_d3dxmtxProjection;
+
+	m_d3dxFrustumPlanes[0].a = -(mtxViewProject._14 + mtxViewProject._11);
+	m_d3dxFrustumPlanes[0].b = -(mtxViewProject._24 + mtxViewProject._21);
+	m_d3dxFrustumPlanes[0].c = -(mtxViewProject._34 + mtxViewProject._31);
+	m_d3dxFrustumPlanes[0].d = -(mtxViewProject._44 + mtxViewProject._41);
+
+	m_d3dxFrustumPlanes[1].a = -(mtxViewProject._14 - mtxViewProject._11);
+	m_d3dxFrustumPlanes[1].b = -(mtxViewProject._24 - mtxViewProject._21);
+	m_d3dxFrustumPlanes[1].c = -(mtxViewProject._34 - mtxViewProject._31);
+	m_d3dxFrustumPlanes[1].d = -(mtxViewProject._44 - mtxViewProject._41);
+
+	m_d3dxFrustumPlanes[2].a = -(mtxViewProject._14 - mtxViewProject._12);
+	m_d3dxFrustumPlanes[2].b = -(mtxViewProject._24 - mtxViewProject._22);
+	m_d3dxFrustumPlanes[2].c = -(mtxViewProject._34 - mtxViewProject._32);
+	m_d3dxFrustumPlanes[2].d = -(mtxViewProject._44 - mtxViewProject._42);
+
+	m_d3dxFrustumPlanes[3].a = -(mtxViewProject._14 + mtxViewProject._12);
+	m_d3dxFrustumPlanes[3].b = -(mtxViewProject._24 + mtxViewProject._22);
+	m_d3dxFrustumPlanes[3].c = -(mtxViewProject._34 + mtxViewProject._32);
+	m_d3dxFrustumPlanes[3].d = -(mtxViewProject._44 + mtxViewProject._42);
+
+	m_d3dxFrustumPlanes[4].a = -(mtxViewProject._13);
+	m_d3dxFrustumPlanes[4].b = -(mtxViewProject._23);
+	m_d3dxFrustumPlanes[4].c = -(mtxViewProject._33);
+	m_d3dxFrustumPlanes[4].d = -(mtxViewProject._43);
+
+	m_d3dxFrustumPlanes[5].a = -(mtxViewProject._14 - mtxViewProject._13);
+	m_d3dxFrustumPlanes[5].b = -(mtxViewProject._24 - mtxViewProject._23);
+	m_d3dxFrustumPlanes[5].c = -(mtxViewProject._34 - mtxViewProject._33);
+	m_d3dxFrustumPlanes[5].d = -(mtxViewProject._44 - mtxViewProject._43);
+
+	/*è¦–éŒå°å„å¹³é¢ã®æ³•ç·šãƒ™ã‚¯ãƒˆãƒ«ï¼ˆaã€bã€‚cï¼‰ã®å¤§ãã•ã§ã€aã€bã€cã€dã‚’åˆ†ã‘ã‚‹ã€‚ã¤ã¾ã‚Šã€æ³•ç·šãƒ™ã‚¯ãƒˆãƒ«ã‚’æ­£è¦åŒ–ã—ã¦ã€åŸç‚¹ã‹ã‚‰å¹³é¢ã¾ã§ã®è·é›¢ã‚’è¨ˆç®—ã™ã‚‹ã€‚*/
+	for (int i = 0; i < 6; i++) D3DXPlaneNormalize(&m_d3dxFrustumPlanes[i], &m_d3dxFrustumPlanes[i]);
+}
+bool CCamera::IsInFrustum(D3DXVECTOR3& d3dxvMinimum, D3DXVECTOR3& d3dxvMaximum)
+{
+	D3DXVECTOR3 d3dxvNearPoint, d3dxvFarPoint, d3dxvNormal;
+	for (int i = 0; i < 6; i++)
+	{
+		/*è¦–éŒå°ã®å„å¹³é¢ã«ãƒã‚¦ãƒ³ãƒ‡ã‚£ãƒ³ã‚°ãƒœãƒƒã‚¯ã‚¹ã®è¿‘æ¥ç‚¹ã‚’è¨ˆç®—ã—ã¾ã™ã€‚è¿‘æ¥ç‚¹ã®xã€yã€zåº§æ¨™ã¯æ³•ç·šãƒ™ã‚¯ãƒˆãƒ«ã®å„è¦ç´ ãŒè² ã®å ´åˆã€ãƒã‚¦ãƒ³ãƒ‡ã‚£ãƒ³ã‚°ãƒœãƒƒã‚¯ã‚¹ã®æœ€å¤§ç‚¹ã®åº§æ¨™ãŒã€ãã‚Œä»¥å¤–ã®å ´åˆã¯ã€ãƒã‚¦ãƒ³ãƒ‡ã‚£ãƒ³ã‚°ãƒœãƒƒã‚¯ã‚¹ã®æœ€å°ç‚¹ã®åº§æ¨™ã¨ãªã‚Šã¾ã™ã€‚*/
+		d3dxvNormal = D3DXVECTOR3(m_d3dxFrustumPlanes[i].a, m_d3dxFrustumPlanes[i].b, m_d3dxFrustumPlanes[i].c);
+		if (d3dxvNormal.x >= 0.0f)
+		{
+			if (d3dxvNormal.y >= 0.0f)
+			{
+				if (d3dxvNormal.z >= 0.0f)
+				{
+					d3dxvNearPoint.x = d3dxvMinimum.x; d3dxvNearPoint.y = d3dxvMinimum.y; d3dxvNearPoint.z = d3dxvMinimum.z;
+				}
+				else
+				{
+					d3dxvNearPoint.x = d3dxvMinimum.x; d3dxvNearPoint.y = d3dxvMinimum.y; d3dxvNearPoint.z = d3dxvMaximum.z;
+				}
+			}
+			else
+			{
+				if (d3dxvNormal.z >= 0.0f)
+				{
+					d3dxvNearPoint.x = d3dxvMinimum.x; d3dxvNearPoint.y = d3dxvMaximum.y; d3dxvNearPoint.z = d3dxvMinimum.z;
+				}
+				else
+				{
+					d3dxvNearPoint.x = d3dxvMinimum.x; d3dxvNearPoint.y = d3dxvMaximum.y; d3dxvNearPoint.z = d3dxvMaximum.z;
+				}
+			}
+		}
+		else
+		{
+			if (d3dxvNormal.y >= 0.0f)
+			{
+				if (d3dxvNormal.z >= 0.0f)
+				{
+					d3dxvNearPoint.x = d3dxvMaximum.x; d3dxvNearPoint.y = d3dxvMinimum.y; d3dxvNearPoint.z = d3dxvMinimum.z;
+				}
+				else
+				{
+					d3dxvNearPoint.x = d3dxvMaximum.x; d3dxvNearPoint.y = d3dxvMinimum.y; d3dxvNearPoint.z = d3dxvMaximum.z;
+				}
+			}
+			else
+			{
+				if (d3dxvNormal.z >= 0.0f)
+				{
+					d3dxvNearPoint.x = d3dxvMaximum.x; d3dxvNearPoint.y = d3dxvMaximum.y; d3dxvNearPoint.z = d3dxvMinimum.z;
+				}
+				else
+				{
+					d3dxvNearPoint.x = d3dxvMaximum.x; d3dxvNearPoint.y = d3dxvMaximum.y; d3dxvNearPoint.z = d3dxvMaximum.z;
+				}
+			}
+		}
+		if ((D3DXVec3Dot(&d3dxvNormal, &d3dxvNearPoint) + m_d3dxFrustumPlanes[i].d) > 0.0f) return(false);
+	}
+	return(true);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -193,7 +291,6 @@ void CThirdPersonCamera::Update(float fTimeElapsed)
 		}
 	}
 }
-
 void CThirdPersonCamera::SetLookAt(D3DXVECTOR3& d3dxvLookAt)
 {
 	D3DXMATRIX mtxLookAt;
@@ -240,117 +337,3 @@ void CSpectator::Rotate(float x, float y, float z)
 	}
 }
 
-void CCamera::CalculateFrustumPlanes()
-{
-	/*Ä«¸Ş¶ó º¯È¯ Çà·Ä°ú ¿ø±Ù Åõ¿µ º¯È¯ Çà·ÄÀ» °öÇÑ Çà·ÄÀ» »ç¿ëÇÏ¿© ÀıµÎÃ¼ Æò¸éµéÀ» ±¸ÇÑ´Ù. Áï ¿ùµå ÁÂÇ¥°è¿¡¼­ ÀıµÎÃ¼ ÄÃ¸µÀ» ÇÑ´Ù.*/
-	D3DXMATRIX mtxViewProject = m_d3dxmtxView * m_d3dxmtxProjection;
-
-	//ÀıµÎÃ¼ÀÇ ¿ŞÂÊ Æò¸é
-	m_d3dxFrustumPlanes[0].a = -(mtxViewProject._14 + mtxViewProject._11);
-	m_d3dxFrustumPlanes[0].b = -(mtxViewProject._24 + mtxViewProject._21);
-	m_d3dxFrustumPlanes[0].c = -(mtxViewProject._34 + mtxViewProject._31);
-	m_d3dxFrustumPlanes[0].d = -(mtxViewProject._44 + mtxViewProject._41);
-
-	//ÀıµÎÃ¼ÀÇ ¿À¸¥ÂÊ Æò¸é
-	m_d3dxFrustumPlanes[1].a = -(mtxViewProject._14 - mtxViewProject._11);
-	m_d3dxFrustumPlanes[1].b = -(mtxViewProject._24 - mtxViewProject._21);
-	m_d3dxFrustumPlanes[1].c = -(mtxViewProject._34 - mtxViewProject._31);
-	m_d3dxFrustumPlanes[1].d = -(mtxViewProject._44 - mtxViewProject._41);
-
-	//ÀıµÎÃ¼ÀÇ À§ÂÊ Æò¸é
-	m_d3dxFrustumPlanes[2].a = -(mtxViewProject._14 - mtxViewProject._12);
-	m_d3dxFrustumPlanes[2].b = -(mtxViewProject._24 - mtxViewProject._22);
-	m_d3dxFrustumPlanes[2].c = -(mtxViewProject._34 - mtxViewProject._32);
-	m_d3dxFrustumPlanes[2].d = -(mtxViewProject._44 - mtxViewProject._42);
-
-	//ÀıµÎÃ¼ÀÇ ¾Æ·¡ÂÊ Æò¸é
-	m_d3dxFrustumPlanes[3].a = -(mtxViewProject._14 + mtxViewProject._12);
-	m_d3dxFrustumPlanes[3].b = -(mtxViewProject._24 + mtxViewProject._22);
-	m_d3dxFrustumPlanes[3].c = -(mtxViewProject._34 + mtxViewProject._32);
-	m_d3dxFrustumPlanes[3].d = -(mtxViewProject._44 + mtxViewProject._42);
-
-	//ÀıµÎÃ¼ÀÇ ±ÙÆò¸é
-	m_d3dxFrustumPlanes[4].a = -(mtxViewProject._13);
-	m_d3dxFrustumPlanes[4].b = -(mtxViewProject._23);
-	m_d3dxFrustumPlanes[4].c = -(mtxViewProject._33);
-	m_d3dxFrustumPlanes[4].d = -(mtxViewProject._43);
-
-	//ÀıµÎÃ¼ÀÇ ¿øÆò¸é
-	m_d3dxFrustumPlanes[5].a = -(mtxViewProject._14 - mtxViewProject._13);
-	m_d3dxFrustumPlanes[5].b = -(mtxViewProject._24 - mtxViewProject._23);
-	m_d3dxFrustumPlanes[5].c = -(mtxViewProject._34 - mtxViewProject._33);
-	m_d3dxFrustumPlanes[5].d = -(mtxViewProject._44 - mtxViewProject._43);
-
-	/*ÀıµÎÃ¼ÀÇ °¢ Æò¸éÀÇ ¹ı¼± º¤ÅÍ (a, b. c)ÀÇ Å©±â·Î a, b, c, d¸¦ ³ª´«´Ù. Áï, ¹ı¼± º¤ÅÍ¸¦ Á¤±ÔÈ­ÇÏ°í ¿øÁ¡¿¡¼­ Æò¸é±îÁöÀÇ °Å¸®¸¦ °è»êÇÑ´Ù.*/
-	for (int i = 0; i < 6; i++) D3DXPlaneNormalize(&m_d3dxFrustumPlanes[i], &m_d3dxFrustumPlanes[i]);
-}
-
-bool CCamera::IsInFrustum(D3DXVECTOR3& d3dxvMinimum, D3DXVECTOR3& d3dxvMaximum)
-{
-	D3DXVECTOR3 d3dxvNearPoint, d3dxvFarPoint, d3dxvNormal;
-	for (int i = 0; i < 6; i++)
-	{
-		/*ÀıµÎÃ¼ÀÇ °¢ Æò¸é¿¡ ´ëÇÏ¿© ¹Ù¿îµù ¹Ú½ºÀÇ ±ÙÁ¢Á¡À» °è»êÇÑ´Ù. ±ÙÁ¢Á¡ÀÇ x, y, z ÁÂÇ¥´Â ¹ı¼± º¤ÅÍÀÇ °¢ ¿ä¼Ò°¡ À½¼öÀÌ¸é ¹Ù¿îµù ¹Ú½ºÀÇ ÃÖ´ëÁ¡ÀÇ ÁÂÇ¥°¡ µÇ°í ±×·¸Áö ¾ÊÀ¸¸é ¹Ù¿îµù ¹Ú½ºÀÇ ÃÖ¼ÒÁ¡ÀÇ ÁÂÇ¥°¡ µÈ´Ù.*/
-		d3dxvNormal = D3DXVECTOR3(m_d3dxFrustumPlanes[i].a, m_d3dxFrustumPlanes[i].b, m_d3dxFrustumPlanes[i].c);
-		if (d3dxvNormal.x >= 0.0f)
-		{
-			if (d3dxvNormal.y >= 0.0f)
-			{
-				if (d3dxvNormal.z >= 0.0f)
-				{
-					//¹ı¼± º¤ÅÍÀÇ x, y, z ÁÂÇ¥ÀÇ ºÎÈ£°¡ ¸ğµÎ ¾ç¼öÀÌ¹Ç·Î ±ÙÁ¢Á¡Àº ¹Ù¿îµù ¹Ú½ºÀÇ ÃÖ¼ÒÁ¡ÀÌ´Ù.
-					d3dxvNearPoint.x = d3dxvMinimum.x; d3dxvNearPoint.y = d3dxvMinimum.y; d3dxvNearPoint.z = d3dxvMinimum.z;
-				}
-				else
-				{
-					/*¹ı¼± º¤ÅÍÀÇ x, y ÁÂÇ¥ÀÇ ºÎÈ£°¡ ¸ğµÎ ¾ç¼öÀÌ¹Ç·Î ±ÙÁ¢Á¡ÀÇ x, y ÁÂÇ¥´Â ¹Ù¿îµù ¹Ú½ºÀÇ ÃÖ¼ÒÁ¡ÀÇ x, y ÁÂÇ¥ÀÌ°í ¹ı¼± º¤ÅÍÀÇ z ÁÂÇ¥°¡ ¿ò¼öÀÌ¹Ç·Î ±ÙÁ¢Á¡ÀÇ z ÁÂÇ¥´Â ¹Ù¿îµù ¹Ú½ºÀÇ ÃÖ´ëÁ¡ÀÇ z ÁÂÇ¥ÀÌ´Ù.*/
-					d3dxvNearPoint.x = d3dxvMinimum.x; d3dxvNearPoint.y = d3dxvMinimum.y; d3dxvNearPoint.z = d3dxvMaximum.z;
-				}
-			}
-			else
-			{
-				if (d3dxvNormal.z >= 0.0f)
-				{
-					/*¹ı¼± º¤ÅÍÀÇ x, z ÁÂÇ¥ÀÇ ºÎÈ£°¡ ¸ğµÎ ¾ç¼öÀÌ¹Ç·Î ±ÙÁ¢Á¡ÀÇ x, z ÁÂÇ¥´Â ¹Ù¿îµù ¹Ú½ºÀÇ ÃÖ¼ÒÁ¡ÀÇ x, z ÁÂÇ¥ÀÌ°í ¹ı¼± º¤ÅÍÀÇ y ÁÂÇ¥°¡ ¿ò¼öÀÌ¹Ç·Î ±ÙÁ¢Á¡ÀÇ y ÁÂÇ¥´Â ¹Ù¿îµù ¹Ú½ºÀÇ ÃÖ´ëÁ¡ÀÇ y ÁÂÇ¥ÀÌ´Ù.*/
-					d3dxvNearPoint.x = d3dxvMinimum.x; d3dxvNearPoint.y = d3dxvMaximum.y; d3dxvNearPoint.z = d3dxvMinimum.z;
-				}
-				else
-				{
-					/*¹ı¼± º¤ÅÍÀÇ y, z ÁÂÇ¥ÀÇ ºÎÈ£°¡ ¸ğµÎ À½¼öÀÌ¹Ç·Î ±ÙÁ¢Á¡ÀÇ y, z ÁÂÇ¥´Â ¹Ù¿îµù ¹Ú½ºÀÇ ÃÖ´ëÁ¡ÀÇ y, z ÁÂÇ¥ÀÌ°í ¹ı¼± º¤ÅÍÀÇ x ÁÂÇ¥°¡ ¾ç¼öÀÌ¹Ç·Î ±ÙÁ¢Á¡ÀÇ x ÁÂÇ¥´Â ¹Ù¿îµù ¹Ú½ºÀÇ ÃÖ¼ÒÁ¡ÀÇ x ÁÂÇ¥ÀÌ´Ù.*/
-					d3dxvNearPoint.x = d3dxvMinimum.x; d3dxvNearPoint.y = d3dxvMaximum.y; d3dxvNearPoint.z = d3dxvMaximum.z;
-				}
-			}
-		}
-		else
-		{
-			if (d3dxvNormal.y >= 0.0f)
-			{
-				if (d3dxvNormal.z >= 0.0f)
-				{
-					/*¹ı¼± º¤ÅÍÀÇ y, z ÁÂÇ¥ÀÇ ºÎÈ£°¡ ¸ğµÎ ¾ç¼öÀÌ¹Ç·Î ±ÙÁ¢Á¡ÀÇ y, z ÁÂÇ¥´Â ¹Ù¿îµù ¹Ú½ºÀÇ ÃÖ¼ÒÁ¡ÀÇ y, z ÁÂÇ¥ÀÌ°í ¹ı¼± º¤ÅÍÀÇ x ÁÂÇ¥°¡ À½¼öÀÌ¹Ç·Î ±ÙÁ¢Á¡ÀÇ x ÁÂÇ¥´Â ¹Ù¿îµù ¹Ú½ºÀÇ ÃÖ´ëÁ¡ÀÇ x ÁÂÇ¥ÀÌ´Ù.*/
-					d3dxvNearPoint.x = d3dxvMaximum.x; d3dxvNearPoint.y = d3dxvMinimum.y; d3dxvNearPoint.z = d3dxvMinimum.z;
-				}
-				else
-				{
-					/*¹ı¼± º¤ÅÍÀÇ x, z ÁÂÇ¥ÀÇ ºÎÈ£°¡ ¸ğµÎ À½¼öÀÌ¹Ç·Î ±ÙÁ¢Á¡ÀÇ x, z ÁÂÇ¥´Â ¹Ù¿îµù ¹Ú½ºÀÇ ÃÖ´ëÁ¡ÀÇ x, z ÁÂÇ¥ÀÌ°í ¹ı¼± º¤ÅÍÀÇ y ÁÂÇ¥°¡ ¾ç¼öÀÌ¹Ç·Î ±ÙÁ¢Á¡ÀÇ y ÁÂÇ¥´Â ¹Ù¿îµù ¹Ú½ºÀÇ ÃÖ¼ÒÁ¡ÀÇ y ÁÂÇ¥ÀÌ´Ù.*/
-					d3dxvNearPoint.x = d3dxvMaximum.x; d3dxvNearPoint.y = d3dxvMinimum.y; d3dxvNearPoint.z = d3dxvMaximum.z;
-				}
-			}
-			else
-			{
-				if (d3dxvNormal.z >= 0.0f)
-				{
-					/*¹ı¼± º¤ÅÍÀÇ x, y ÁÂÇ¥ÀÇ ºÎÈ£°¡ ¸ğµÎ À½¼öÀÌ¹Ç·Î ±ÙÁ¢Á¡ÀÇ x, y ÁÂÇ¥´Â ¹Ù¿îµù ¹Ú½ºÀÇ ÃÖ´ëÁ¡ÀÇ x, y ÁÂÇ¥ÀÌ°í ¹ı¼± º¤ÅÍÀÇ z ÁÂÇ¥°¡ ¾ç¼öÀÌ¹Ç·Î ±ÙÁ¢Á¡ÀÇ z ÁÂÇ¥´Â ¹Ù¿îµù ¹Ú½ºÀÇ ÃÖ¼ÒÁ¡ÀÇ z ÁÂÇ¥ÀÌ´Ù.*/
-					d3dxvNearPoint.x = d3dxvMaximum.x; d3dxvNearPoint.y = d3dxvMaximum.y; d3dxvNearPoint.z = d3dxvMinimum.z;
-				}
-				else
-				{
-					//¹ı¼± º¤ÅÍÀÇ x, y, z ÁÂÇ¥ÀÇ ºÎÈ£°¡ ¸ğµÎ À½¼öÀÌ¹Ç·Î ±ÙÁ¢Á¡Àº ¹Ù¿îµù ¹Ú½ºÀÇ ÃÖ´ëÁ¡ÀÌ´Ù.
-					d3dxvNearPoint.x = d3dxvMaximum.x; d3dxvNearPoint.y = d3dxvMaximum.y; d3dxvNearPoint.z = d3dxvMaximum.z;
-				}
-			}
-		}
-		if ((D3DXVec3Dot(&d3dxvNormal, &d3dxvNearPoint) + m_d3dxFrustumPlanes[i].d) > 0.0f) return(false);
-	}
-	return(true);
-}

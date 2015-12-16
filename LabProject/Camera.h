@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #define FRAME_BUFFER_WIDTH			1280
 #define FRAME_BUFFER_HEIGHT			960
@@ -8,6 +8,7 @@
 #define SPECTATOR_CAMERA			0x02
 #define THIRD_PERSON_CAMERA			0x03
 
+//カメラの情報を更新する時に使う構造体です。
 struct VS_CB_VIEWPROJECTION_MATRIX
 {
 	D3DXMATRIX						m_d3dxmtxView;
@@ -16,6 +17,8 @@ struct VS_CB_VIEWPROJECTION_MATRIX
 
 class CPlayer;
 
+/////////////////////////////////////////////////////////////////////////////////////////////////
+//カメラクラスです。
 class CCamera
 {
 public:
@@ -88,6 +91,8 @@ protected:
 	D3DXPLANE						 m_d3dxFrustumPlanes[6];
 };
 
+/////////////////////////////////////////////////////////////////////////////////////////////////
+//一人称視点カメラクラスです。
 class CFirstPersonCamera : public CCamera
 {
 public:
@@ -96,6 +101,8 @@ public:
 	virtual void Rotate(float fPitch = 0.0f, float fYaw = 0.0f, float fRoll = 0.0f);
 };
 
+/////////////////////////////////////////////////////////////////////////////////////////////////
+//三人称視点カメラクラスです。
 class CThirdPersonCamera : public CCamera
 {
 public:
@@ -105,6 +112,8 @@ public:
 	virtual void SetLookAt(D3DXVECTOR3& vLookAt);
 };
 
+/////////////////////////////////////////////////////////////////////////////////////////////////
+//自由視点カメラクラスです。
 class CSpectator : public CCamera
 {
 public:

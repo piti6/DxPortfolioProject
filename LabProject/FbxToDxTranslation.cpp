@@ -1,6 +1,7 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "FbxToDxTranslation.h"
 
+//反射平面を作ります。
 FbxAMatrix* D3DXMatrixReflect_Fixed(__inout FbxAMatrix *pOut, __in const D3DXPLANE *pPlane)
 {
 	D3DXPLANE P;
@@ -26,6 +27,7 @@ FbxAMatrix* D3DXMatrixReflect_Fixed(__inout FbxAMatrix *pOut, __in const D3DXPLA
 	return pOut;
 }
 
+//ジオメトリ情報を持って来ます。
 FbxAMatrix GetGeometry(FbxNode* pNode)
 {
 	const FbxVector4 lT = pNode->GetGeometricTranslation(FbxNode::eSourcePivot);
@@ -35,6 +37,7 @@ FbxAMatrix GetGeometry(FbxNode* pNode)
 	return FbxAMatrix(lT, lR, lS);
 }
 
+//FBX SDKの行列からDirectX行列を作ります。
 D3DXMATRIX GetD3DMatrix(FbxAMatrix SrcFbxMtx)
 {
 	D3DXMATRIX Dst;

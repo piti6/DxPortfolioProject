@@ -1,21 +1,7 @@
-#include "stdafx.h"
+ï»¿#include "stdafx.h"
 #include "AABB.h"
 
-void AABB::Union(D3DXVECTOR3 d3dxvMinimum, D3DXVECTOR3 d3dxvMaximum)
-{
-	if (d3dxvMinimum.x < m_d3dxvMinimum.x) m_d3dxvMinimum.x = d3dxvMinimum.x;
-	if (d3dxvMinimum.y < m_d3dxvMinimum.y) m_d3dxvMinimum.y = d3dxvMinimum.y;
-	if (d3dxvMinimum.z < m_d3dxvMinimum.z) m_d3dxvMinimum.z = d3dxvMinimum.z;
-	if (d3dxvMaximum.x > m_d3dxvMaximum.x) m_d3dxvMaximum.x = d3dxvMaximum.x;
-	if (d3dxvMaximum.y > m_d3dxvMaximum.y) m_d3dxvMaximum.y = d3dxvMaximum.y;
-	if (d3dxvMaximum.z > m_d3dxvMaximum.z) m_d3dxvMaximum.z = d3dxvMaximum.z;
-}
-
-void AABB::Union(AABB *pAABB)
-{
-	Union(pAABB->m_d3dxvMinimum, pAABB->m_d3dxvMaximum);
-}
-
+//é ‚ç‚¹ã‚’å¼•æ•°è¡Œåˆ—ã®ã‚¹ãƒšãƒ¼ã‚¹ã§å¤‰æ›ã™ã‚‹é–¢æ•°
 void AABB::Transform(D3DXMATRIX *pmtxTransform)
 {
 	D3DXVECTOR3 vVertices[8];
@@ -29,10 +15,10 @@ void AABB::Transform(D3DXMATRIX *pmtxTransform)
 	vVertices[7] = D3DXVECTOR3(m_d3dxvMaximum.x, m_d3dxvMaximum.y, m_d3dxvMinimum.z);
 	m_d3dxvMinimum = D3DXVECTOR3(+FLT_MAX, +FLT_MAX, +FLT_MAX);
 	m_d3dxvMaximum = D3DXVECTOR3(-FLT_MAX, -FLT_MAX, -FLT_MAX);
-	//8°³ÀÇ Á¤Á¡¿¡¼­ x, y, z ÁÂÇ¥ÀÇ ÃÖ¼Ò°ª°ú ÃÖ´ë°ªÀ» ±¸ÇÑ´Ù.
+	//8ê°œì˜ ì •ì ì—ì„œ x, y, z ì¢Œí‘œì˜ ìµœì†Œê°’ê³¼ ìµœëŒ€ê°’ì„ êµ¬í•œë‹¤.
 	for (int i = 0; i < 8; i++)
 	{
-		//Á¤Á¡À» º¯È¯ÇÑ´Ù.
+		//ì •ì ì„ ë³€í™˜í•œë‹¤.
 		D3DXVec3TransformCoord(&vVertices[i], &vVertices[i], pmtxTransform);
 		if (vVertices[i].x < m_d3dxvMinimum.x) m_d3dxvMinimum.x = vVertices[i].x;
 		if (vVertices[i].y < m_d3dxvMinimum.y) m_d3dxvMinimum.y = vVertices[i].y;

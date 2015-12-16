@@ -1,10 +1,9 @@
-//-----------------------------------------------------------------------------
-// File: CGameObject.cpp
-//-----------------------------------------------------------------------------
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "Object.h"
 #include "FbxToDxTranslation.h"
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//
 
 CGameObject::CGameObject()
 {
@@ -14,7 +13,6 @@ CGameObject::CGameObject()
 	m_bIsActive = true;
 	m_d3dxvOffset = D3DXVECTOR3(0, 0, 0);
 }
-
 CGameObject::~CGameObject()
 {
 	for (int i = 0; i < m_MeshesVector.size(); ++i){
@@ -27,7 +25,6 @@ CGameObject::~CGameObject()
 void CGameObject::SetActive(bool isActive){
 	m_bIsActive = isActive;
 }
-
 bool CGameObject::isActive(){
 	return m_bIsActive;
 }
@@ -38,14 +35,12 @@ void CGameObject::SetTexture(CTexture *pTexture)
 	m_pTexture = pTexture;
 	if (m_pTexture) m_pTexture->AddRef();
 }
-
 void CGameObject::SetMaterial(CMaterial *pMaterial)
 {
 	if (m_pMaterial) m_pMaterial->Release();
 	m_pMaterial = pMaterial;
 	if (m_pMaterial) m_pMaterial->AddRef();
 }
-
 void CGameObject::SetMesh(CMesh *pMesh)
 {
 	m_MeshesVector.push_back(pMesh);
@@ -55,19 +50,16 @@ CMaterial* CGameObject::GetMaterial()
 {
 	return m_pMaterial;
 }
-
 CTexture* CGameObject::GetTexture()
 {
 	return m_pTexture;
 }
-
 CMesh* CGameObject::GetMesh(int _Index)
 {
 	if (0 <= _Index  && _Index < m_MeshesVector.size())
 		return m_MeshesVector[_Index];
 	return NULL;
 }
-
 D3DXMATRIX CGameObject::GetWorldMatrix()
 {
 	return m_d3dxmtxWorld;
@@ -88,10 +80,6 @@ void CGameObject::Render(ID3D11DeviceContext *pd3dDeviceContext)
 		if (m_MeshesVector[i]) m_MeshesVector[i]->Render(pd3dDeviceContext);
 }
 
-void CGameObject::UpdateAnimation(ID3D11DeviceContext *pd3dDeviceContext){
-
-}
-
 void CGameObject::SetPosition(D3DXVECTOR3 d3dxvPosition)
 {
 	m_d3dxmtxWorld._41 = d3dxvPosition.x;
@@ -103,50 +91,23 @@ D3DXVECTOR3 CGameObject::GetPosition()
 {
 	return(D3DXVECTOR3(m_d3dxmtxWorld._41, m_d3dxmtxWorld._42, m_d3dxmtxWorld._43));
 }
-
 D3DXVECTOR3 CGameObject::GetLookAt()
 {
 	D3DXVECTOR3 d3dxvLookAt(m_d3dxmtxWorld._31, m_d3dxmtxWorld._32, m_d3dxmtxWorld._33);
 	D3DXVec3Normalize(&d3dxvLookAt, &d3dxvLookAt);
 	return(d3dxvLookAt);
 }
-
 D3DXVECTOR3 CGameObject::GetUp()
 {
 	D3DXVECTOR3 d3dxvUp(m_d3dxmtxWorld._21, m_d3dxmtxWorld._22, m_d3dxmtxWorld._23);
 	D3DXVec3Normalize(&d3dxvUp, &d3dxvUp);
 	return(d3dxvUp);
 }
-
 D3DXVECTOR3 CGameObject::GetRight()
 {
 	D3DXVECTOR3 d3dxvRight(m_d3dxmtxWorld._11, m_d3dxmtxWorld._12, m_d3dxmtxWorld._13);
 	D3DXVec3Normalize(&d3dxvRight, &d3dxvRight);
 	return(d3dxvRight);
-}
-
-void CGameObject::MoveStrafe(float fDistance)
-{
-	D3DXVECTOR3 d3dxvPosition = GetPosition();
-	D3DXVECTOR3 d3dxvRight = GetRight();
-	d3dxvPosition += fDistance * d3dxvRight;
-	SetPosition(d3dxvPosition);
-}
-
-void CGameObject::MoveUp(float fDistance)
-{
-	D3DXVECTOR3 d3dxvPosition = GetPosition();
-	D3DXVECTOR3 d3dxvUp = GetUp();
-	d3dxvPosition += fDistance * d3dxvUp;
-	SetPosition(d3dxvPosition);
-}
-
-void CGameObject::MoveForward(float fDistance)
-{
-	D3DXVECTOR3 d3dxvPosition = GetPosition();
-	D3DXVECTOR3 d3dxvLookAt = GetLookAt();
-	d3dxvPosition += fDistance * d3dxvLookAt;
-	SetPosition(d3dxvPosition);
 }
 
 void CGameObject::Rotate(float fPitch, float fYaw, float fRoll)
@@ -155,14 +116,12 @@ void CGameObject::Rotate(float fPitch, float fYaw, float fRoll)
 	D3DXMatrixRotationYawPitchRoll(&mtxRotate, (float)D3DXToRadian(fYaw), (float)D3DXToRadian(fPitch), (float)D3DXToRadian(fRoll));
 	m_d3dxmtxWorld = mtxRotate * m_d3dxmtxWorld;
 }
-
 void CGameObject::Rotate(D3DXVECTOR3 rotation)
 {
 	D3DXMATRIX mtxRotate;
 	D3DXMatrixRotationYawPitchRoll(&mtxRotate, (float)D3DXToRadian(rotation.x), (float)D3DXToRadian(rotation.y), (float)D3DXToRadian(rotation.z));
 	m_d3dxmtxWorld = mtxRotate * m_d3dxmtxWorld;
 }
-
 void CGameObject::Rotate(D3DXVECTOR3 *pd3dxvAxis, float fAngle)
 {
 	D3DXMATRIX mtxRotate;
@@ -174,7 +133,6 @@ void CGameObject::SetOffset(D3DXVECTOR3 _Offset)
 {
 	m_d3dxvOffset = _Offset;
 }
-
 D3DXVECTOR3 CGameObject::GetOffset()
 {
 	return m_d3dxvOffset;
@@ -185,24 +143,23 @@ D3DXVECTOR3 CGameObject::GetOffset()
 
 CStaticObject::CStaticObject()
 {
-	m_pPxMaterial = NULL;
 	m_pPxActor = NULL;
 }
-
 CStaticObject::~CStaticObject()
 {
 }
 
+//Physx SDKを使ったオブジェクトを作成
 void CStaticObject::BuildObjects(PxPhysics *pPxPhysics, PxScene *pPxScene, PxMaterial *pPxMaterial, const char* name)
 {
-	m_pPxMaterial = pPxMaterial;
 	D3DXVECTOR3 _d3dxvBoundMinimum = m_MeshesVector[0]->GetBoundingCube().GetMinimum();
 	D3DXVECTOR3 _d3dxvBoundMaximum = m_MeshesVector[0]->GetBoundingCube().GetMaximum();
+	//AABBからメッシュの最大、最小点を計算し、それでボックスコライダーを作る
 	D3DXVECTOR3 _d3dxvExtents =
 		D3DXVECTOR3((abs(_d3dxvBoundMinimum.x) + abs(_d3dxvBoundMaximum.x)) / 2, (abs(_d3dxvBoundMinimum.y) + abs(_d3dxvBoundMaximum.y)) / 2, (abs(_d3dxvBoundMinimum.z) + abs(_d3dxvBoundMaximum.z)) / 2);
 	PxTransform _PxTransform(0, 0, 0);
 	PxBoxGeometry _PxBoxGeometry(_d3dxvExtents.x, _d3dxvExtents.y, _d3dxvExtents.z);
-	m_pPxActor = PxCreateStatic(*pPxPhysics, _PxTransform, _PxBoxGeometry, *m_pPxMaterial);
+	m_pPxActor = PxCreateStatic(*pPxPhysics, _PxTransform, _PxBoxGeometry, *pPxMaterial);
 	m_pPxActor->setName(name);
 	pPxScene->addActor(*m_pPxActor);
 }
@@ -226,7 +183,6 @@ CDynamicObject::CDynamicObject(bool _HasAnimation)
 	m_pPxActor = NULL;
 	m_bHasAnimation = _HasAnimation;
 }
-
 CDynamicObject::~CDynamicObject()
 {
 }
@@ -235,6 +191,7 @@ void CDynamicObject::BuildObjects(PxPhysics *pPxPhysics, PxScene *pPxScene, PxMa
 {
 	D3DXVECTOR3 _d3dxvBoundMinimum = m_MeshesVector[0]->GetBoundingCube().GetMinimum();
 	D3DXVECTOR3 _d3dxvBoundMaximum = m_MeshesVector[0]->GetBoundingCube().GetMaximum();
+	//AABBからメッシュの最大、最小点を計算し、それでボックスコライダーを作る
 	D3DXVECTOR3 _d3dxvExtents =
 		D3DXVECTOR3((abs(_d3dxvBoundMinimum.x) + abs(_d3dxvBoundMaximum.x)) / 2, (abs(_d3dxvBoundMinimum.y) + abs(_d3dxvBoundMaximum.y)) / 2, (abs(_d3dxvBoundMinimum.z) + abs(_d3dxvBoundMaximum.z)) / 2);
 	PxTransform _PxTransform(0, 0, 0);
@@ -243,6 +200,7 @@ void CDynamicObject::BuildObjects(PxPhysics *pPxPhysics, PxScene *pPxScene, PxMa
 	pPxScene->addActor(*m_pPxActor);
 }
 
+//アニメーションの更新や、Physx SDKから現在の物理を計算した位置をもらって更新します。
 void CDynamicObject::Animate(float fTimeElapsed, PxScene *pPxScene)
 {
 	if (m_bHasAnimation)
@@ -256,14 +214,8 @@ void CDynamicObject::Animate(float fTimeElapsed, PxScene *pPxScene)
 
 void CDynamicObject::SetPosition(D3DXVECTOR3 d3dxvPosition)
 {
-	D3DXVECTOR3 _d3dxvBoundMinimum = m_MeshesVector[0]->GetBoundingCube().GetMinimum();
-	D3DXVECTOR3 _d3dxvBoundMaximum = m_MeshesVector[0]->GetBoundingCube().GetMaximum();
-	D3DXVECTOR3 _d3dxvExtents =
-		D3DXVECTOR3((abs(_d3dxvBoundMinimum.x) + abs(_d3dxvBoundMaximum.x)) / 2, (abs(_d3dxvBoundMinimum.y) + abs(_d3dxvBoundMaximum.y)) / 2, (abs(_d3dxvBoundMinimum.z) + abs(_d3dxvBoundMaximum.z)) / 2);
-	//m_pPxActor->setGlobalPose(PxTransform(PxVec3(d3dxvPosition.x + _d3dxvExtents.x, d3dxvPosition.y + _d3dxvExtents.y, d3dxvPosition.z + _d3dxvExtents.z)));
 	m_pPxActor->setGlobalPose(PxTransform(PxVec3(d3dxvPosition.x, d3dxvPosition.y, d3dxvPosition.z)));
 }
-
 void CDynamicObject::Rotate(float fPitch, float fYaw, float fRoll)
 {
 
@@ -272,7 +224,6 @@ void CDynamicObject::Rotate(float fPitch, float fYaw, float fRoll)
 	_PxTransform.q *= PxQuat(D3DXToDegree(fPitch), PxVec3(1, 0, 0));
 	m_pPxActor->setGlobalPose(_PxTransform);
 }
-
 void CDynamicObject::SetActive(bool isActive)
 {
 	m_bIsActive = isActive;
@@ -281,7 +232,6 @@ void CDynamicObject::SetActive(bool isActive)
 	else
 		m_pPxActor->putToSleep();
 }
-
 void CDynamicObject::AddForce(float fx, float fy, float fz)
 {
 	m_pPxActor->addForce(PxVec3(fx, fy, fz), PxForceMode::eVELOCITY_CHANGE);
@@ -297,7 +247,6 @@ CCharacterObject::CCharacterObject(bool _HasAnimation)
 	D3DXMatrixIdentity(&m_d3dxmtxRotateOffset);
 	m_bHasAnimation = _HasAnimation;
 }
-
 CCharacterObject::~CCharacterObject()
 {
 
@@ -305,8 +254,6 @@ CCharacterObject::~CCharacterObject()
 
 void CCharacterObject::BuildObjects(PxPhysics *pPxPhysics, PxScene *pPxScene, PxMaterial *pPxMaterial, PxControllerManager *pPxControllerManager)
 {
-
-
 	D3DXVECTOR3 _d3dxvBoundMinimum = m_MeshesVector[0]->GetBoundingCube().GetMinimum();
 	D3DXVECTOR3 _d3dxvBoundMaximum = m_MeshesVector[0]->GetBoundingCube().GetMaximum();
 	D3DXVECTOR3 _d3dxvExtents =
@@ -338,80 +285,30 @@ void CCharacterObject::SetPosition(D3DXVECTOR3 d3dxvPosition)
 {
 	m_pPxCharacterController->setPosition(PxExtendedVec3(d3dxvPosition.x, d3dxvPosition.y, d3dxvPosition.z));
 }
-
 void CCharacterObject::RotateOffset(float fPitch, float fYaw, float fRoll)
 {
 	D3DXMATRIX d3dxmtxRotateOffset;
 	D3DXMatrixRotationYawPitchRoll(&d3dxmtxRotateOffset, (float)D3DXToRadian(fYaw), (float)D3DXToRadian(fPitch), (float)D3DXToRadian(fRoll));
 	m_d3dxmtxRotateOffset = d3dxmtxRotateOffset;
 }
-
 void CCharacterObject::Rotate(float fPitch, float fYaw, float fRoll)
 {
 	D3DXMATRIX mtxRotate;
 	D3DXMatrixRotationYawPitchRoll(&mtxRotate, (float)D3DXToRadian(fYaw), (float)D3DXToRadian(fPitch), (float)D3DXToRadian(fRoll));
 	m_d3dxmtxRotate = mtxRotate * m_d3dxmtxRotate;
 }
-
 void CCharacterObject::Rotate(D3DXVECTOR3 rotation)
 {
 	D3DXMATRIX mtxRotate;
 	D3DXMatrixRotationYawPitchRoll(&mtxRotate, (float)D3DXToRadian(rotation.x), (float)D3DXToRadian(rotation.y), (float)D3DXToRadian(rotation.z));
 	m_d3dxmtxRotate = mtxRotate * m_d3dxmtxRotate;
 }
-
 void CCharacterObject::Rotate(D3DXVECTOR3 *pd3dxvAxis, float fAngle)
 {
 	D3DXMATRIX mtxRotate;
 	D3DXMatrixRotationAxis(&mtxRotate, pd3dxvAxis, (float)D3DXToRadian(fAngle));
 	m_d3dxmtxRotate = mtxRotate * m_d3dxmtxRotate;
 }
-
-void CCharacterObject::MoveStrafe(float fDistance)
-{
-	D3DXVECTOR3 d3dxvPosition = GetPosition();
-	D3DXVECTOR3 d3dxvRight = GetRight();
-	d3dxvPosition += fDistance * d3dxvRight;
-	SetPosition(d3dxvPosition);
-}
-
-void CCharacterObject::MoveUp(float fDistance)
-{
-	D3DXVECTOR3 d3dxvPosition = GetPosition();
-	D3DXVECTOR3 d3dxvUp = GetUp();
-	d3dxvPosition += fDistance * d3dxvUp;
-	SetPosition(d3dxvPosition);
-}
-
-void CCharacterObject::MoveForward(float fDistance)
-{
-	D3DXVECTOR3 d3dxvPosition = GetPosition();
-	D3DXVECTOR3 d3dxvLookAt = GetLookAt();
-	d3dxvPosition += fDistance * d3dxvLookAt;
-	SetPosition(d3dxvPosition);
-}
-
-D3DXVECTOR3 CCharacterObject::GetLookAt()
-{
-	D3DXVECTOR3 d3dxvLookAt(m_d3dxmtxRotate._31, m_d3dxmtxRotate._32, m_d3dxmtxRotate._33);
-	D3DXVec3Normalize(&d3dxvLookAt, &d3dxvLookAt);
-	return(d3dxvLookAt);
-}
-
-D3DXVECTOR3 CCharacterObject::GetUp()
-{
-	D3DXVECTOR3 d3dxvUp(m_d3dxmtxRotate._21, m_d3dxmtxRotate._22, m_d3dxmtxRotate._23);
-	D3DXVec3Normalize(&d3dxvUp, &d3dxvUp);
-	return(d3dxvUp);
-}
-
-D3DXVECTOR3 CCharacterObject::GetRight()
-{
-	D3DXVECTOR3 d3dxvRight(m_d3dxmtxRotate._11, m_d3dxmtxRotate._12, m_d3dxmtxRotate._13);
-	D3DXVec3Normalize(&d3dxvRight, &d3dxvRight);
-	return(d3dxvRight);
-}
-
 void CCharacterObject::SetActive(bool isActive)
 {
 	m_bIsActive = isActive;
@@ -422,7 +319,6 @@ void CCharacterObject::SetActive(bool isActive)
 	m_pPxActor->putToSleep();
 	*/
 }
-
 void CCharacterObject::SetRotation(D3DXVECTOR3 d3dxvRotation){
 	D3DXMATRIX mtxRotate;
 	D3DXMatrixRotationYawPitchRoll(&mtxRotate, (float)D3DXToRadian(d3dxvRotation.x), (float)D3DXToRadian(d3dxvRotation.y), (float)D3DXToRadian(d3dxvRotation.z));
@@ -435,54 +331,12 @@ void CCharacterObject::SetRotation(D3DXVECTOR3 d3dxvRotation){
 CSkyBox::CSkyBox()
 {
 }
-
-
 CSkyBox::~CSkyBox()
 {
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
-//
-
-CHeightMapTerrain::CHeightMapTerrain(ID3D11Device *pd3dDevice, LPCTSTR pFileName, int nWidth, int nLength, int nBlockWidth, int nBlockLength, D3DXVECTOR3 d3dxvScale)
-{
-	m_nWidth = nWidth;
-	m_nLength = nLength;
-
-	int cxQuadsPerBlock = nBlockWidth - 1;
-	int czQuadsPerBlock = nBlockLength - 1;
-
-	m_d3dxvScale = d3dxvScale;
-
-	m_pHeightMap = new CHeightMap(pFileName, nWidth, nLength, d3dxvScale);
-
-	long cxBlocks = (m_nWidth - 1) / cxQuadsPerBlock;
-	long czBlocks = (m_nLength - 1) / czQuadsPerBlock;
-
-	CHeightMapGridMesh *pHeightMapGridMesh = NULL;
-	for (int z = 0, zStart = 0; z < czBlocks; ++z)
-	{
-		for (int x = 0, xStart = 0; x < cxBlocks; ++x)
-		{
-			xStart = x * (nBlockWidth - 1);
-			zStart = z * (nBlockLength - 1);
-			pHeightMapGridMesh = new CHeightMapGridMesh(pd3dDevice, xStart, zStart, nBlockWidth, nBlockLength, d3dxvScale, m_pHeightMap);
-			SetMesh(pHeightMapGridMesh);
-		}
-	}
-	//D3DXMatrixIdentity(&m_d3dxmtxWorld);
-}
-
-CHeightMapTerrain::~CHeightMapTerrain(void)
-{
-	if (m_pHeightMap) delete m_pHeightMap;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-//
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// CPlayer
+//
 
 CPlayer::CPlayer() : CCharacterObject(true)
 {
@@ -498,7 +352,6 @@ CPlayer::CPlayer() : CCharacterObject(true)
 	m_fYaw = 0.0f;
 
 }
-
 CPlayer::~CPlayer()
 {
 	if (m_pCamera) delete m_pCamera;
@@ -507,21 +360,32 @@ CPlayer::~CPlayer()
 void CPlayer::CreateShaderVariables(ID3D11Device *pd3dDevice)
 {
 }
-
 void CPlayer::UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext)
 {
 	if (m_pCamera) m_pCamera->UpdateShaderVariables(pd3dDeviceContext);
 }
 
-/*
-void CPlayer::RegenerateWorldMatrix()
+void CPlayer::Animate(float fTimeElapsed, PxScene *pPxScene)
 {
-m_d3dxmtxWorld._11 = m_d3dxvRight.x; m_d3dxmtxWorld._12 = m_d3dxvRight.y; m_d3dxmtxWorld._13 = m_d3dxvRight.z;
-m_d3dxmtxWorld._21 = m_d3dxvUp.x; m_d3dxmtxWorld._22 = m_d3dxvUp.y; m_d3dxmtxWorld._23 = m_d3dxvUp.z;
-m_d3dxmtxWorld._31 = m_d3dxvLook.x; m_d3dxmtxWorld._32 = m_d3dxvLook.y; m_d3dxmtxWorld._33 = m_d3dxvLook.z;
-m_d3dxmtxWorld._41 = m_d3dxvPosition.x; m_d3dxmtxWorld._42 = m_d3dxvPosition.y; m_d3dxmtxWorld._43 = m_d3dxvPosition.z;
+	CCharacterObject::Animate(fTimeElapsed, pPxScene);
+	if (m_pCamera)
+		if (m_pCamera->GetMode() == FIRST_PERSON_CAMERA){
+			PxExtendedVec3 pxvPos = m_pPxCharacterController->getPosition();
+			D3DXVECTOR3 d3dxvPosition = D3DXVECTOR3(pxvPos.x, pxvPos.y + 2, pxvPos.z);
+			m_pCamera->SetPosition(d3dxvPosition);
+		}
+	if (m_pCamera->GetMode() == THIRD_PERSON_CAMERA)
+	{
+		m_pCamera->Update(fTimeElapsed);
+	}
+	m_pCamera->RegenerateViewMatrix();
 }
-*/
+
+void CPlayer::SetPosition(D3DXVECTOR3 d3dxvPosition)
+{
+	CCharacterObject::SetPosition(d3dxvPosition);
+	m_pCamera->SetPosition(d3dxvPosition);
+}
 void CPlayer::Move(DWORD dwDirection, float fDistance, float fTimeElapsed)
 {
 	if (dwDirection)
@@ -537,7 +401,6 @@ void CPlayer::Move(DWORD dwDirection, float fDistance, float fTimeElapsed)
 		Move(d3dxvShift, fTimeElapsed);
 	}
 }
-
 void CPlayer::Move(const D3DXVECTOR3& d3dxvShift, float fTimeElapsed)
 {
 	DWORD nCurrentCameraMode = m_pCamera->GetMode();
@@ -548,7 +411,6 @@ void CPlayer::Move(const D3DXVECTOR3& d3dxvShift, float fTimeElapsed)
 		m_pCamera->Move(d3dxvShift * fTimeElapsed);
 	}
 }
-
 void CPlayer::Rotate(float x, float y, float z)
 {
 	D3DXMATRIX mtxRotate;
@@ -590,16 +452,6 @@ void CPlayer::Rotate(float x, float y, float z)
 	m_d3dxmtxRotate = mtxRotate * m_d3dxmtxRotate;
 }
 
-void CPlayer::Update(float fTimeElapsed)
-{
-	DWORD nCurrentCameraMode = m_pCamera->GetMode();
-	if (nCurrentCameraMode == THIRD_PERSON_CAMERA)
-	{
-		m_pCamera->Update(fTimeElapsed);
-	}
-	m_pCamera->RegenerateViewMatrix();
-}
-
 CCamera *CPlayer::OnChangeCamera(ID3D11Device *pd3dDevice, DWORD nNewCameraMode, DWORD nCurrentCameraMode)
 {
 	CCamera *pNewCamera = NULL;
@@ -627,7 +479,6 @@ CCamera *CPlayer::OnChangeCamera(ID3D11Device *pd3dDevice, DWORD nNewCameraMode,
 
 	return(pNewCamera);
 }
-
 void CPlayer::ChangeCamera(ID3D11Device *pd3dDevice, DWORD nNewCameraMode, float fTimeElapsed)
 {
 	DWORD nCurrentCameraMode = (m_pCamera) ? m_pCamera->GetMode() : 0x00;
@@ -658,22 +509,5 @@ void CPlayer::ChangeCamera(ID3D11Device *pd3dDevice, DWORD nNewCameraMode, float
 	default:
 		break;
 	}
-	Update(fTimeElapsed);
 }
 
-void CPlayer::SetPosition(D3DXVECTOR3 d3dxvPosition)
-{
-	CCharacterObject::SetPosition(d3dxvPosition);
-	m_pCamera->SetPosition(d3dxvPosition);
-}
-
-void CPlayer::Animate(float fTimeElapsed, PxScene *pPxScene)
-{
-	CCharacterObject::Animate(fTimeElapsed, pPxScene);
-	if (m_pCamera)
-		if (m_pCamera->GetMode() == FIRST_PERSON_CAMERA){
-			PxExtendedVec3 pxvPos = m_pPxCharacterController->getPosition();
-			D3DXVECTOR3 d3dxvPosition = D3DXVECTOR3(pxvPos.x, pxvPos.y + 2, pxvPos.z);
-			m_pCamera->SetPosition(d3dxvPosition);
-		}
-}

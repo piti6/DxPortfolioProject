@@ -1,4 +1,4 @@
-//------------------------------------------------------- ----------------------
+﻿//------------------------------------------------------- ----------------------
 // File: Object.h
 //-----------------------------------------------------------------------------
 
@@ -18,10 +18,13 @@
 #define DIR_UP					0x10
 #define DIR_DOWN				0x20
 
-
+//アニメーションインスタンス化をする時に使います。アニメーションテクスチャの長さを更新します。
 struct ANIM_WIDTH{
 	UINT WIDTH[4];
 };
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//基本的なオブジェクトです。テクスチャとマテリアル、メッシュを持っています。
 
 class CGameObject
 {
@@ -47,10 +50,6 @@ public:
 	D3DXMATRIX			GetWorldMatrix();
 	virtual D3DXVECTOR3 GetPosition();
 
-	virtual void MoveStrafe(float fDistance = 1.0f);
-	virtual void MoveUp(float fDistance = 1.0f);
-	virtual void MoveForward(float fDistance = 1.0f);
-
 	virtual void Rotate(float fPitch = 10.0f, float fYaw = 10.0f, float fRoll = 10.0f);
 	virtual void Rotate(D3DXVECTOR3 rotation);
 	virtual void Rotate(D3DXVECTOR3 *pd3dxvAxis, float fAngle);
@@ -63,7 +62,6 @@ public:
 	virtual void Animate(float fTimeElapsed, PxScene *pPxScene);
 	virtual void BuildObjects(PxPhysics *pPxPhysics, PxScene *pPxScene, PxMaterial *pPxMaterial);
 
-	virtual void UpdateAnimation(ID3D11DeviceContext *pd3dDeviceContext);
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext);
 
 protected:
@@ -80,7 +78,7 @@ protected:
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-//
+//動いているオブジェクトです。Physx関連関数とアニメーションを持っています。
 
 class CDynamicObject : public CGameObject
 {
@@ -110,7 +108,7 @@ protected:
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-//
+//止まっているオブジェクトです。Physx関連関数を持っています。マップに使います。
 
 class CStaticObject : public CGameObject
 {
@@ -123,11 +121,10 @@ public:
 
 private:
 	PxRigidStatic				*m_pPxActor;
-	PxMaterial					*m_pPxMaterial;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-//
+//キャラクターオブジェクトです。
 
 class CCharacterObject : public CDynamicObject
 {
@@ -142,19 +139,11 @@ public:
 
 	virtual void SetPosition(D3DXVECTOR3 d3dxvPosition);
 
-	virtual void MoveStrafe(float fDistance = 1.0f);
-	virtual void MoveUp(float fDistance = 1.0f);
-	virtual void MoveForward(float fDistance = 1.0f);
-
 	virtual void Rotate(float fPitch = 10.0f, float fYaw = 10.0f, float fRoll = 10.0f);
 	virtual void Rotate(D3DXVECTOR3 rotation);
 	virtual void Rotate(D3DXVECTOR3 *pd3dxvAxis, float fAngle);
 	void SetRotation(D3DXVECTOR3 d3dxvRotation);
 	void RotateOffset(float fPitch, float fYaw, float fRoll);
-
-	virtual D3DXVECTOR3 GetLookAt();
-	virtual D3DXVECTOR3 GetUp();
-	virtual D3DXVECTOR3 GetRight();
 
 protected:
 	D3DXMATRIX					m_d3dxmtxRotate;
@@ -165,7 +154,7 @@ protected:
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-//
+//スカイボックスです。
 
 class CSkyBox : public CGameObject
 {
@@ -175,38 +164,7 @@ public:
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-//
-
-class CHeightMapTerrain : public CGameObject
-{
-public:
-	CHeightMapTerrain(ID3D11Device *pd3dDevice, LPCTSTR pFileName, int nWidth, int nLength, int nBlockWidth, int nBlockLength, D3DXVECTOR3 d3dxvScale);
-	virtual ~CHeightMapTerrain();
-
-private:
-	CHeightMap					*m_pHeightMap;
-
-	int							m_nWidth;
-	int							m_nLength;
-
-	D3DXVECTOR3					m_d3dxvScale;
-
-public:
-	float GetHeight(float x, float z, bool bReverseQuad = false) { return(m_pHeightMap->GetHeight(x, z, bReverseQuad) * m_d3dxvScale.y); } //World
-	D3DXVECTOR3 GetNormal(float x, float z) { return(m_pHeightMap->GetHeightMapNormal(int(x / m_d3dxvScale.x), int(z / m_d3dxvScale.z))); }
-
-	int GetHeightMapWidth() { return(m_pHeightMap->GetHeightMapWidth()); }
-	int GetHeightMapLength() { return(m_pHeightMap->GetHeightMapLength()); }
-
-	D3DXVECTOR3 GetScale() { return(m_d3dxvScale); }
-	float GetWidth() { return(m_nWidth * m_d3dxvScale.x); }
-	float GetLength() { return(m_nLength * m_d3dxvScale.z); }
-
-	//float GetPeakHeight() { return(m_bcMeshBoundingCube.m_d3dxvMaximum.y); }
-};
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-//
+//プレイヤーです。CCharacterObjectにカメラを追加しました。
 
 class CPlayer : public CCharacterObject
 {
@@ -218,7 +176,6 @@ public:
 	virtual void UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext);
 
 	void Animate(float fTimeElapsed, PxScene *pPxScene);
-	void Update(float fTimeElapsed);
 
 	void Move(ULONG nDirection, float fDistance, float fTimeElapsed);
 	void Move(const D3DXVECTOR3& d3dxvShift, float fTimeElapsed);
@@ -242,13 +199,12 @@ public:
 
 	GET_SET_FUNC_IMPL(string, Name, m_Name);
 
-protected:
+private:
 	string						m_Name;
 
 	D3DXVECTOR3					m_d3dxvRight;
 	D3DXVECTOR3					m_d3dxvUp;
 	D3DXVECTOR3					m_d3dxvLook;
-
 
 	float           			m_fPitch;
 	float           			m_fYaw;

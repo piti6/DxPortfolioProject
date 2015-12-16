@@ -1,6 +1,3 @@
-// LabProject07-3.cpp : 응용 프로그램에 대한 진입점을 정의합니다.
-//
-
 #include "stdafx.h"
 #include "LabProject07-3.h"
 
@@ -8,8 +5,8 @@
 
 #define MAX_LOADSTRING 100
 
-TCHAR				szTitle[MAX_LOADSTRING];				// 제목 표시줄 텍스트입니다.
-TCHAR				szWindowClass[MAX_LOADSTRING];			// 기본 창 클래스 이름입니다.
+TCHAR				szTitle[MAX_LOADSTRING];
+TCHAR				szWindowClass[MAX_LOADSTRING];
 
 CGameFramework		gGameFramework;
 

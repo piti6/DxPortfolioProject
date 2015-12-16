@@ -1,5 +1,6 @@
-#pragma once
+﻿#pragma once
 
+//光の計算に使うマテリアル構造体です。
 struct MATERIAL
 {
 	D3DXCOLOR m_d3dxcAmbient;

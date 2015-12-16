@@ -105,51 +105,6 @@ public:
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
-//ハイトマップです。（未使用）
-
-class CHeightMap
-{
-public:
-	CHeightMap(LPCTSTR pFileName, int nWidth, int nLength, D3DXVECTOR3 d3dxvScale);
-	virtual ~CHeightMap();
-
-	float GetHeight(float x, float z, bool bReverseQuad = false);
-	D3DXVECTOR3 GetHeightMapNormal(int x, int z);
-	D3DXVECTOR3 GetScale() { return(m_d3dxvScale); }
-
-	BYTE *GetHeightMapImage() { return(m_pHeightMapImage); }
-	int GetHeightMapWidth() { return(m_nWidth); }
-	int GetHeightMapLength() { return(m_nLength); }
-
-private:
-	BYTE						*m_pHeightMapImage;
-	int							m_nWidth;
-	int							m_nLength;
-	D3DXVECTOR3					m_d3dxvScale;
-
-};
-
-
-class CHeightMapGridMesh : public CMeshIlluminated
-{
-public:
-	CHeightMapGridMesh(ID3D11Device *pd3dDevice, int xStart, int zStart, int nWidth, int nLength, D3DXVECTOR3 d3dxvScale = D3DXVECTOR3(1.0f, 1.0f, 1.0f), void *pContext = NULL);
-	virtual ~CHeightMapGridMesh();
-
-	D3DXVECTOR3 GetScale() { return(m_d3dxvScale); }
-	int GetWidth() { return(m_nWidth); }
-	int GetLength() { return(m_nLength); }
-
-	virtual float OnGetHeight(int x, int z, void *pContext);
-
-private:
-	int							m_nWidth;
-	int							m_nLength;
-	D3DXVECTOR3					m_d3dxvScale;
-
-};
-
-/////////////////////////////////////////////////////////////////////////////////////////////////
 //テクスチャを持っており、光の影響を受けるFBXモデルのメッシュです。
 
 class CFbxMeshIlluminatedTextured : public CMesh

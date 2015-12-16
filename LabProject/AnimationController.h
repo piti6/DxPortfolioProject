@@ -1,5 +1,7 @@
-#pragma once
+﻿#pragma once
 #include "Animation.h"
+
+//アニメーションをプレイ、現在アニメーション時間を管理するクラスです。
 class CAnimationController
 {
 public:

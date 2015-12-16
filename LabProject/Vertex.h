@@ -1,5 +1,7 @@
-#pragma once
+﻿#pragma once
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//ポジションだけを持っている頂点クラスです。
 class CVertex
 {
 public:
@@ -13,6 +15,8 @@ protected:
 	D3DXVECTOR3						m_d3dxvPosition;
 };
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//ポジションとカラーを持っている頂点クラスです。
 class CDiffusedVertex : public CVertex
 {
 public:
@@ -27,6 +31,9 @@ private:
 	D3DXCOLOR						m_d3dxcDiffuse;
 };
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//ポジションとノーマルを持っている頂点クラスです。
+
 class CNormalVertex : public CVertex
 {
 public:
@@ -40,6 +47,10 @@ public:
 private:
 	D3DXVECTOR3						m_d3dxvNormal;
 };
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//ポジションとテクスチャＵＶを持っている頂点クラスです。
+
 class CTexturedVertex : public CVertex
 {
 public:
@@ -53,6 +64,9 @@ public:
 private:
 	D3DXVECTOR2						m_d3dxvTexCoord;
 };
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//ポジションとノーマル、テクスチャＵＶを持っている頂点クラスです。
 
 class CTexturedNormalVertex : public CVertex
 {
@@ -69,6 +83,9 @@ private:
 	D3DXVECTOR3						m_d3dxvNormal;
 	D3DXVECTOR2						m_d3dxvTexCoord;
 };
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//ポジションとノーマル、テクスチャＵＶ、ボーンのインデックスとウェイトを持っている頂点クラスです。
 
 class CBoneWeightVertex : public CTexturedNormalVertex
 {

@@ -10,7 +10,6 @@ CTexture::CTexture(int nTextures)
 	m_ppd3dSamplerStates = new ID3D11SamplerState*[m_nTextures];
 	for (int i = 0; i < m_nTextures; i++) m_ppd3dSamplerStates[i] = NULL;
 }
-
 CTexture::~CTexture()
 {
 	if (m_ppd3dsrvTextures) delete[] m_ppd3dsrvTextures;
@@ -21,7 +20,6 @@ void CTexture::AddRef()
 {
 	m_nReferences++;
 }
-
 void CTexture::Release()
 {
 	if (m_nReferences > 0) {

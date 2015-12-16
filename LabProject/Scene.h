@@ -1,4 +1,4 @@
-//-----------------------------------------------------------------------------
+﻿//-----------------------------------------------------------------------------
 // File: Scene.h
 //-----------------------------------------------------------------------------
 
@@ -10,6 +10,7 @@
 #include "Shader.h"
 #include "Light.h"
 
+//ゲームシーンです光を更新します。
 class CScene
 {
 public:
@@ -24,7 +25,6 @@ public:
 	void BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhysics, PxScene *pPxScene, PxControllerManager *pPxControllerManager, FbxManager *pFbxSdkManager);
 	void ReleaseObjects();
 
-	bool ProcessInput();
 	void AnimateObjects(float fTimeElapsed, PxScene *pPxScene);
 
 	void Render(ID3D11DeviceContext	*pd3dDeviceContext, int nThreadID, CCamera *pCamera);

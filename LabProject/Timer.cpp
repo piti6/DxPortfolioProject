@@ -1,7 +1,3 @@
-//-----------------------------------------------------------------------------
-// File: CGameTimer.cpp
-//-----------------------------------------------------------------------------
-
 #include "stdafx.h"
 #include "Timer.h"
 
@@ -25,7 +21,6 @@ CGameTimer::CGameTimer()
 	m_FramePerSecond = 0;
 	m_fFPSTimeElapsed = 0.0f;
 }
-
 CGameTimer::~CGameTimer()
 {
 }
@@ -98,7 +93,6 @@ unsigned long CGameTimer::GetFrameRate(LPTSTR lpszString, int nCharacters) const
 
 	return(m_nCurrentFrameRate);
 }
-
 float CGameTimer::GetTimeElapsed() const
 {
 	return(m_fTimeElapsed);

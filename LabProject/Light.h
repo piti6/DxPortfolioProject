@@ -1,10 +1,11 @@
-#pragma once
+﻿#pragma once
 
-#define MAX_LIGHTS			1 
+
 #define POINT_LIGHT			1.0f
 #define SPOT_LIGHT			2.0f
 #define DIRECTIONAL_LIGHT	3.0f
 
+//光の計算に使う構造体です。
 struct LIGHT
 {
 	D3DXCOLOR m_d3dxcAmbient;

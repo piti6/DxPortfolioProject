@@ -5,8 +5,6 @@ CGameServer::CGameServer(void)
 {
 	m_pSceneServer = new CSceneServer();
 }
-
-
 CGameServer::~CGameServer(void)
 {
 	delete m_pSceneServer;

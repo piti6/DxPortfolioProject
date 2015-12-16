@@ -1,5 +1,6 @@
-#pragma once
+﻿#pragma once
 
+//実際のテクスチャを持っているクラスです。
 class CTexture
 {
 public:

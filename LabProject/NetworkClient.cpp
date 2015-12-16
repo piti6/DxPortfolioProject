@@ -1,11 +1,11 @@
-#include "stdafx.h"
+ï»¿#include "stdafx.h"
 #include "NetworkClient.h"
+
 
 void SetSocketOption(SOCKET s, int level, int optname, char* optval, int optlen){
 	int retval = setsockopt(s, level, optname, optval, optlen);
 	if (retval == SOCKET_ERROR) err_quit("setsockopt()");
 }
-
 int recvn(SOCKET s, char *buf, int len, int flags)
 {
 	int received;
@@ -25,6 +25,7 @@ int recvn(SOCKET s, char *buf, int len, int flags)
 	return (len - left);
 }
 
+//ã‚¨ãƒ©ãƒ¼å‡¦ç†
 void err_quit(char *msg)
 {
 	LPVOID lpMsgBuf;
@@ -37,7 +38,6 @@ void err_quit(char *msg)
 	LocalFree(lpMsgBuf);
 	exit(1);
 }
-
 void err_display(char *msg)
 {
 	LPVOID lpMsgBuf;
@@ -54,11 +54,11 @@ CNetworkClient::CNetworkClient(char* _ServerIP, int _ServerPort){
 	strcpy(ServerIP, _ServerIP);
 	ServerPort = _ServerPort;
 }
-
 CNetworkClient::~CNetworkClient(){
-	this->Release();
+	Release();
 }
 
+//åˆæœŸåŒ–
 int CNetworkClient::Init(){
 	WSAInit();
 	SocketInit();
@@ -67,21 +67,19 @@ int CNetworkClient::Init(){
 	Connect();
 	return 0;
 }
-
 int CNetworkClient::WSAInit(){
 	if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
 		return -1;
 	return 0;
 }
-
 void CNetworkClient::SocketInit(){
-	TCPsock = socket(AF_INET, SOCK_STREAM, 0);
-	if (TCPsock == INVALID_SOCKET) err_quit("socket()");
-	UDPsock = socket(AF_INET, SOCK_DGRAM, 0);
-	if (UDPsock == INVALID_SOCKET) err_quit("socket()");
-	optval = TRUE;
-	retval = setsockopt(UDPsock, SOL_SOCKET, SO_REUSEADDR, (char *)&optval, sizeof(optval));
-	if (retval == SOCKET_ERROR) err_quit("setsockopt()");
+	m_TCPsock = socket(AF_INET, SOCK_STREAM, 0);
+	if (m_TCPsock == INVALID_SOCKET) err_quit("socket()");
+	m_UDPsock = socket(AF_INET, SOCK_DGRAM, 0);
+	if (m_UDPsock == INVALID_SOCKET) err_quit("socket()");
+	bool optval = TRUE;
+	m_iRetval = setsockopt(m_UDPsock, SOL_SOCKET, SO_REUSEADDR, (char *)&optval, sizeof(optval));
+	if (m_iRetval == SOCKET_ERROR) err_quit("setsockopt()");
 }
 
 void CNetworkClient::Bind(){
@@ -93,63 +91,66 @@ void CNetworkClient::Bind(){
 	localaddr.sin_family = AF_INET;
 	localaddr.sin_addr.s_addr = htonl(INADDR_ANY);
 	localaddr.sin_port = htons(ServerPort);
-	retval = bind(UDPsock, (SOCKADDR *)&localaddr, sizeof(localaddr));
-	if (retval == SOCKET_ERROR) err_quit("bind()");
+	m_iRetval = bind(m_UDPsock, (SOCKADDR *)&localaddr, sizeof(localaddr));
+	if (m_iRetval == SOCKET_ERROR) err_quit("bind()");
 }
-
+void CNetworkClient::Connect(){
+	m_iRetval = connect(m_TCPsock, (SOCKADDR *)&serveraddr, sizeof(serveraddr));
+	printf("\n[TCP ã‚¯ãƒ©ã‚¤ã‚¢ãƒ³ãƒˆ] ã‚µãƒ¼ãƒãƒ¼æŽ¥ç¶šæˆåŠŸ: IP ã‚¢ãƒ‰ãƒ¬ã‚¹=%s, ãƒãƒ¼ãƒˆ=%d\n",
+		inet_ntoa(serveraddr.sin_addr), ntohs(serveraddr.sin_port));
+	if (m_iRetval == SOCKET_ERROR) err_quit("connect()");
+	MulticastAddMember();
+}
 void CNetworkClient::BufferResize(){
 	int optval;
 	int optlen = sizeof(int);
-	int retval = getsockopt(TCPsock, SOL_SOCKET, SO_RCVBUF,
+	m_iRetval = getsockopt(m_TCPsock, SOL_SOCKET, SO_RCVBUF,
 		(char *)&optval, &optlen);
-	if (retval == SOCKET_ERROR) err_quit("getsockopt()");
+	if (m_iRetval == SOCKET_ERROR) err_quit("getsockopt()");
 	optval *= 10;
-	retval = setsockopt(TCPsock, SOL_SOCKET, SO_RCVBUF,
+	m_iRetval = setsockopt(m_TCPsock, SOL_SOCKET, SO_RCVBUF,
 		(char *)&optval, sizeof(optval));
-	if (retval == SOCKET_ERROR) err_quit("setsockopt()");
+	if (m_iRetval == SOCKET_ERROR) err_quit("setsockopt()");
 }
-void CNetworkClient::Connect(){
-	m_iTCPReceive = connect(TCPsock, (SOCKADDR *)&serveraddr, sizeof(serveraddr));
-	printf("\n[TCP Å¬¶ó] ¼­¹ö Á¢¼Ó ¼º°ø: IP ÁÖ¼Ò=%s, Æ÷Æ® ¹øÈ£=%d\n",
-		inet_ntoa(serveraddr.sin_addr), ntohs(serveraddr.sin_port));
-	if (m_iTCPReceive == SOCKET_ERROR) err_quit("connect()");
-	MulticastAddMember();
-}
-//Send
+
+
+//é€ä¿¡
 void CNetworkClient::TCPSendChar(SOCKET* sock, char _Protocol, char* _Data){
 	char cProtocol[20];
 	int size = strlen(_Data);
-	m_iTCPSend = send(*sock, (char*)&_Protocol, sizeof(char), 0);
-	m_iTCPSend = send(*sock, (char*)&size, sizeof(char), 0);
-	m_iTCPSend = send(*sock, _Data, size, 0);
-	ProtocolToChar(_Protocol, cProtocol);
-	if (m_iTCPSend == SOCKET_ERROR)
+	m_iRetval = send(*sock, (char*)&_Protocol, sizeof(char), 0);
+	m_iRetval = send(*sock, (char*)&size, sizeof(char), 0);
+	m_iRetval = send(*sock, _Data, size, 0);
+	if (m_iRetval == SOCKET_ERROR)
 		err_display("send()");
-	else
-		printf("[%s -> TCPSend] Protocol : %s, DataSize : %d, Data:%s\n", inet_ntoa(serveraddr.sin_addr), cProtocol, size, _Data);
+	else{
+		ProtocolToChar(_Protocol, cProtocol);
+		//printf("[%s -> TCPSend] Protocol : %s, DataSize : %d, Data:%s\n", inet_ntoa(serveraddr.sin_addr), cProtocol, size, _Data);
+	}
 }
 void CNetworkClient::TCPSendInt(SOCKET* sock, char _Protocol, int _Data){
 	char cProtocol[20];
 	int size = sizeof(_Data);
-	m_iTCPSend = send(*sock, (char*)&_Protocol, sizeof(char), 0);
-	m_iTCPSend = send(*sock, (char*)&size, sizeof(char), 0);
-	m_iTCPSend = send(*sock, (char*)&_Data, size, 0);
-	ProtocolToChar(_Protocol, cProtocol);
-	if (m_iTCPSend == SOCKET_ERROR)
+	m_iRetval = send(*sock, (char*)&_Protocol, sizeof(char), 0);
+	m_iRetval = send(*sock, (char*)&size, sizeof(char), 0);
+	m_iRetval = send(*sock, (char*)&_Data, size, 0);
+	
+	if (m_iRetval == SOCKET_ERROR)
 		err_display("send()");
-	else
-		printf("[%s -> TCPSend] Protocol : %s, DataSize : %d, Data:%d\n", inet_ntoa(serveraddr.sin_addr), cProtocol, size, _Data);
+	else{
+		ProtocolToChar(_Protocol, cProtocol);
+		//printf("[%s -> TCPSend] Protocol : %s, DataSize : %d, Data:%d\n", inet_ntoa(serveraddr.sin_addr), cProtocol, size, _Data);
+	}
 }
 
-
-//Receive
+//å—ä¿¡
 bool CNetworkClient::UDPReceive(SOCKET* sock, char* Temp){
 	char cProtocol[20];
 	int addrlen = sizeof(peeraddr);
-	int UDPretval = recvfrom(*sock, (char*)&Temp[0], sizeof(char), 0, (SOCKADDR *)&peeraddr, &addrlen);
-	UDPretval = recvfrom(*sock, (char*)&Temp[1], sizeof(char), 0, (SOCKADDR *)&peeraddr, &addrlen);
-	UDPretval = recvfrom(*sock, (char*)&Temp[2], Temp[1], 0, (SOCKADDR *)&peeraddr, &addrlen);
-	if (UDPretval == SOCKET_ERROR){
+	m_iRetval = recvfrom(*sock, (char*)&Temp[0], sizeof(char), 0, (SOCKADDR *)&peeraddr, &addrlen);
+	m_iRetval = recvfrom(*sock, (char*)&Temp[1], sizeof(char), 0, (SOCKADDR *)&peeraddr, &addrlen);
+	m_iRetval = recvfrom(*sock, (char*)&Temp[2], Temp[1], 0, (SOCKADDR *)&peeraddr, &addrlen);
+	if (m_iRetval == SOCKET_ERROR){
 		err_display("recv()");
 		return false;
 	}
@@ -159,19 +160,18 @@ bool CNetworkClient::UDPReceive(SOCKET* sock, char* Temp){
 	}
 	return true;
 }
-
 bool CNetworkClient::TCPReceive(SOCKET* sock, char* Temp){
 	char cProtocol[20];
-	int TCPretval = recv(*sock, (char*)&Temp[0], sizeof(char), 0);
-	TCPretval = recv(*sock, (char*)&Temp[1], sizeof(char), 0);
-	TCPretval = recvn(*sock, (char*)&Temp[2], Temp[1], 0);
-	if (TCPretval == SOCKET_ERROR){
+	m_iRetval = recv(*sock, (char*)&Temp[0], sizeof(char), 0);
+	m_iRetval = recv(*sock, (char*)&Temp[1], sizeof(char), 0);
+	m_iRetval = recvn(*sock, (char*)&Temp[2], Temp[1], 0);
+	if (m_iRetval == SOCKET_ERROR){
 		err_display("recv()");
 		return false;
 	}
 	else{
 		ProtocolToChar(Temp[0], cProtocol);
-		printf("[%s -> TCPReceive] Protocol : %s, Datasize : %d\n", inet_ntoa(serveraddr.sin_addr), cProtocol, Temp[1]);
+		//printf("[%s -> TCPReceive] Protocol : %s, Datasize : %d\n", inet_ntoa(serveraddr.sin_addr), cProtocol, Temp[1]);
 	}
 	return true;
 }
@@ -180,17 +180,17 @@ bool CNetworkClient::TCPReceive(SOCKET* sock, char* Temp){
 void CNetworkClient::MulticastAddMember(){
 	mreq.imr_multiaddr.s_addr = inet_addr("235.7.7.10");
 	mreq.imr_interface.s_addr = htonl(INADDR_ANY);
-	retval = setsockopt(UDPsock, IPPROTO_IP, IP_ADD_MEMBERSHIP,
+	m_iRetval = setsockopt(m_UDPsock, IPPROTO_IP, IP_ADD_MEMBERSHIP,
 		(char *)&mreq, sizeof(mreq));
-	if (retval == SOCKET_ERROR) err_quit("setsockopt()");
+	if (m_iRetval == SOCKET_ERROR) err_quit("setsockopt()");
 }
 void CNetworkClient::MulticastDropMember(){
-	retval = setsockopt(UDPsock, IPPROTO_IP, IP_DROP_MEMBERSHIP,
+	m_iRetval = setsockopt(m_UDPsock, IPPROTO_IP, IP_DROP_MEMBERSHIP,
 		(char *)&mreq, sizeof(mreq));
-	if (retval == SOCKET_ERROR) err_quit("setsockopt()");
+	if (m_iRetval == SOCKET_ERROR) err_quit("setsockopt()");
 }
 
-//ÇÁ·ÎÅäÄÝ Ãâ·Â½Ã »ç¿ë
+//Debug (Print Protocol Information)
 void CNetworkClient::ProtocolToChar(char _Protocol, char* _cProtocol){
 	switch (_Protocol){
 	case 0:
@@ -200,12 +200,18 @@ void CNetworkClient::ProtocolToChar(char _Protocol, char* _cProtocol){
 		strcpy(_cProtocol, "TCP_MOVE");
 		break;
 	case 2:
-		strcpy(_cProtocol, "TCP_LOGIN");
+		strcpy(_cProtocol, "TCP_TRANSFORM");
 		break;
 	case 3:
-		strcpy(_cProtocol, "TCP_DISCONNECT");
+		strcpy(_cProtocol, "TCP_THROWOBJECT"); 
 		break;
 	case 4:
+		strcpy(_cProtocol, "TCP_LOGIN");
+		break;
+	case 5:
+		strcpy(_cProtocol, "TCP_DISCONNECT");
+		break;
+	case 6:
 		strcpy(_cProtocol, "UDP_PLAYER");
 		break;
 	}
@@ -213,7 +219,7 @@ void CNetworkClient::ProtocolToChar(char _Protocol, char* _cProtocol){
 
 //Release
 void CNetworkClient::Release(){
-	closesocket(TCPsock);
-	closesocket(UDPsock);
+	closesocket(m_TCPsock);
+	closesocket(m_UDPsock);
 	WSACleanup();
 }

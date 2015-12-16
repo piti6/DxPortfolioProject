@@ -1,5 +1,6 @@
 #pragma once
 #include "SceneServer.h"
+
 class CGameServer
 {
 public:

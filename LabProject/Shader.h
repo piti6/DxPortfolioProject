@@ -1,4 +1,4 @@
-//-----------------------------------------------------------------------------
+﻿//-----------------------------------------------------------------------------
 // File: Shader.h
 //-----------------------------------------------------------------------------
 
@@ -7,16 +7,21 @@
 #include "Object.h"
 #include "AnimationInstancing.h"
 
+//ポジションインスタンス化を使わない場合、この構造体を使ってポジションを更新します。
 struct VS_CB_WORLD_MATRIX
 {
 	D3DXMATRIX m_d3dxmtxWorld;         
 };
 
+//ポジション、アニメーションインスタンス化をする時に使用する構造体です。
 struct InstanceBuffer
 {
 	D3DXMATRIX InstancePos;
 	UINT AnimationPos[4];
 };
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//基本的なシェーダです。
 
 class CShader
 {
@@ -54,7 +59,7 @@ protected:
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-//
+//テクスチャ、ライティングの影響も受けるシェーダです。
 
 class CTexturedIlluminatedShader : public CShader
 {
@@ -73,23 +78,8 @@ public:
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-//
+//ポジション、アニメーションインスタンス化をする時にその情報を持っているクラスです。
 
-class CPlayerShader : public CShader
-{
-public:
-	CPlayerShader();
-	~CPlayerShader();
-	virtual void UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext, CTexture *pTexture);
-	virtual void CreateShader(ID3D11Device *pd3dDevice);
-	virtual void CreateShaderVariables(ID3D11Device *pd3dDevice);
-	virtual void UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext, D3DXMATRIX *pd3dxmtxWorld);
-	virtual void UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext, MATERIAL *pMaterial=NULL);
-
-};
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-//
 class InstanceData{
 public:
 	InstanceData(CMesh* _Mesh, bool _bHasAnimation, string _Name, ID3D11Buffer* _Buffer)
@@ -125,6 +115,9 @@ private:
 	CAnimationInstancing	*m_pAnimationInstancing;
 };
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//ポジション、アニメーションインスタンス化をするシェーダです。
+
 class CInstancingShader : public CTexturedIlluminatedShader
 {
 public:
@@ -143,7 +136,6 @@ public:
 	CCharacterObject* AddCharacter(PxPhysics *pPxPhysics, PxScene *pPxScene, PxControllerManager *pPxControllerManager, int _IndexOfInstanceDataVector, int _IndexOfMaterial, int _IndexOfTexture, D3DXVECTOR3 _d3dxvPosition);
 
 public:
-	//��ü�� �ν��Ͻ� �����̴�.
 	vector<InstanceData*>		m_InstanceDataVector;
 	ID3D11Buffer				*m_pd3dcbAnimationTextureWidth;
 
@@ -151,7 +143,7 @@ public:
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-//
+//テクスチャだけを持っているシェーダです。
 
 class CTexturedShader : public CShader
 {
@@ -166,7 +158,7 @@ public:
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-//
+//空を表現するスカイボックスのシェーダです。
 
 class CSkyBoxShader : public CTexturedShader
 {
@@ -176,18 +168,4 @@ public:
 
 	virtual void BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhysics, PxScene *pPxScene, PxControllerManager *pPxControllerManager, FbxManager *pFbxSdkManager);
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, int nThreadID, CCamera *pCamera);
-};
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-//
-
-class CTerrainShader : public CTexturedIlluminatedShader
-{
-public:
-	CTerrainShader();
-	virtual ~CTerrainShader();
-
-	virtual void BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhysics, PxScene *pPxScene, PxControllerManager *pPxControllerManager, FbxManager *pFbxSdkManager);
-
-	CHeightMapTerrain *GetTerrain();
 };

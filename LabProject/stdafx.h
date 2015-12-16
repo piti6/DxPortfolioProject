@@ -1,11 +1,11 @@
-#pragma once
+﻿#pragma once
 
 #pragma comment(linker, "/entry:wWinMainCRTStartup /subsystem:console" )
 #pragma comment(lib, "ws2_32")
 
 #include "targetver.h"
 
-//#define WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
 
 #include <WinSock2.h>
 #include <windows.h>
@@ -52,6 +52,8 @@
 using namespace physx;
 using namespace std;
 
+//定数バッファのスロット番号です。
+
 #define PS_SLOT_LIGHT					0x00
 #define PS_SLOT_MATERIAL				0x01
 #define PS_SLOT_TEXTURE					0x00
@@ -64,9 +66,11 @@ using namespace std;
 #define VS_SLOT_ANIMATION_WIDTH			0x03
 #define VS_SLOT_ANIMATION_TEXTURE		0x01
 
+#define MAX_INSTANCE 350
 #define MAX_BONE 64
 #define MAX_WEIGHT 4
 #define MAX_THREAD 3
+#define MAX_LIGHTS 1 
 
 #define NULL_IDX 100000
 

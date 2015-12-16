@@ -205,7 +205,7 @@ D3DXMATRIX CAnimationInstancing::GetClusterMatrix(FbxAMatrix & pGlobalPosition, 
 	return GetD3DMatrix(lClusterRelativeCurrentPositionInverse * lClusterRelativeInitPosition);
 }
 
-//インスタンス化をため、アニメーションテクスチャを作ります。
+//インスタンシングをため、アニメーションテクスチャを作ります。
 void CAnimationInstancing::CreateAnimationTexture(ID3D11Device* pd3dDevice)
 {
 	unordered_map<string, CAnimation> *pAnimationMap = m_vAnimationList.GetAnimationMap();

@@ -1,7 +1,7 @@
 ﻿#pragma once
 #include "Animation.h"
 
-//アニメーションを持って、インスタンス化するクラスです。
+//アニメーションを持って、インスタンシングするクラスです。
 class CAnimationInstancing
 {
 public:

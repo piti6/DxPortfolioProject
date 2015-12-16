@@ -420,6 +420,7 @@ void CInstancingShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhy
 	m_pPlayer->SetPosition(D3DXVECTOR3(200.0f, 1.0f, 200.0f));
 	m_ObjectsVector.push_back(make_pair(1, m_pPlayer));
 
+	/*
 	//テストオブジェクトです。
 	for (int i = 0; i < 1000; ++i){
 		int randAnim = rand() % 3;
@@ -451,6 +452,7 @@ void CInstancingShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhy
 
 		m_ObjectsVector.push_back(make_pair(randAnim+1, pObject));
 	}
+	*/
 
 	//Unityで作成したマップの姿（モデルの名前、ポジション、ローテーション）を、テクストファイルで保存、それをロードします。
 	ifstream ifsFbxList;
@@ -713,7 +715,7 @@ ID3D11Buffer *CInstancingShader::CreateInstanceBuffer(ID3D11Device *pd3dDevice, 
 	return(pd3dInstanceBuffer);
 }
 
-//視錐台カーリング、マルチスレット、インスタンス化を使ってレンダリングします。
+//視錐台カーリング、マルチスレット、インスタンシングを使ってレンダリングします。
 void CInstancingShader::Render(ID3D11DeviceContext *pd3dDeviceContext, int nThreadID, CCamera *pCamera){
 	OnPostRender(pd3dDeviceContext);
 

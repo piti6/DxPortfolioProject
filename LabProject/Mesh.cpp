@@ -440,7 +440,7 @@ CFbxMeshIlluminatedTextured::CFbxMeshIlluminatedTextured(ID3D11Device *pd3dDevic
 	pImporter->Destroy();
 	m_bHasAnimation = _bHasAnimation;
 
-	// メッシュが三角形のメッシュじゃない場合は、三角形のメッシュに変換します。
+	//メッシュが三角形のメッシュじゃない場合は、三角形のメッシュに変換します。
 	FbxGeometryConverter lGeomConverter(pFbxSdkManager);
 	lGeomConverter.Triangulate(pFbxScene, true);
 
@@ -521,13 +521,8 @@ void CFbxMeshIlluminatedTextured::SetVertices(FbxNode *pNode, vector<CBoneWeight
 	{
 		if (pNode->GetNodeAttribute()->GetAttributeType() == FbxNodeAttribute::eMesh)
 		{
-
 			FbxMesh * pMesh = pNode->GetMesh();
 			FbxVector4* pVertices = pMesh->GetControlPoints();
-
-			FbxStringList lUVSetNameList;
-			pMesh->GetUVSetNames(lUVSetNameList);
-
 
 			D3DXVECTOR3 tempMin;
 			D3DXVECTOR3	tempMax;
@@ -562,6 +557,8 @@ void CFbxMeshIlluminatedTextured::SetVertices(FbxNode *pNode, vector<CBoneWeight
 					Vertex.SetNormal(d3dxvNormal);
 
 					//UV設定
+					FbxStringList lUVSetNameList;
+					pMesh->GetUVSetNames(lUVSetNameList);
 					FbxVector2 textureUV;
 					bool isMapped;
 					pMesh->GetPolygonVertexUV(j, k, lUVSetNameList[0], textureUV, isMapped);

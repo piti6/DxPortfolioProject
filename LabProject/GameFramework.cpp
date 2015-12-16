@@ -350,7 +350,7 @@ void CGameFramework::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPA
 		case VK_SPACE:
 			break;
 		case 'F':
-			int Index = rand() % 80 + 2;
+			int Index = rand() % 60 + 4;
 			m_pScene->GetInstancingShader()->AddObject(m_pPxPhysicsSDK, m_pPxScene, Index, 0, 1, m_pPlayer->GetPosition() - m_pPlayer->GetUp(), m_pPlayer->GetUp() * -100, false, false);
 			Network_Throw_Packet pkt;
 			strncpy(pkt.m_ID, m_pPlayer->GetName().c_str(), sizeof(pkt.m_ID));

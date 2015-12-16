@@ -682,7 +682,7 @@ CCharacterObject* CInstancingShader::AddCharacter(PxPhysics *pPxPhysics, PxScene
 	pObject->SetPosition(_d3dxvPosition);
 	pObject->RotateOffset(-90, 0, 0);
 
-	CAnimationController *pAnimationController = m_pPlayer->GetAnimationController();
+	CAnimationController *pAnimationController = pObject->GetAnimationController();
 	CAnimationInstancing *pAnimationInstancing = m_InstanceDataVector[1]->GetAnimationInstancing();
 	CAnimationList *pAnimationList = pAnimationInstancing->GetAnimation();
 	unordered_map<string, CAnimation> *pAnimationMap = pAnimationList->GetAnimationMap();

@@ -12,23 +12,21 @@
 #define _WITH_LOCAL_VIEWER_HIGHLIGHTING
 #define _WITH_THETA_PHI_CONES
 
-
 //--------------------------------------------------------------------------------------
 // Struct For Material & Lighting
 //--------------------------------------------------------------------------------------
 
 
-//π∞¡˙¿ª ¿ß«— ±∏¡∂√º∏¶ º±æ«—¥Ÿ.
+//$BJ*<A$r$?$a$N9=B$BN$rEPO?$7$^$9!#(B
 struct MATERIAL
 {
 	float4 m_cAmbient;
 	float4 m_cDiffuse;
-	float4 m_cSpecular; //a = power
+	float4 m_cSpecular;
 	float4 m_cEmissive;
 };
 
-
-//¡∂∏Ì¿ª ¿ß«— ±∏¡∂√º∏¶ º±æ«—¥Ÿ.
+//$B8w$r$?$a$N9=B$BN$rEPO?$7$^$9!#(B
 struct LIGHT
 {
 	float4 m_cAmbient;
@@ -38,10 +36,10 @@ struct LIGHT
 	float m_fRange;
 	float3 m_vDirection;
 	float m_nType;
-	float3 m_vAttenuation; 
+	float3 m_vAttenuation;
 	float m_fFalloff;
-	float m_fTheta; //cos(m_fTheta)
-	float m_fPhi; //cos(m_fPhi)
+	float m_fTheta;
+	float m_fPhi;
 	float m_bEnable;
 	float padding;
 };
@@ -56,15 +54,16 @@ struct LIGHTEDCOLOR
 //--------------------------------------------------------------------------------------
 // Struct For Vertex Shader In & Out
 //--------------------------------------------------------------------------------------
+
 struct VS_TEXTURED_COLOR_INPUT
 {
-    float3 position : POSITION;
+	float3 position : POSITION;
 	float2 tex2dCoord : TEXCOORD0;
 };
 
 struct VS_TEXTURED_COLOR_OUTPUT
 {
-    float4 position : SV_POSITION;
+	float4 position : SV_POSITION;
 	float2 tex2dCoord : TEXCOORD0;
 };
 struct VS_TEXTURED_LIGHTING_INPUT
@@ -84,37 +83,37 @@ struct VS_TEXTURED_LIGHTING_OUTPUT
 
 struct VS_INSTANCED_TEXTURED_LIGHTING_INPUT
 {
-    float3 position : POSITION;
+	float3 position : POSITION;
 	float3 normal : NORMAL;
 	float2 tex2dcoord : TEXCOORD0;
-    float4x4 mtxTransform : INSTANCEPOS;
+	float4x4 mtxTransform : INSTANCEPOS;
 };
 
 struct VS_INSTANCED_TEXTURED_LIGHTING_OUTPUT
 {
-    float4 position : SV_POSITION;
-    float3 positionW : POSITION;
-    float3 normalW : NORMAL;
+	float4 position : SV_POSITION;
+	float3 positionW : POSITION;
+	float3 normalW : NORMAL;
 	float2 tex2dcoord : TEXCOORD0;
 };
 
 struct VS_INSTANCED_TEXTURED_LIGHTING_ANIMATION_INPUT
 {
-    float3 position : POSITION;
+	float3 position : POSITION;
 	float3 normal : NORMAL;
 	float2 tex2dcoord : TEXCOORD0;
 	uint4 boneindex : BLENDINDICES0;
 	float4 boneweight : BLENDWEIGHT0;
 
-    float4x4 mtxTransform : INSTANCEPOS;
+	float4x4 mtxTransform : INSTANCEPOS;
 	uint4 animationdata : ANIMATIONOFFSET;
 };
 
 struct VS_INSTANCED_TEXTURED_LIGHTING_ANIMATION_OUTPUT
 {
-    float4 position : SV_POSITION;
-    float3 positionW : POSITION;
-    float3 normalW : NORMAL;
+	float4 position : SV_POSITION;
+	float3 positionW : POSITION;
+	float3 normalW : NORMAL;
 	float2 tex2dcoord : TEXCOORD0;
 };
 
@@ -122,30 +121,35 @@ struct VS_INSTANCED_TEXTURED_LIGHTING_ANIMATION_OUTPUT
 //--------------------------------------------------------------------------------------
 // Constant Buffer Variables
 //--------------------------------------------------------------------------------------
+
+//$B%S%e!<9TNs(B
 cbuffer cbViewMatrix : register(b0)
 {
 	matrix		gmtxView : packoffset(c0);
 	matrix		gmtxProjection : packoffset(c4);
 };
 
+//$B%o!<%k%I9TNs(B
 cbuffer cbWorldMatrix : register(b1)
 {
 	matrix		gmtxWorld : packoffset(c0);
 };
 
+//$BIaDL$N%"%K%a!<%7%g%s$K;H$&%\!<%s%P%C%U%!!JL$;HMQ!K(B
 cbuffer cbBone : register(b2)
 {
 	float4x4 BoneMtx[MAX_BONE] : packoffset(c0);
 }
 
+//$B%$%s%9%?%s%92=$7$?%"%K%a!<%7%g%s$K;H$&%"%K%a!<%7%g%s%F%/%9%A%c$ND9$5(B
 cbuffer cbAnimationTextureWidth : register(b3)
 {
 	uint4 gInstanceMatricesWidth : packoffset(c0);
 }
 
-float4x4    gIdentity = {1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1};
+float4x4    gIdentity = { 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1 };
 
-//¡∂∏Ì¿ª ¿ß«— ªÛºˆπˆ∆€∏¶ º±æ«—¥Ÿ. 
+//$B8w%P%C%U%!(B
 cbuffer cbLight : register(b0)
 {
 	LIGHT gLights[MAX_LIGHTS];
@@ -153,20 +157,18 @@ cbuffer cbLight : register(b0)
 	float4 gvCameraPosition;
 };
 
-//π∞¡˙¿ª ¿ß«— ªÛºˆπˆ∆€∏¶ º±æ«—¥Ÿ. 
+//$B%^%F%j%"%k%P%C%U%!(B
 cbuffer cbMaterial : register(b1)
 {
 	MATERIAL gMaterial;
 };
 
-
-
 //--------------------------------------------------------------------------------------
 // Texture & Sampler
 //--------------------------------------------------------------------------------------
 
-Texture2D gtxtTexture : register(ps,t0);
-Texture2D<float4> gtxtAnimation : register(vs,t0);
+Texture2D gtxtTexture : register(ps, t0);
+Texture2D<float4> gtxtAnimation : register(vs, t0);//VS$B$G;H$&%"%K%a!<%7%g%s%F%/%9%A%c(B
 
 SamplerState gSamplerState : register(s0);
 
@@ -174,29 +176,28 @@ SamplerState gSamplerState : register(s0);
 // Lighting Function
 //--------------------------------------------------------------------------------------
 
-/*πÊ«‚º∫ ¡∂∏Ì¿« »ø∞˙∏¶ ∞ËªÍ«œ¥¬ «‘ºˆ¿Ã¥Ÿ. πÊ«‚º∫ ¡∂∏Ì¿∫ ¡∂∏Ì±Ó¡ˆ¿« ∞≈∏Æø° µ˚∂Û ¡∂∏Ì¿« æÁ¿Ã ∫Ø«œ¡ˆ æ ¥¬¥Ÿ.*/
-LIGHTEDCOLOR DirectionalLight(int i, float3 vNormal, float3 vToCamera) 
+//$B8w$N7W;;(B
+LIGHTEDCOLOR DirectionalLight(int i, float3 vNormal, float3 vToCamera)
 {
 	LIGHTEDCOLOR output = (LIGHTEDCOLOR)0;
 
 	float3 vToLight = -gLights[i].m_vDirection;
-	float fDiffuseFactor = dot(vToLight, vNormal);
-//¡∂∏Ì¿« πÊ«‚¿Ã π˝º± ∫§≈ÕøÕ ¿Ã∑Á¥¬ ∞¢µµ∞° øπ∞¢¿œ ∂ß ¡˜¡¢ ¡∂∏Ì¿« øµ«‚¿ª ∞ËªÍ«—¥Ÿ.
-	if (fDiffuseFactor > 0.0f) 
+		float fDiffuseFactor = dot(vToLight, vNormal);
+
+	if (fDiffuseFactor > 0.0f)
 	{
-//π∞¡˙¿« Ω∫∆Â≈ß∑Ø ∆ƒøˆ∞° 0¿Ã æ∆¥“ ∂ß∏∏ Ω∫∆Â≈ß∑Ø ¡∂∏Ì¿« øµ«‚¿ª ∞ËªÍ«—¥Ÿ.
 		if (gMaterial.m_cSpecular.a != 0.0f)
 		{
 #ifdef _WITH_REFLECT
 			float3 vReflect = reflect(-vToLight, vNormal);
-			float fSpecularFactor = pow(max(dot(vReflect, vToCamera), 0.0f), gMaterial.m_cSpecular.a);
+				float fSpecularFactor = pow(max(dot(vReflect, vToCamera), 0.0f), gMaterial.m_cSpecular.a);
 #else
 #ifdef _WITH_LOCAL_VIEWER_HIGHLIGHTING
 			float3 vHalf = normalize(vToCamera + vToLight);
 #else
 			float3 vHalf = float3(0.0f, 1.0f, 0.0f);
 #endif
-			float fSpecularFactor = pow(max(dot(vHalf, vNormal), 0.0f), gMaterial.m_cSpecular.a);
+				float fSpecularFactor = pow(max(dot(vHalf, vNormal), 0.0f), gMaterial.m_cSpecular.a);
 #endif
 			output.m_cSpecular = gMaterial.m_cSpecular * (gLights[i].m_cSpecular * fSpecularFactor);
 		}
@@ -204,79 +205,68 @@ LIGHTEDCOLOR DirectionalLight(int i, float3 vNormal, float3 vToCamera)
 	}
 	output.m_cAmbient = gMaterial.m_cAmbient * gLights[i].m_cAmbient;
 	return(output);
-} 
-
-//¡° ¡∂∏Ì¿« »ø∞˙∏¶ ∞ËªÍ«œ¥¬ «‘ºˆ¿Ã¥Ÿ.
-LIGHTEDCOLOR PointLight(int i, float3 vPosition, float3 vNormal, float3 vToCamera) 
+}
+LIGHTEDCOLOR PointLight(int i, float3 vPosition, float3 vNormal, float3 vToCamera)
 {
 	LIGHTEDCOLOR output = (LIGHTEDCOLOR)0;
 
 	float3 vToLight = gLights[i].m_vPosition - vPosition;
-	float fDistance = length(vToLight);
-//¡∂∏Ì±Ó¡ˆ¿« ∞≈∏Æ∞° ¡∂∏Ì¿« ¿Ø»ø∞≈∏Æ∫∏¥Ÿ ¿€¿ª ∂ß∏∏ ¡∂∏Ì¿« øµ«‚¿ª ∞ËªÍ«—¥Ÿ.
+		float fDistance = length(vToLight);
 	if (fDistance <= gLights[i].m_fRange)
 	{
 		vToLight /= fDistance;
 		float fDiffuseFactor = dot(vToLight, vNormal);
-//¡∂∏Ì¿« πÊ«‚¿Ã π˝º± ∫§≈ÕøÕ ¿Ã∑Á¥¬ ∞¢µµ∞° øπ∞¢¿œ ∂ß ¡˜¡¢ ¡∂∏Ì¿« øµ«‚¿ª ∞ËªÍ«—¥Ÿ.
 		if (fDiffuseFactor > 0.0f)
 		{
-//π∞¡˙¿« Ω∫∆Â≈ß∑Ø ∆ƒøˆ∞° 0¿Ã æ∆¥“ ∂ß∏∏ Ω∫∆Â≈ß∑Ø ¡∂∏Ì¿« øµ«‚¿ª ∞ËªÍ«—¥Ÿ.
 			if (gMaterial.m_cSpecular.a != 0.0f)
 			{
 #ifdef _WITH_REFLECT
-			float3 vReflect = reflect(-vToLight, vNormal);
-			float fSpecularFactor = pow(max(dot(vReflect, vToCamera), 0.0f), gMaterial.m_cSpecular.a);
+				float3 vReflect = reflect(-vToLight, vNormal);
+					float fSpecularFactor = pow(max(dot(vReflect, vToCamera), 0.0f), gMaterial.m_cSpecular.a);
 #else
 #ifdef _WITH_LOCAL_VIEWER_HIGHLIGHTING
-			float3 vHalf = normalize(vToCamera + vToLight);
+				float3 vHalf = normalize(vToCamera + vToLight);
 #else
-			float3 vHalf = float3(0.0f, 1.0f, 0.0f);
+				float3 vHalf = float3(0.0f, 1.0f, 0.0f);
 #endif
-			float fSpecularFactor = pow(max(dot(vHalf, vNormal), 0.0f), gMaterial.m_cSpecular.a);
+					float fSpecularFactor = pow(max(dot(vHalf, vNormal), 0.0f), gMaterial.m_cSpecular.a);
 #endif
-			output.m_cSpecular = gMaterial.m_cSpecular * (gLights[i].m_cSpecular * fSpecularFactor);
+				output.m_cSpecular = gMaterial.m_cSpecular * (gLights[i].m_cSpecular * fSpecularFactor);
 			}
 			output.m_cDiffuse = gMaterial.m_cDiffuse * (gLights[i].m_cDiffuse * fDiffuseFactor);
-	}
-//¡∂∏Ì±Ó¡ˆ¿« ∞≈∏Æø° µ˚∂Û ¡∂∏Ì¿« øµ«‚¿ª ∞ËªÍ«—¥Ÿ.
-	float fAttenuationFactor = 1.0f / dot(gLights[i].m_vAttenuation, float3(1.0f, fDistance, fDistance*fDistance));
-	output.m_cAmbient = gMaterial.m_cAmbient * (gLights[i].m_cAmbient * fAttenuationFactor);
-	output.m_cDiffuse *= fAttenuationFactor;
-	output.m_cSpecular *= fAttenuationFactor;
+		}
+		float fAttenuationFactor = 1.0f / dot(gLights[i].m_vAttenuation, float3(1.0f, fDistance, fDistance*fDistance));
+		output.m_cAmbient = gMaterial.m_cAmbient * (gLights[i].m_cAmbient * fAttenuationFactor);
+		output.m_cDiffuse *= fAttenuationFactor;
+		output.m_cSpecular *= fAttenuationFactor;
 	}
 	return(output);
-} 
-
-//Ω∫∆Ã ¡∂∏Ì¿« »ø∞˙∏¶ ∞ËªÍ«œ¥¬ «‘ºˆ¿Ã¥Ÿ.
-LIGHTEDCOLOR SpotLight(int i, float3 vPosition, float3 vNormal, float3 vToCamera) 
+}
+LIGHTEDCOLOR SpotLight(int i, float3 vPosition, float3 vNormal, float3 vToCamera)
 {
 	LIGHTEDCOLOR output = (LIGHTEDCOLOR)0;
 	float3 vToLight = gLights[i].m_vPosition - vPosition;
-	float fDistance = length(vToLight);
-//¡∂∏Ì±Ó¡ˆ¿« ∞≈∏Æ∞° ¡∂∏Ì¿« ¿Ø»ø∞≈∏Æ∫∏¥Ÿ ¿€¿ª ∂ß∏∏ ¡∂∏Ì¿« øµ«‚¿ª ∞ËªÍ«—¥Ÿ.
+		float fDistance = length(vToLight);
 	if (fDistance <= gLights[i].m_fRange)
 	{
 		vToLight /= fDistance;
 		float fDiffuseFactor = dot(vToLight, vNormal);
-//¡∂∏Ì¿« πÊ«‚¿Ã π˝º± ∫§≈ÕøÕ ¿Ã∑Á¥¬ ∞¢µµ∞° øπ∞¢¿œ ∂ß ¡˜¡¢ ¡∂∏Ì¿« øµ«‚¿ª ∞ËªÍ«—¥Ÿ.
-		if (fDiffuseFactor > 0.0f) 
+		if (fDiffuseFactor > 0.0f)
 		{
-//π∞¡˙¿« Ω∫∆Â≈ß∑Ø ∆ƒøˆ∞° 0¿Ã æ∆¥“ ∂ß∏∏ Ω∫∆Â≈ß∑Ø ¡∂∏Ì¿« øµ«‚¿ª ∞ËªÍ«—¥Ÿ.
 			if (gMaterial.m_cSpecular.a != 0.0f)
 			{
 #ifdef _WITH_REFLECT
-			    float3 vReflect = reflect(-vToLight, vNormal);
-			    float fSpecularFactor = pow(max(dot(vReflect, vToCamera), 0.0f), gMaterial.m_cSpecular.a);
+				float3 vReflect = reflect(-vToLight, vNormal);
+					float fSpecularFactor = pow(max(dot(vReflect, vToCamera), 0.0f), gMaterial.m_cSpecular.a);
 #else
 #ifdef _WITH_LOCAL_VIEWER_HIGHLIGHTING
-			    float3 vHalf = normalize(vToCamera + vToLight);
+				float3 vHalf = normalize(vToCamera + vToLight);
 #else
-			    float3 vHalf = float3(0.0f, 1.0f, 0.0f);
+				float3 vHalf = float3(0.0f, 1.0f, 0.0f);
 #endif
-			    float fSpecularFactor = pow(max(dot(vHalf, vNormal), 0.0f), gMaterial.m_cSpecular.a);
+					float fSpecularFactor = pow(max(dot(vHalf, vNormal), 0.0f), gMaterial.m_cSpecular.a);
 #endif
-			    output.m_cSpecular = gMaterial.m_cSpecular * (gLights[i].m_cSpecular * fSpecularFactor);
+				output.m_cSpecular = gMaterial.m_cSpecular * (gLights[i].m_cSpecular * fSpecularFactor);
 			}
 			output.m_cDiffuse = gMaterial.m_cDiffuse * (gLights[i].m_cDiffuse * fDiffuseFactor);
 		}
@@ -287,85 +277,75 @@ LIGHTEDCOLOR SpotLight(int i, float3 vPosition, float3 vNormal, float3 vToCamera
 		float fSpotFactor = pow(max(dot(-vToLight, gLights[i].m_vDirection), 0.0f), gLights[i].m_fFalloff);
 #endif
 		float fAttenuationFactor = 1.0f / dot(gLights[i].m_vAttenuation, float3(1.0f, fDistance, fDistance*fDistance));
-		output.m_cAmbient = gMaterial.m_cAmbient * (gLights[i].m_cAmbient * fAttenuationFactor * fSpotFactor); 
+		output.m_cAmbient = gMaterial.m_cAmbient * (gLights[i].m_cAmbient * fAttenuationFactor * fSpotFactor);
 		output.m_cDiffuse *= fAttenuationFactor * fSpotFactor;
 		output.m_cSpecular *= fAttenuationFactor * fSpotFactor;
 	}
 	return(output);
-} 
-
+}
 float4 Lighting(float3 vPosition, float3 vNormal)
 {
 	int i;
 	float3 vCameraPosition = float3(gvCameraPosition.x, gvCameraPosition.y, gvCameraPosition.z);
-	float3 vToCamera = normalize(vCameraPosition - vPosition);
-	LIGHTEDCOLOR LightedColor = (LIGHTEDCOLOR)0;
+		float3 vToCamera = normalize(vCameraPosition - vPosition);
+		LIGHTEDCOLOR LightedColor = (LIGHTEDCOLOR)0;
 	float4 cColor = float4(0.0f, 0.0f, 0.0f, 0.0f);
-	for (i = 0; i < MAX_LIGHTS; i++)
-	{
-//»∞º∫»≠µ» ¡∂∏Ìø° ¥Î«œø© ¡∂∏Ì¿« øµ«‚¿ª ∞ËªÍ«—¥Ÿ.
-		if (gLights[i].m_bEnable == 1.0f)
+
+		for (i = 0; i < MAX_LIGHTS; i++)
 		{
-//¡∂∏Ì¿« ¿Ø«¸ø° µ˚∂Û ¡∂∏Ì¿« øµ«‚¿ª ∞ËªÍ«—¥Ÿ.
-			if (gLights[i].m_nType == DIRECTIONAL_LIGHT) 
+			if (gLights[i].m_bEnable == 1.0f)
 			{
-			    LightedColor = DirectionalLight(i, vNormal, vToCamera); 
-			    cColor += (LightedColor.m_cAmbient + LightedColor.m_cDiffuse + LightedColor.m_cSpecular);
-			}
-			if (gLights[i].m_nType == POINT_LIGHT) 
-			{
-			    LightedColor = PointLight(i, vPosition, vNormal, vToCamera); 
-			    cColor += (LightedColor.m_cAmbient + LightedColor.m_cDiffuse + LightedColor.m_cSpecular);
-			}
-			if (gLights[i].m_nType == SPOT_LIGHT) 
-			{
-			    LightedColor = SpotLight(i, vPosition, vNormal, vToCamera); 
-			    cColor += (LightedColor.m_cAmbient + LightedColor.m_cDiffuse + LightedColor.m_cSpecular);
+				if (gLights[i].m_nType == DIRECTIONAL_LIGHT)
+				{
+					LightedColor = DirectionalLight(i, vNormal, vToCamera);
+					cColor += (LightedColor.m_cAmbient + LightedColor.m_cDiffuse + LightedColor.m_cSpecular);
+				}
+				if (gLights[i].m_nType == POINT_LIGHT)
+				{
+					LightedColor = PointLight(i, vPosition, vNormal, vToCamera);
+					cColor += (LightedColor.m_cAmbient + LightedColor.m_cDiffuse + LightedColor.m_cSpecular);
+				}
+				if (gLights[i].m_nType == SPOT_LIGHT)
+				{
+					LightedColor = SpotLight(i, vPosition, vNormal, vToCamera);
+					cColor += (LightedColor.m_cAmbient + LightedColor.m_cDiffuse + LightedColor.m_cSpecular);
+				}
 			}
 		}
-	}
-//±€∑Œπ˙ ¡÷∫Ø ¡∂∏Ì¿« øµ«‚¿ª √÷¡æ ªˆªÛø° ¥ı«—¥Ÿ.
-	cColor += (gcLightGlobalAmbient * gMaterial.m_cAmbient); 
-//√÷¡æ ªˆªÛ¿« æÀ∆ƒ∞™¿∫ π∞¡˙¿« µ«ª¡Ó ªˆªÛ¿« æÀ∆ƒ∞™¿∏∑Œ º≥¡§«—¥Ÿ.
+
+	cColor += (gcLightGlobalAmbient * gMaterial.m_cAmbient);
 	cColor.a = gMaterial.m_cDiffuse.a;
-	return(cColor); 
+	return(cColor);
 }
 
-// Read a matrix(3 texture reads) from a texture containing animation data
-float4x4 loadBoneMatrix(uint animationData,uint bone)
+//$B%"%K%a!<%7%g%s%F%/%9%A%c$+$i8=:_%$%s%G%C%/%9$N%\!<%s$r7W;;$7$F;}$C$FMh$^$9!#(B
+float4x4 loadBoneMatrix(uint animationData, uint bone)
 {
-    // Calculate a UV for the bone for this vertex
-    float4x4 rval = gIdentity;
-    
-    // animationData.x and .y are linear offsets.  Combine into a single linear offset.
-    uint baseIndex = animationData;
-    baseIndex += (4*bone);    // 4*bone is since each bone is 4 texels to form a float4x4 
-        
-    // Now turn linear offset into 2D coords
-    uint baseU = baseIndex%gInstanceMatricesWidth.x;
-    uint baseV = baseIndex/gInstanceMatricesWidth.x;
-   
-    // Note that we assume the width of the texture(and just add texels) is an even multiple of the # of texels per bone,
-    //     otherwise we'd have to recalculate the V component per lookup
-	
-    float4 mat1 = gtxtAnimation.Load( uint3(baseU,baseV,0));
-    float4 mat2 = gtxtAnimation.Load( uint3(baseU+1,baseV,0));
-    float4 mat3 = gtxtAnimation.Load( uint3(baseU+2,baseV,0));
-	float4 mat4 = gtxtAnimation.Load( uint3(baseU+3,baseV,0));
-	
-	 return float4x4(   float4(mat1),
-                        float4(mat2),
-                        float4(mat3),
-                        float4(mat4));
+
+	float4x4 rval = gIdentity;
+
+		uint baseIndex = animationData;
+	baseIndex += (4 * bone);
+
+	uint baseU = baseIndex%gInstanceMatricesWidth.x;
+	uint baseV = baseIndex / gInstanceMatricesWidth.x;
+
+	float4 mat1 = gtxtAnimation.Load(uint3(baseU, baseV, 0));
+		float4 mat2 = gtxtAnimation.Load(uint3(baseU + 1, baseV, 0));
+		float4 mat3 = gtxtAnimation.Load(uint3(baseU + 2, baseV, 0));
+		float4 mat4 = gtxtAnimation.Load(uint3(baseU + 3, baseV, 0));
+
+		return float4x4(float4(mat1), float4(mat2), float4(mat3), float4(mat4));
 }
 
 //--------------------------------------------------------------------------------------
 // Vertex Shader
 //--------------------------------------------------------------------------------------
+
 VS_TEXTURED_COLOR_OUTPUT VSTexturedColor(VS_TEXTURED_COLOR_INPUT input)
 {
-    VS_TEXTURED_COLOR_OUTPUT output = (VS_TEXTURED_COLOR_OUTPUT)0;
-    output.position = mul(mul(mul(float4(input.position, 1.0f), gmtxWorld), gmtxView), gmtxProjection);
+	VS_TEXTURED_COLOR_OUTPUT output = (VS_TEXTURED_COLOR_OUTPUT)0;
+	output.position = mul(mul(mul(float4(input.position, 1.0f), gmtxWorld), gmtxView), gmtxProjection);
 	output.tex2dCoord = input.tex2dCoord;
 
 	return(output);
@@ -373,40 +353,39 @@ VS_TEXTURED_COLOR_OUTPUT VSTexturedColor(VS_TEXTURED_COLOR_INPUT input)
 
 VS_TEXTURED_LIGHTING_OUTPUT VSTexturedLighting(VS_TEXTURED_LIGHTING_INPUT input)
 {
-    VS_TEXTURED_LIGHTING_OUTPUT output = (VS_TEXTURED_LIGHTING_OUTPUT)0;
-    output.normalW = mul(input.normal, (float3x3)gmtxWorld);
+	VS_TEXTURED_LIGHTING_OUTPUT output = (VS_TEXTURED_LIGHTING_OUTPUT)0;
+	output.normalW = mul(input.normal, (float3x3)gmtxWorld);
 
-    output.positionW = mul(float4(input.position, 1.0f), gmtxWorld).xyz;
-    output.position = mul(mul(float4(output.positionW, 1.0f), gmtxView), gmtxProjection);
-    output.tex2dcoord = input.tex2dcoord;
+	output.positionW = mul(float4(input.position, 1.0f), gmtxWorld).xyz;
+	output.position = mul(mul(float4(output.positionW, 1.0f), gmtxView), gmtxProjection);
+	output.tex2dcoord = input.tex2dcoord;
 
-    return(output);
+	return(output);
 }
 
 
 VS_INSTANCED_TEXTURED_LIGHTING_OUTPUT VSInstancedTexturedLighting(VS_INSTANCED_TEXTURED_LIGHTING_INPUT input)
 {
-    VS_INSTANCED_TEXTURED_LIGHTING_OUTPUT output = (VS_INSTANCED_TEXTURED_LIGHTING_OUTPUT)0;
-    output.normalW = mul(input.normal, (float3x3)input.mtxTransform);
+	VS_INSTANCED_TEXTURED_LIGHTING_OUTPUT output = (VS_INSTANCED_TEXTURED_LIGHTING_OUTPUT)0;
+	output.normalW = mul(input.normal, (float3x3)input.mtxTransform);
 	//output.normalW = input.normal, (float3x3)input.mtxTransform);
-    output.positionW = mul(float4(input.position, 1.0f), input.mtxTransform).xyz;
-    output.position = mul(mul(float4(output.positionW, 1.0f), gmtxView), gmtxProjection);
-    output.tex2dcoord = input.tex2dcoord;
+	output.positionW = mul(float4(input.position, 1.0f), input.mtxTransform).xyz;
+	output.position = mul(mul(float4(output.positionW, 1.0f), gmtxView), gmtxProjection);
+	output.tex2dcoord = input.tex2dcoord;
 
-    return(output);
+	return(output);
 }
 
 VS_INSTANCED_TEXTURED_LIGHTING_ANIMATION_OUTPUT VSInstancedTexturedLightingAnimation(VS_INSTANCED_TEXTURED_LIGHTING_ANIMATION_INPUT input)
 {
-    VS_INSTANCED_TEXTURED_LIGHTING_ANIMATION_OUTPUT output = (VS_INSTANCED_TEXTURED_LIGHTING_ANIMATION_OUTPUT)0;
-    
+	VS_INSTANCED_TEXTURED_LIGHTING_ANIMATION_OUTPUT output = (VS_INSTANCED_TEXTURED_LIGHTING_ANIMATION_OUTPUT)0;
+
 
 	float3 Src = input.position;
-		
-		if (input.boneindex.x < NULL_IDX)
+
+		if (input.boneindex.x < NULL_IDX)//$B%\!<%s%$%s%G%C%/%9$,$"$k>l9g(B
 		{
 			float4x4 mtx = (float4x4)0;
-				//Src = float3( 0.0f, 0.0f, 0.0f );
 				float weight[4];
 			weight[0] = input.boneweight.x;
 			weight[1] = input.boneweight.y;
@@ -422,63 +401,55 @@ VS_INSTANCED_TEXTURED_LIGHTING_ANIMATION_OUTPUT VSInstancedTexturedLightingAnima
 			for (int i = 0; i<4; ++i)
 			{
 				if (weight[i]>0.0f)
-				{
 					mtx += loadBoneMatrix(input.animationdata.x, bone[i]) * weight[i];
-					//TotalWeight += weight[i];
-				}
 			}
-			Src = mul(float4(input.position,1.0f),mtx);
-			//Src /= TotalWeight;
+			Src = mul(float4(input.position, 1.0f), mtx);
 		}
-	//output.position = mul(float4(Src, 1.0f), mtx);
 	output.normalW = mul(input.normal, (float3x3)input.mtxTransform);
 	output.positionW = mul(float4(input.position, 1.0f), input.mtxTransform).xyz;
 	matrix mtxWorldViewProjection = mul(input.mtxTransform, gmtxView);
-    mtxWorldViewProjection = mul(mtxWorldViewProjection, gmtxProjection);
-    output.position = mul(float4(Src, 1.0f), mtxWorldViewProjection);
-    output.tex2dcoord = input.tex2dcoord;
+	mtxWorldViewProjection = mul(mtxWorldViewProjection, gmtxProjection);
+	output.position = mul(float4(Src, 1.0f), mtxWorldViewProjection);
+	output.tex2dcoord = input.tex2dcoord;
 
-    return(output);
+	return(output);
 }
-
-
-
 
 //--------------------------------------------------------------------------------------
 // Pixel Shader
 //--------------------------------------------------------------------------------------
+
 float4 PSTexturedColor(VS_TEXTURED_COLOR_OUTPUT input) : SV_Target
-{ 
-    float4 cColor = gtxtTexture.Sample(gSamplerState, input.tex2dCoord);
+{
+	float4 cColor = gtxtTexture.Sample(gSamplerState, input.tex2dCoord);
 
 	return(cColor);
 }
 
 float4 PSTexturedLighting(VS_TEXTURED_LIGHTING_OUTPUT input) : SV_Target
-{ 
-    input.normalW = normalize(input.normalW); 
-    float4 cIllumination = Lighting(input.positionW, input.normalW);
-    float4 cColor = gtxtTexture.Sample(gSamplerState, input.tex2dcoord) * cIllumination;
+{
+	input.normalW = normalize(input.normalW);
+	float4 cIllumination = Lighting(input.positionW, input.normalW);
+		float4 cColor = gtxtTexture.Sample(gSamplerState, input.tex2dcoord) * cIllumination;
 
-    return(cColor);
+		return(cColor);
 }
 
-
 float4 PSInstancedTexturedLighting(VS_INSTANCED_TEXTURED_LIGHTING_OUTPUT input) : SV_Target
-{ 
-    input.normalW = normalize(input.normalW); 
-    float4 cIllumination = Lighting(input.positionW, input.normalW);
-    float4 cColor = gtxtTexture.Sample(gSamplerState, input.tex2dcoord) * cIllumination;
+{
+	input.normalW = normalize(input.normalW);
+	float4 cIllumination = Lighting(input.positionW, input.normalW);
+		float4 cColor = gtxtTexture.Sample(gSamplerState, input.tex2dcoord) * cIllumination;
 
-    return(cColor);
+		return(cColor);
 }
 
 float4 PSInstancedTexturedLightingAnimation(VS_INSTANCED_TEXTURED_LIGHTING_ANIMATION_OUTPUT input) : SV_Target
-{ 
-    input.normalW = normalize(input.normalW); 
-    float4 cIllumination = Lighting(input.positionW, input.normalW);
-    float4 cColor = gtxtTexture.Sample(gSamplerState, input.tex2dcoord) * cIllumination;
+{
+	input.normalW = normalize(input.normalW);
+	float4 cIllumination = Lighting(input.positionW, input.normalW);
+		float4 cColor = gtxtTexture.Sample(gSamplerState, input.tex2dcoord) * cIllumination;
 
-    return(cColor);
+		return(cColor);
 }
 

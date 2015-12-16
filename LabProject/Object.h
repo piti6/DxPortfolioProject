@@ -99,6 +99,8 @@ public:
 
 	CAnimationController* GetAnimationController(){ return &m_AnimationController; }
 
+	bool HasAnimation(){ return m_bHasAnimation; }
+
 protected:
 	PxRigidDynamic				*m_pPxActor;
 

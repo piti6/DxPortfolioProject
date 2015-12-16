@@ -92,7 +92,6 @@
   <ItemGroup>
     <None Include="Effect.fx" />
     <None Include="LabProject07-3.ico" />
-    <None Include="ReadMe.txt" />
     <None Include="small.ico" />
   </ItemGroup>
   <ItemGroup>

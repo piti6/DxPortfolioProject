@@ -51,7 +51,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="ReadMe.txt" />
     <None Include="small.ico">
       <Filter>리소스 파일</Filter>
     </None>

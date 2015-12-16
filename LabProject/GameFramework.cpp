@@ -350,8 +350,8 @@ void CGameFramework::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPA
 		case VK_SPACE:
 			break;
 		case 'F':
-			int Index = 5;//rand() % 80 + 2;
-			m_pScene->GetInstancingShader()->AddObject(m_pPxPhysicsSDK, m_pPxScene, Index, 0, 1, m_pPlayer->GetPosition() - m_pPlayer->GetUp(), false, m_pPlayer->GetUp() * -100);
+			int Index = rand() % 80 + 2;
+			m_pScene->GetInstancingShader()->AddObject(m_pPxPhysicsSDK, m_pPxScene, Index, 0, 1, m_pPlayer->GetPosition() - m_pPlayer->GetUp(), m_pPlayer->GetUp() * -100, false, false);
 			Network_Throw_Packet pkt;
 			strncpy(pkt.m_ID, m_pPlayer->GetName().c_str(), sizeof(pkt.m_ID));
 			pkt.m_ID[9] = 0;
@@ -594,7 +594,7 @@ UINT CGameFramework::ThreadProcTCP(CGameFramework* _GameFramework)
 					if (m_vPlayers[nPlayers].first == network_throw_packet.m_ID)
 					{
 						EnterCriticalSection(&cs);
-						m_pScene->GetInstancingShader()->AddObject(m_pPxPhysicsSDK, m_pPxScene, network_throw_packet.m_iIndex, 0, 1, m_vPlayers[nPlayers].second->GetPosition() - m_vPlayers[nPlayers].second->GetUp(), false, m_vPlayers[nPlayers].second->GetUp() * -100);
+						m_pScene->GetInstancingShader()->AddObject(m_pPxPhysicsSDK, m_pPxScene, network_throw_packet.m_iIndex, 0, 1, m_vPlayers[nPlayers].second->GetPosition() - m_vPlayers[nPlayers].second->GetUp(), m_vPlayers[nPlayers].second->GetUp() * -100, false, false);
 						LeaveCriticalSection(&cs);
 					}
 				}

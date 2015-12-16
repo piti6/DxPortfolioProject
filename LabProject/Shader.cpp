@@ -357,6 +357,16 @@ void CInstancingShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhy
 	pTexture->SetTexture(0, pd3dTexture, pd3dSamplerState);
 	m_TexturesVector.push_back(pTexture);
 
+	pTexture = new CTexture(1);
+	D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("Data/Image/Model/Character/2/1.png"), NULL, NULL, &pd3dTexture, NULL);
+	pTexture->SetTexture(0, pd3dTexture, pd3dSamplerState);
+	m_TexturesVector.push_back(pTexture);
+
+	pTexture = new CTexture(1);
+	D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("Data/Image/Model/Character/3/1.png"), NULL, NULL, &pd3dTexture, NULL);
+	pTexture->SetTexture(0, pd3dTexture, pd3dSamplerState);
+	m_TexturesVector.push_back(pTexture);
+
 
 
 	//物理マテリアルの作成
@@ -374,12 +384,23 @@ void CInstancingShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhy
 	m_ObjectsVector.push_back(make_pair(0, pPlaneObject));
 	
 	//アニメーションキャラクタ（プレイヤー）の作成
-	m_InstanceDataVector.push_back(new InstanceData(new CFbxMeshIlluminatedTextured(pd3dDevice, pFbxSdkManager, "Data/Model/Character/GoblinWizard/mon_goblinWizard@Attack01.fbx", 1.0f, true), true, "Monster1", CreateInstanceBuffer(pd3dDevice, 3000, sizeof(InstanceBuffer))));
-	ID3D11Texture2D *pd3dAnimationTexture = NULL;
+	m_InstanceDataVector.push_back(new InstanceData(new CFbxMeshIlluminatedTextured(pd3dDevice, pFbxSdkManager, "Data/Model/Character/GoblinWizard/mon_goblinWizard@Attack01.fbx", 1.0f, true), true, "Monster1", CreateInstanceBuffer(pd3dDevice, 2000, sizeof(InstanceBuffer))));
 	m_InstanceDataVector[1]->GetAnimationInstancing()->LoadAnimationFromFile(pFbxSdkManager, "Data/Model/Character/GoblinWizard/mon_goblinWizard@Attack01.fbx", "Attack", true);
 	m_InstanceDataVector[1]->GetAnimationInstancing()->LoadAnimationFromFile(pFbxSdkManager, "Data/Model/Character/GoblinWizard/mon_goblinWizard@Run.fbx", "Run", true);
 	m_InstanceDataVector[1]->GetAnimationInstancing()->LoadAnimationFromFile(pFbxSdkManager, "Data/Model/Character/GoblinWizard/mon_goblinWizard@Idle.fbx", "Idle", true);
 	m_InstanceDataVector[1]->GetAnimationInstancing()->CreateAnimationTexture(pd3dDevice);
+
+	m_InstanceDataVector.push_back(new InstanceData(new CFbxMeshIlluminatedTextured(pd3dDevice, pFbxSdkManager, "Data/Model/Character/OrcWarrior/mon_orcWarrior@Attack01.fbx", 1.0f, true), true, "Monster2", CreateInstanceBuffer(pd3dDevice, 2000, sizeof(InstanceBuffer))));
+	m_InstanceDataVector[2]->GetAnimationInstancing()->LoadAnimationFromFile(pFbxSdkManager, "Data/Model/Character/OrcWarrior/mon_orcWarrior@Attack01.fbx", "Attack", true);
+	m_InstanceDataVector[2]->GetAnimationInstancing()->LoadAnimationFromFile(pFbxSdkManager, "Data/Model/Character/OrcWarrior/mon_orcWarrior@Run.fbx", "Run", true);
+	m_InstanceDataVector[2]->GetAnimationInstancing()->LoadAnimationFromFile(pFbxSdkManager, "Data/Model/Character/OrcWarrior/mon_orcWarrior@Idle.fbx", "Idle", true);
+	m_InstanceDataVector[2]->GetAnimationInstancing()->CreateAnimationTexture(pd3dDevice);
+
+	m_InstanceDataVector.push_back(new InstanceData(new CFbxMeshIlluminatedTextured(pd3dDevice, pFbxSdkManager, "Data/Model/Character/TrollCurer/mon_trolCurer@Attack01.fbx", 1.0f, true), true, "Monster3", CreateInstanceBuffer(pd3dDevice, 2000, sizeof(InstanceBuffer))));
+	m_InstanceDataVector[3]->GetAnimationInstancing()->LoadAnimationFromFile(pFbxSdkManager, "Data/Model/Character/TrollCurer/mon_trolCurer@Attack01.fbx", "Attack", true);
+	m_InstanceDataVector[3]->GetAnimationInstancing()->LoadAnimationFromFile(pFbxSdkManager, "Data/Model/Character/TrollCurer/mon_trolCurer@Run.fbx", "Run", true);
+	m_InstanceDataVector[3]->GetAnimationInstancing()->LoadAnimationFromFile(pFbxSdkManager, "Data/Model/Character/TrollCurer/mon_trolCurer@Idle.fbx", "Idle", true);
+	m_InstanceDataVector[3]->GetAnimationInstancing()->CreateAnimationTexture(pd3dDevice);
 
 	CAnimationController *pAnimationController = m_pPlayer->GetAnimationController();
 	CAnimationInstancing *pAnimationInstancing = m_InstanceDataVector[1]->GetAnimationInstancing();
@@ -397,34 +418,39 @@ void CInstancingShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhy
 	m_pPlayer->RotateOffset(-90, 0, 0);
 	m_pPlayer->ChangeCamera(pd3dDevice, FIRST_PERSON_CAMERA, 0);
 	m_pPlayer->SetPosition(D3DXVECTOR3(200.0f, 1.0f, 200.0f));
-
 	m_ObjectsVector.push_back(make_pair(1, m_pPlayer));
 
-	//テストオブジェクトの作成
-	/*
-	CDynamicObject *pCharacter = NULL;
-	for (int i = 0; i < 2000; ++i){
-		pCharacter = new CDynamicObject(true);
-		CAnimationController *pAnimation = pCharacter->GetAnimationController();
-		pAnimation->SetAnimationData("Attack", m_InstanceDataVector[1]->GetAnimationInstancing()->GetAnimation()->m_Animation["Attack"].m_fLength);
-		pAnimation->SetAnimationData("Run", m_InstanceDataVector[1]->GetAnimationInstancing()->GetAnimation()->m_Animation["Run"].m_fLength);
-		pAnimation->SetAnimationData("Idle", m_InstanceDataVector[1]->GetAnimationInstancing()->GetAnimation()->m_Animation["Idle"].m_fLength);
-		if (i % 3 == 0)
-			pAnimation->Play("Attack");
-		else if (i % 3 == 1)
-			pAnimation->Play("Idle");
-		else
-			pAnimation->Play("Run");
-		pCharacter->SetMesh(m_InstanceDataVector[1]->GetMesh());
-		pCharacter->SetMaterial(pMaterial);
-		pCharacter->SetTexture(m_TexturesVector[4]);
-		pCharacter->BuildObjects(pPxPhysics, pPxScene, pPxM);
-		pCharacter->SetOffset(D3DXVECTOR3(0, 0, -1));
-		pCharacter->Rotate(0, i * 20, 0);
-		pCharacter->SetPosition(D3DXVECTOR3(200, i, 200));
-		m_ObjectsVector.push_back(make_pair(1, pCharacter));
+	//テストオブジェクトです。
+	for (int i = 0; i < 1000; ++i){
+		int randAnim = rand() % 3;
+		CDynamicObject *pObject = new CDynamicObject(true);
+		pObject->SetMesh(m_InstanceDataVector[randAnim+1]->GetMesh());
+		pObject->SetMaterial(pMaterial);
+		pObject->SetTexture(m_TexturesVector[randAnim+4]);
+		pObject->BuildObjects(pPxPhysics, pPxScene, pPxM);
+		pObject->SetPosition(D3DXVECTOR3(200, i, 200));
+		CAnimationController *pAnimationController = pObject->GetAnimationController();
+		CAnimationInstancing *pAnimationInstancing = m_InstanceDataVector[randAnim + 1]->GetAnimationInstancing();
+		CAnimationList *pAnimationList = pAnimationInstancing->GetAnimation();
+		unordered_map<string, CAnimation> *pAnimationMap = pAnimationList->GetAnimationMap();
+		pAnimationController->SetAnimationData("Attack", (*pAnimationMap)["Attack"].GetLength());
+		pAnimationController->SetAnimationData("Run", (*pAnimationMap)["Run"].GetLength());
+		pAnimationController->SetAnimationData("Idle", (*pAnimationMap)["Idle"].GetLength());
+		switch (randAnim)
+		{
+		case 0:
+			pAnimationController->Play("Attack");
+			break;
+		case 1:
+			pAnimationController->Play("Run");
+			break;
+		case 2:
+			pAnimationController->Play("Idle");
+			break;
+		}
+
+		m_ObjectsVector.push_back(make_pair(randAnim+1, pObject));
 	}
-	*/
 
 	//Unityで作成したマップの姿（モデルの名前、ポジション、ローテーション）を、テクストファイルで保存、それをロードします。
 	ifstream ifsFbxList;
@@ -559,7 +585,7 @@ void CInstancingShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhy
 }
 
 //ゲームの中で、オブジェクト、キャラクタの追加
-void CInstancingShader::AddObject(PxPhysics *pPxPhysics, PxScene *pPxScene, int _IndexOfInstanceDataVector, int _IndexOfMaterial, int _IndexOfTexture, D3DXVECTOR3 _d3dxvPosition, int _isStatic, D3DXVECTOR3 _Force)
+void CInstancingShader::AddObject(PxPhysics *pPxPhysics, PxScene *pPxScene, int _IndexOfInstanceDataVector, int _IndexOfMaterial, int _IndexOfTexture, D3DXVECTOR3 _d3dxvPosition, D3DXVECTOR3 _Force, bool _isStatic, bool _hasAnimation)
 {
 	if (_IndexOfInstanceDataVector >= m_InstanceDataVector.size())
 	{
@@ -590,19 +616,41 @@ void CInstancingShader::AddObject(PxPhysics *pPxPhysics, PxScene *pPxScene, int 
 	}
 	else
 	{
-		CDynamicObject *pObject = new CDynamicObject();
+		CDynamicObject *pObject;
+		if (_hasAnimation)
+			pObject = new CDynamicObject(true);
+		else
+			pObject = new CDynamicObject();
 		pObject->SetMesh(m_InstanceDataVector[_IndexOfInstanceDataVector]->GetMesh());
 		pObject->SetMaterial(m_MaterialsVector[_IndexOfMaterial]);
 		pObject->SetTexture(m_TexturesVector[_IndexOfTexture]);
 		pObject->BuildObjects(pPxPhysics, pPxScene, pPxM);
 		pObject->SetPosition(_d3dxvPosition);
 		pObject->AddForce(_Force.x, _Force.y, _Force.z);
-		/*
-		CAnimationController *pAnimationController = pObject->GetAnimationController();
-		pAnimationController->SetAnimationData("Attack", m_InstanceDataVector[1]->GetAnimationInstancing()->m_vAnimationList.m_Animation["Attack"].m_fLength);
-		pAnimationController->SetAnimationData("Run", m_InstanceDataVector[1]->GetAnimationInstancing()->m_vAnimationList.m_Animation["Run"].m_fLength);
-		pAnimationController->SetAnimationData("Idle", m_InstanceDataVector[1]->GetAnimationInstancing()->m_vAnimationList.m_Animation["Idle"].m_fLength);
-		pAnimationController->Play("Attack");*/
+		if (pObject->HasAnimation())
+		{
+			CAnimationController *pAnimationController = m_pPlayer->GetAnimationController();
+			CAnimationInstancing *pAnimationInstancing = m_InstanceDataVector[1]->GetAnimationInstancing();
+			CAnimationList *pAnimationList = pAnimationInstancing->GetAnimation();
+			unordered_map<string, CAnimation> *pAnimationMap = pAnimationList->GetAnimationMap();
+			pAnimationController->SetAnimationData("Attack", (*pAnimationMap)["Attack"].GetLength());
+			pAnimationController->SetAnimationData("Run", (*pAnimationMap)["Run"].GetLength());
+			pAnimationController->SetAnimationData("Idle", (*pAnimationMap)["Idle"].GetLength());
+			int randAnim = rand() % 3;
+			switch (randAnim)
+			{
+				case 0:
+					pAnimationController->Play("Attack");
+					break;
+				case 1:
+					pAnimationController->Play("Run");
+					break;
+				case 2:
+					pAnimationController->Play("Idle");
+					break;
+			}
+			
+		}
 		m_ObjectsVector.push_back(make_pair(_IndexOfInstanceDataVector, pObject));
 	}
 }

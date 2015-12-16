@@ -132,7 +132,7 @@ public:
 	
 	ID3D11Buffer* CreateInstanceBuffer(ID3D11Device *pd3dDevice, int nObjects, UINT nBufferStride);
 
-	void AddObject(PxPhysics *pPxPhysics, PxScene *pPxScene, int _IndexOfInstanceDataVector, int _IndexOfMaterial, int _IndexOfTexture, D3DXVECTOR3 _d3dxvPosition, int _isStatic, D3DXVECTOR3 _Force);
+	void AddObject(PxPhysics *pPxPhysics, PxScene *pPxScene, int _IndexOfInstanceDataVector, int _IndexOfMaterial, int _IndexOfTexture, D3DXVECTOR3 _d3dxvPosition, D3DXVECTOR3 _Force, bool _isStatic, bool _hasAnimation);
 	CCharacterObject* AddCharacter(PxPhysics *pPxPhysics, PxScene *pPxScene, PxControllerManager *pPxControllerManager, int _IndexOfInstanceDataVector, int _IndexOfMaterial, int _IndexOfTexture, D3DXVECTOR3 _d3dxvPosition);
 
 public:

@@ -631,7 +631,7 @@ void CInstancingShader::AddObject(PxPhysics *pPxPhysics, PxScene *pPxScene, int 
 		pObject->AddForce(_Force.x, _Force.y, _Force.z);
 		if (pObject->HasAnimation())
 		{
-			CAnimationController *pAnimationController = m_pPlayer->GetAnimationController();
+			CAnimationController *pAnimationController = pObject->GetAnimationController();
 			CAnimationInstancing *pAnimationInstancing = m_InstanceDataVector[1]->GetAnimationInstancing();
 			CAnimationList *pAnimationList = pAnimationInstancing->GetAnimation();
 			unordered_map<string, CAnimation> *pAnimationMap = pAnimationList->GetAnimationMap();

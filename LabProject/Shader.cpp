@@ -575,7 +575,7 @@ void CInstancingShader::BuildObjects(ID3D11Device *pd3dDevice, PxPhysics *pPxPhy
 		}
 	}
 	ifsModelTransform.close();
-
+	//아ㅏㅏ씨발!
 	//インスタンスデータ（レンダリングするオブジェクトの位置ベクトルの配列、アニメーションする時の現在インデックス）をメッシュの頂点バッファに追加します。
 	UINT nMatrixBufferStride = sizeof(InstanceBuffer);
 	UINT nMatrixBufferOffset = 0;
